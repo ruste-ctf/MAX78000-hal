@@ -1,5 +1,5 @@
 [package]
-name = "hal"
+name = "max78000-hal"
 version = "0.1.0"
 edition = "2021"
 
