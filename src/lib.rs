@@ -9,6 +9,10 @@ pub mod memory_map;
 /// provided constants fall in expected range.
 #[macro_export]
 macro_rules! const_assert {
+    (STRUCT, $($tt:tt)*) => {
+        #[allow(unused)]
+        const CONST_ASSERT_VALUE: () = assert!($($tt)*);
+    };
     ($($tt:tt)*) => {
         const _: () = assert!($($tt)*);
     };
