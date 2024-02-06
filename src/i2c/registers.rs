@@ -334,6 +334,51 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     /// 0: Disabled
     /// 1: Enabled
     is_irxm_enabled}
+
+    bit_impl! {2, RW,
+    /// # Set Acknowledge Gneral Call
+    /// Set the I2C controller to acknowledge the general call address, and repsond with ACK.
+    ///
+    /// 0: Ignore Gneral Call Address
+    /// 1: Acknowledge General Call Address
+    set_acknowledge_general_call,
+    /// # Is Acknowledging General Call
+    /// Checks is the controller is currently configured to acknowledge the general call
+    /// addressing.
+    ///
+    /// 0: Ignore Gneral Call Address
+    /// 1: Acknowledge General Call Address
+    is_acknowledging_general_call}
+
+    bit_impl! {1, RW,
+    /// # Set Master Mode Enabled
+    /// Sets the controller to be the bus master on the I2C bus. Only some operations
+    /// are available during master mode. It is important to know which mode the
+    /// controller is in to use other functions.
+    ///
+    /// 0: Slave Mode Enabled
+    /// 1: Master Mode Enabled
+    set_master_mode_enable,
+    /// # Is Master Mode Enabled
+    /// Checks if the controller is currently configured to use I2C bus master mode.
+    ///
+    /// 0: Slave Mode Enabled
+    /// 1: Master Mode Enabled
+    is_master_mode_enabled}
+
+    bit_impl! {0, RW,
+    /// # Set I2C Peripheral Enable
+    /// Enables the I2C bus. Allows communication to be sent over to I2C peripherals.
+    ///
+    /// 0: Disabled
+    /// 1: Enabled
+    set_i2c_peripheral_enable,
+    /// # Is I2C Peripheral Enabled
+    /// Checks if the I2C peripheral bus is currently enabled.
+    ///
+    /// 0: Disabled
+    /// 1: Enabled
+    is_i2c_peripheral_enabled}
 }
 
 /// # I2C Status Register
