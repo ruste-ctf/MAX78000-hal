@@ -386,6 +386,58 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
 pub struct StatusRegister<const PORT_PTR: usize> {}
 reg_impl!(RO, StatusRegister, rro::I2C_STATUS_OFFSET);
 
+impl<const PORT_PTR: usize> StatusRegister<PORT_PTR> {
+    bit_impl! {5, RO,
+    /// # Is Master Busy
+    /// When the controller is in master mode, and is currently processing a transaction,
+    /// then this flag will be set for the duration that `START` until `STOP`.
+    ///
+    /// 0: Device is currently not driving the SCL clock
+    /// 1: Device is currently driving the SCL clock
+    is_master_busy}
+
+    bit_impl! {4, RO,
+    /// # Is Transmit FIFO Full
+    /// Checks to see if the transmit FIFO is currently full.
+    ///
+    /// 0: Not Full
+    /// 1: Full
+    is_transmit_fifo_full}
+
+    bit_impl! {3, RO,
+    /// # Is Trasmit FIFO Empty
+    /// Checks to see if the transmit FIFO is currently empty.
+    ///
+    /// 0: Not Empty
+    /// 1: Empty
+    is_transmit_fifo_empty}
+
+    bit_impl! {2, RO,
+    /// # Is Recieve FIFO Full
+    /// Checks to see if the current recieve FIFO is full.
+    ///
+    /// 0: Not Full
+    /// 1: Full
+    is_receive_fifo_full}
+
+    bit_impl! {1, RO,
+    /// # Is Receive FIFO Empty
+    /// Checks to see if the current FIFO is currently empty.
+    ///
+    /// 0: Not Empty
+    /// 1: Empty
+    is_receive_fifo_empty}
+
+    bit_impl! {0, RO,
+    /// # Is Transaction Active
+    /// Checks to see (either in master or slave mode) if the I2C controller is currently
+    /// processing a transaction.
+    ///
+    /// 0: I2C bus is idle
+    /// 1: I2C bus is busy
+    is_transaction_active}
+}
+
 /// # I2C Interrupt Flag 0 Register
 /// The interrupt flag 0 register for controlling interrupt flags for I2C related tasks, page 226-229 (MAX78000 User Guide)
 pub struct InterruptFlag0<const PORT_PTR: usize> {}
