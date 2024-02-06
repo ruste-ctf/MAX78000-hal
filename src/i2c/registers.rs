@@ -134,18 +134,51 @@ macro_rules! reg_impl {
 /// ```
 macro_rules! bit_impl {
     ($bit:literal, RW, $(#[$meta_set:meta])* $set:ident, $(#[$meta_get:meta])* $get:ident) => {
+        bit_impl!($bit, WO, $(#[$meta_set])* $set);
+        bit_impl!($bit, RO, $(#[$meta_get])* $get);
+    };
+    ($bit:literal, RO, $(#[$meta_get:meta])* $get:ident) => {
+        $(#[$meta_get])*
+        ///
+        /// # Saftey
+        /// It is ultimately up to the caller to ensure this function will
+        /// never cause any side effects. However, useally reading from
+        /// registers does not modify any processor state (just looks at it).
+        ///
+        /// # Volitle
+        /// This function only preforms **1** volitle *read* and immediatly copies
+        /// the value to test the flag and return the result.
+        ///
+        #[inline]
+        pub fn $get() -> bool {
+            Self::read().get_bit($bit)
+        }
+    };
+    ($bit:literal, WO, $(#[$meta_set:meta])* $set:ident) => {
         $(#[$meta_set])*
+        ///
+        /// # Saftey
+        /// It is up to the caller to verify that this register write will not
+        /// cause any side effects. There could be an event that setting this
+        /// register could cause undefined behavior elsewhere in the program.
+        ///
+        /// ## Other Register State
+        /// In some examples it is true that ones register state depends on another
+        /// register's status. In these cases, it is up to the caller to properly
+        /// set this register to a valid (and ONLY valid value).
+        ///
+        /// # Volitle
+        /// This function only preforms **1** volitle *read* using `Self::read()`,
+        /// immediately modifies the flag and does **1** volitle *write* using
+        /// the interal provided function `Self::write(value)`.
+        #[inline]
         pub unsafe fn $set(flag: bool) {
             let mut value = Self::read();
             value.set_bit($bit, flag);
             Self::write(value);
         }
+    }
 
-        $(#[$meta_get])*
-        pub fn $get() -> bool {
-            Self::read().get_bit($bit)
-        }
-    };
 }
 
 /// # I2C Control Register
@@ -165,6 +198,142 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     /// 0: Disabled
     /// 1: Enabled
     is_high_speed_mode_enabled}
+
+    bit_impl! {13, RW,
+    /// # Set One Master Mode
+    /// Set if the controller is going to be using one master mode. When set
+    /// to true, the device must only be used with slave devices. No other
+    /// masters should be attached to the bus. When using one master mode,
+    /// it must also be true that no slave devices will hold SCL low for
+    /// any given reason (i.e clock streaching).
+    ///
+    /// 0: Disabled
+    /// 1: Enabled
+    set_one_master_mode,
+    /// # Is One Master Mode Enabled
+    /// Check to see if the device is in single master mode. When in single
+    /// device master mode, there must be only one master on the bus.
+    ///
+    /// 0: Disabled
+    /// 1: Enabled
+    is_one_master_mode_enabled}
+
+    bit_impl! {12, RW,
+    /// # Set Disable Slave Clock Stretching
+    /// Sets if slave clock stretching will be disabled. In this mode, it must
+    /// also be true that `one_master_mode` must also be set since slave devices
+    /// will be pulling SCL low.
+    ///
+    /// 0: Enabled
+    /// 1: Disabled
+    set_disable_slave_clock_stretching,
+    /// # Is Slave Clock Stretching Disabled
+    /// Check to see if the device is currently disabling slave devices from using
+    /// clock stretching on the bus. If this mode is active, it must also be true
+    /// that `one_master_mode` must also be active.
+    ///
+    /// 0: Enabled
+    /// 1: Disabled
+    is_slave_clock_stretching_disabled}
+
+    bit_impl! {11, RO,
+    /// # Read Write Bit Status
+    /// Get the logic level of the R/W bit on a received address match.
+    ///
+    // ## Extra Flags
+    // FIXME: Include Extra flags (e.g `I2Cn_INTFL0.addr_match`) and what they do
+    read_write_bit_status}
+
+    bit_impl! {10, RW,
+    /// # Set Software I2C Mode
+    /// Tell the controller to either use software mode (i.e the SCL and SDA are managed
+    /// by the software) or to use the on-board I2C controller hardware. This does not mean
+    /// that the on-board I2C controller will do all communication by itself, more, it means
+    /// the onboard hardware will generate basic I2C based signals (provided you tell it to).
+    ///
+    /// 0: The I2C controller will manage I2C in hardware.
+    /// 1: SDA and SCL will need to be "bit-banged" by software by setting them manually.
+    set_software_i2c_mode,
+    /// # Is Software I2C Mode Enabled
+    /// Checks if the hardware I2C controller will be managing the SCL and SDA pins.
+    is_software_i2c_mode_enabled}
+
+    bit_impl! {9, RO,
+    /// # Get SDA Pin
+    /// Get the `SDA` pin status, whether it be high or low.
+    ///
+    /// 0: The `SDA` pin is logic low
+    /// 1: The `SDA` pin is logic high
+    get_sda_pin}
+
+    bit_impl! {8, RO,
+    /// # Get SCL Pin
+    /// Get the `SCL` pin status, whether it be high or low.
+    ///
+    /// 0: The `SCL` pin is logic low
+    /// 1: The `SCL` pin is logic high
+    get_scl_pin}
+
+    bit_impl! {7, RW,
+    /// # Set SDA Hardware Pin Released
+    /// Set the state of the SDA hardware pin. (Activly pull the pin low, or leave it floating). This
+    /// mode is only active during `software_i2c_mode_enabled`, and other state is to be undefined.
+    ///
+    /// 0: Activly Pull SDA Low
+    /// 1: Leave SDA floating
+    set_sda_hardware_pin_released,
+    /// # Is SDA Hardware Pin Released
+    /// Check if the SDA hardware pin is being pulled low, or is being released.
+    ///
+    /// 0: Activly Pulled low
+    /// 1: SDA is currently floating
+    is_sda_hardware_pin_released}
+
+    bit_impl! {6, RW,
+    /// # Set SCL Hardware Pin Released
+    /// Set the state of the SCL hardware pin. (Activly pull the pin low, or leave it floating). This
+    /// mode is only active during `software_i2c_mode_enabled`, and other state is to be undefined.
+    ///
+    /// 0: Activly Pull SCL Low
+    /// 1: Leave SCL floating
+    set_scl_hardware_pin_released,
+    /// # Is SCL Hardware Pin Released
+    /// Check if the SCL hardware pin is being pulled low, or is being released.
+    ///
+    /// 0: Activly Pulled low
+    /// 1: SCL is currently floating
+    is_scl_hardware_pin_released}
+
+    bit_impl! {4, RW,
+    /// # Set IRXM Responce `NACK`
+    /// If the IRXM is currently enabled, this will set if the IRXM response will be an `ACK`, or
+    /// a `NACK`. This also requires that the IRXM be enabled.
+    ///
+    /// 0: Respond to IRXM with `ACK`
+    /// 1: Respond to IRXM with `NACK`
+    set_irxm_responce_nack,
+    /// # Is IRXM Responding with `NACK`
+    /// Check to see if the IRXM will respond with `ACK`, or `NACK`.
+    ///
+    /// 0: The controller will respond with `ACK`
+    /// 1: The controller will repsond with `NACK`
+    is_irxm_responding_with_nack}
+
+    bit_impl! {3, RW,
+    /// # Set if IRXM will be Enabled
+    /// When currently receiving data, the IRXM will allow for interactive receive mode (IRXM)
+    /// interrupts for each byte of data received. Configuration of if the hardware will send
+    /// an `ACK` to IRXM is with `set_irxm_response_nack`.
+    ///
+    /// 0: Disabled
+    /// 1: Enabled
+    set_irxm_enable,
+    /// # Is IRXM Enabled
+    /// Check if IRXM (interactive receive mode) will send interrupts for each byte of data received.
+    ///
+    /// 0: Disabled
+    /// 1: Enabled
+    is_irxm_enabled}
 }
 
 /// # I2C Status Register
