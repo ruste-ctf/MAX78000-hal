@@ -1,9 +1,9 @@
 /// # Bit Manipulation
 /// A Simple trait to help with setting and unsetting bits in types.
 pub trait BitManipulation {
-    /// # Set Single
+    /// # Set Bit
     /// Set a single bit in the given type.
-    fn set_single<B>(&mut self, bit: B, set: bool) -> &mut Self
+    fn set_bit<B>(&mut self, bit: B, set: bool) -> &mut Self
     where
         B: Into<u8>;
 }
@@ -15,9 +15,9 @@ pub trait BitManipulation {
 macro_rules! bit_manipulation_impl {
     ($($t:ty)*) => ($(
      impl BitManipulation for $t {
-        /// # Set Single
+        /// # Set Bit
         /// Set a single bit in the given type.
-        fn set_single<B>(&mut self, bit: B, set: bool) -> &mut Self
+        fn set_bit<B>(&mut self, bit: B, set: bool) -> &mut Self
         where
             B: Into<u8>,
         {
