@@ -1,3 +1,4 @@
+use crate::bits::BitManipulation;
 use crate::const_assert;
 use crate::memory_map::mmio;
 use core::ptr;
@@ -122,10 +123,49 @@ macro_rules! reg_impl {
     };
 }
 
+/// # Bit Impl
+/// A macro to help with implementing large number of single bit operations on registers.
+///
+/// ## How to use
+/// ```text
+/// bit_impl!{5, RW, set_my_register, get_my_register}
+///           ^
+///       Bit to use
+/// ```
+macro_rules! bit_impl {
+    ($bit:literal, RW, $(#[$meta_set:meta])* $set:ident, $(#[$meta_get:meta])* $get:ident) => {
+        $(#[$meta_set])*
+        pub unsafe fn $set(flag: bool) {
+            let mut value = Self::read();
+            value.set_bit($bit, flag);
+            Self::write(value);
+        }
+
+        $(#[$meta_get])*
+        pub fn $get() -> bool {
+            Self::read().get_bit($bit)
+        }
+    };
+}
+
 /// # I2C Control Register
 /// The control register for I2C related tasks, page 224-226 (MAX78000 User Guide)
 pub struct ControlRegister<const PORT_PTR: usize> {}
 reg_impl!(RW, ControlRegister, rro::I2C_CTRL_OFFSET);
+
+impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
+    bit_impl! {15, RW,
+    /// # Set High Speed Mode
+    /// Set I2C to high speed mode, or set it to low speed mode.
+    /// 0: Disabled
+    /// 1: Enabled
+    set_high_speed_mode,
+    /// # Is High Speed Mode Enabled
+    /// Check if I2C is set to high speed mode, or if its set to low speed mode.
+    /// 0: Disabled
+    /// 1: Enabled
+    is_high_speed_mode_enabled}
+}
 
 /// # I2C Status Register
 /// The status register for I2C related tasks, page 226 (MAX78000 User Guide)
