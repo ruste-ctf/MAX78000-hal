@@ -146,3 +146,68 @@ reg_impl!(RW, InterruptEnable0, rro::I2C_INTEN0_OFFSET);
 /// The interrupt flag 1 register for controlling interrupt flags for I2C related tasks, page 230-231 (MAX78000 User Guide)
 pub struct InterruptFlag1<const PORT_PTR: usize> {}
 reg_impl!(RW, InterruptFlag1, rro::I2C_INTFL1_OFFSET);
+
+/// # I2C Interrupt Enable 1 Register
+/// The interrupt enable 1 register for controlling if interrupts are enabled for I2C, page 231 (MAX78000 User Guide)
+pub struct InterruptEnable1<const PORT_PTR: usize> {}
+reg_impl!(RW, InterruptEnable1, rro::I2C_INTEN1_OFFSET);
+
+/// # I2C FIFO Length Register
+/// The FIFO length status register. Used to see the length of the transmit/receive FIFO, page 231 (MAX78000 User Guide)
+pub struct FIFOLengthRegister<const PORT_PTR: usize> {}
+reg_impl!(RO, FIFOLengthRegister, rro::I2C_FIFOLEN_OFFSET);
+
+/// # I2C Receive Control 0 Register
+/// The Receive control register is used to set the receive FIFO threshold level, and set flush receive FIFO, page 231-232 (MAX78000 User Guide)
+pub struct ReceiveControl0<const PORT_PTR: usize> {}
+reg_impl!(RW, ReceiveControl0, rro::I2C_RXCTRL0_OFFSET);
+
+/// # I2C Receive Control 1 Register
+/// The receive control register is used to set receive FIFO byte count configuration, and read byte cound, page 232-233 (MAX78000 User Guide)
+pub struct ReceiveControl1<const PORT_PTR: usize> {}
+reg_impl!(RW, ReceiveControl1, rro::I2C_RXCTRL1_OFFSET);
+
+/// # I2C Transmit Control 0 Register
+/// The transmit control register is used to control transmitting related I2C tasks, page 233-234 (MAX78000 User Guide)
+pub struct TransmitControl0<const PORT_PTR: usize> {}
+reg_impl!(RW, TransmitControl0, rro::I2C_TXCTRL0_OFFSET);
+
+/// # I2C Transmit Control 1 Register
+/// The trasmit control register is used to control transmitting related I2C tasks, page 234-235 (MAX78000 User Guide)
+pub struct TransmitControl1<const PORT_PTR: usize> {}
+reg_impl!(RW, TransmitControl1, rro::I2C_TXCTRL1_OFFSET);
+
+/// # I2C Data Register
+/// The data register is used to send and receive data to the FIFO, page 235 (MAX78000 User Guide)
+pub struct DataRegister<const PORT_PTR: usize> {}
+reg_impl!(RW, DataRegister, rro::I2C_FIFO_OFFSET);
+
+/// # I2C Master Control Register
+/// The master control register is used to control the bus when the device is configured to be the master, page 235-236 (MAX78000 User Guide)
+pub struct MasterControl<const PORT_PTR: usize> {}
+reg_impl!(RW, MasterControl, rro::I2C_MSTCTRL_OFFSET);
+
+/// # I2C SCL Low Control Register
+/// The SCL low control register is used to control the clock low time of the bus, page 236 (MAX78000 User Guide)
+pub struct LowSCLControl<const PORT_PTR: usize> {}
+reg_impl!(RW, LowSCLControl, rro::I2C_CLKLO_OFFSET);
+
+/// # I2C SCL High Control Register
+/// The SCL high control register is used to control the clock high time of the bus, page 236 (MAX78000 User Guide)
+pub struct HighSCLControl<const PORT_PTR: usize> {}
+reg_impl!(RW, HighSCLControl, rro::I2C_CLKHI_OFFSET);
+
+/// # I2C High Speed Clock Control Register
+/// The high speed clock control register is used to control the high speed clock rate, page 236-237 (MAX78000 User Guide)
+pub struct HighSpeedClockControl<const PORT_PTR: usize> {}
+reg_impl!(RW, HighSpeedClockControl, rro::I2C_HSCLK_OFFSET);
+
+/// # I2C Timeout Register
+/// The timeout register is used to control the bus error scl timeout period, page 237 (MAX78000 User Guide)
+pub struct TimeoutControl<const PORT_PTR: usize> {}
+reg_impl!(RW, TimeoutControl, rro::I2C_TIMEOUT_OFFSET);
+
+/// # I2C Slave Address Register
+/// The slave address register is used to control the addressing mode of the bus, page 237-238 (MAX78000 User Guide)
+pub struct SlaveAddress<const PORT_PTR: usize> {}
+reg_impl!(RW, SlaveAddress, rro::I2C_SLAVE_OFFSET);
