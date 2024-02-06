@@ -6,6 +6,12 @@ pub trait BitManipulation {
     fn set_bit<B>(&mut self, bit: B, set: bool) -> &mut Self
     where
         B: Into<u8>;
+
+    /// # Get Bit
+    /// Get a single bit in the given type.
+    fn get_bit<B>(&self, bit: B) -> bool
+    where
+        B: Into<u8>;
 }
 
 /// # Bit Manipulation Impl
@@ -36,6 +42,22 @@ macro_rules! bit_manipulation_impl {
             }
 
             self
+        }
+
+        /// # Get Bit
+        /// Get a single bit in the given type.
+        fn get_bit<B>(&self, bit: B) -> bool
+        where
+            B: Into<u8> {
+            let bit: u8 = bit.into();
+            let self_bits = (core::mem::size_of::<Self>() * 8) as u8;
+
+            debug_assert!(
+                bit <= self_bits,
+                "Bit '{bit}' is larger then type's total bits of '{self_bits}'!"
+            );
+
+            *self & (1 << bit) != 0
         }
     }
     )*)
