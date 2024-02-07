@@ -2,7 +2,6 @@
 /// The Peripheral space for memory mapped registers.
 /// Found at: MAX78000 Pg 31 & 37
 pub mod mmio {
-
     /// # Global Control (GCR)
     /// The Global Control Registers ptr.
     pub const GLOBAL_CONTROL: usize = 0x4000_0000;
