@@ -57,6 +57,22 @@ macro_rules! reg_impl {
         /// # Write
         /// Write to the value stored at this register with **1** volatile
         /// memory read.
+        ///
+        /// # Safety
+        /// It is up to the caller to verify that this register write will not
+        /// cause any side effects. There could be an event that setting this
+        /// register could cause undefined behavior elsewhere in the program.
+        ///
+        /// ## Other Register State
+        /// In some examples it is true that ones register state depends on another
+        /// register's status. In these cases, it is up to the caller to properly
+        /// set this register to a valid (and ONLY valid value).
+        ///
+        /// # Volatile
+        /// This read function will preform **1** volatile `write` from the given
+        /// register. Each register's helper functions will call this very function
+        /// to read, and thus each register's helper functions conform to the same
+        /// safety and volatility of this function.
         #[inline]
         pub unsafe fn write(value: u32) {
             unsafe { ptr::write_volatile(Self::get_ptr(), value) }
