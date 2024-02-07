@@ -1,3 +1,5 @@
+use core::ops::RangeBounds;
+
 /// # Bit Manipulation
 /// A Simple trait to help with setting and un-setting bits in types.
 pub trait BitManipulation {
@@ -12,6 +14,12 @@ pub trait BitManipulation {
     fn get_bit<B>(&self, bit: B) -> bool
     where
         B: Into<u8>;
+
+    /// # Get Bit Range
+    /// Get a range of bits in the given type.
+    fn get_bit_range<R>(&self, bit: R) -> Self
+    where
+        R: RangeBounds<Self>;
 }
 
 /// # Bit Manipulation Impl
@@ -58,6 +66,45 @@ macro_rules! bit_manipulation_impl {
             );
 
             *self & (1 << bit) != 0
+        }
+
+        /// # Get Bit Range
+        /// Get a range of bits in the given type.
+        fn get_bit_range<R>(&self, bit: R) -> Self
+        where
+            R: RangeBounds<Self>,
+        {
+            let self_bits = (core::mem::size_of::<Self>() * 8) as Self;
+            let true_bit_start = match bit.start_bound() {
+                core::ops::Bound::Included(&value) => value,
+                core::ops::Bound::Excluded(&value) => value + 1,
+                core::ops::Bound::Unbounded => 0 as Self,
+            };
+
+            let true_bit_end = match bit.end_bound() {
+                core::ops::Bound::Included(&value) => value,
+                core::ops::Bound::Excluded(&value) => value - 1,
+                core::ops::Bound::Unbounded => self_bits,
+            };
+
+            debug_assert!(
+                true_bit_start <= self_bits,
+                "Bit Start '{true_bit_start}' is larger then type's total bits of '{self_bits}'!"
+            );
+
+            debug_assert!(
+                true_bit_end <= self_bits,
+                "Bit End '{true_bit_end}' is larger then type's total bits of '{self_bits}'!"
+            );
+
+            debug_assert!(
+                true_bit_end > true_bit_start,
+                "Bit Start '{true_bit_start}' must be less then Bit End '{true_bit_end}'!"
+            );
+
+            let bits = *self << (self_bits - true_bit_end) >> (self_bits - true_bit_end);
+
+            bits >> true_bit_start
         }
     }
     )*)
