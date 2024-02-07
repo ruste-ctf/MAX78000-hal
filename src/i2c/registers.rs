@@ -1026,6 +1026,20 @@ impl<const PORT_PTR: usize> InterruptEnable0<PORT_PTR> {
 pub struct InterruptFlag1<const PORT_PTR: usize> {}
 reg_impl!(RW, InterruptFlag1, rro::I2C_INTFL1_OFFSET);
 
+impl<const PORT_PTR: usize> InterruptFlag1<PORT_PTR> {
+    bit_impl! {2, RW1C,
+    clear_start_condition_flag,
+    is_start_condidtion_flag}
+
+    bit_impl! {1, RW1C,
+    clear_slave_mode_transmit_fifo_underflow_flag,
+    is_slave_mode_trasmit_fifo_underflow_flag}
+
+    bit_impl! {0, RW1C,
+    clear_slave_mode_receive_fifo_overflow_flag,
+    is_slave_mode_receive_fifo_overflow_flag}
+}
+
 /// # I2C Interrupt Enable 1 Register
 /// The interrupt enable 1 register for controlling if interrupts are enabled for I2C, page 231 (MAX78000 User Guide)
 pub struct InterruptEnable1<const PORT_PTR: usize> {}
