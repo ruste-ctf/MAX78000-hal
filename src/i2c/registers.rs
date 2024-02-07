@@ -1081,6 +1081,44 @@ impl<const PORT_PTR: usize> InterruptFlag1<PORT_PTR> {
 pub struct InterruptEnable1<const PORT_PTR: usize> {}
 reg_impl!(RW, InterruptEnable1, rro::I2C_INTEN1_OFFSET);
 
+impl<const PORT_PTR: usize> InterruptEnable1<PORT_PTR> {
+    bit_impl! {2, RW,
+    /// # Set Start Condition Interrupt Enable
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
+    set_start_condition_interrupt_enable,
+    /// # Is Start Condition Interrupt Enable
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
+    is_start_condition_interrupt_enabled}
+
+    bit_impl! {1, RW,
+    /// # Set Slave Mode Transmit FIFO Underflow Interrupt Enable
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
+    set_slave_mode_transmit_fifo_underflow_interrupt_enable,
+    /// # Is Slave Mode Transmit FIFO Underflow Interrupt Enable
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
+    is_slave_mode_transmit_fifo_underflow_interrupt_enabled}
+
+    bit_impl! {0, RW,
+    /// # Set Slave Mode Receive FIFO Overflow Interrupt Enable
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
+    set_slave_mode_receive_fifo_overflow_interrupt_enable,
+    /// # Is Slave Mode Receive FIFO Overflow Interrupt Enable
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
+    is_slave_mode_receive_fifo_overflow_interrupt_enabled}
+}
+
 /// # I2C FIFO Length Register
 /// The FIFO length status register. Used to see the length of the transmit/receive FIFO, page 231 (MAX78000 User Guide)
 pub struct FIFOLengthRegister<const PORT_PTR: usize> {}
