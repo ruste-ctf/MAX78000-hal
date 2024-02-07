@@ -137,6 +137,10 @@ macro_rules! bit_impl {
         bit_impl!($bit, WO, $(#[$meta_set])* $set);
         bit_impl!($bit, RO, $(#[$meta_get])* $get);
     };
+    ($bit:literal, RW1C, $(#[$meta_set:meta])* $set:ident, $(#[$meta_get:meta])* $get:ident) => {
+        bit_impl!($bit, RESET, $(#[$meta_set])* $set);
+        bit_impl!($bit, RO, $(#[$meta_get])* $get);
+    };
     ($bit:literal, RO, $(#[$meta_get:meta])* $get:ident) => {
         $(#[$meta_get])*
         ///
@@ -177,8 +181,31 @@ macro_rules! bit_impl {
             value.set_bit($bit, flag);
             Self::write(value);
         }
+    };
+    ($bit:literal, RESET, $(#[$meta_set:meta])* $set:ident) => {
+        $(#[$meta_set])*
+        ///
+        /// # Saftey
+        /// It is up to the caller to verify that this register write will not
+        /// cause any side effects. There could be an event that setting this
+        /// register could cause undefined behavior elsewhere in the program.
+        ///
+        /// ## Other Register State
+        /// In some examples it is true that ones register state depends on another
+        /// register's status. In these cases, it is up to the caller to properly
+        /// set this register to a valid (and ONLY valid value).
+        ///
+        /// # Volitle
+        /// This function only preforms **1** volitle *read* using `Self::read()`,
+        /// immediately modifies the flag and does **1** volitle *write* using
+        /// the interal provided function `Self::write(value)`.
+        #[inline]
+        pub unsafe fn $set() {
+            let mut value = Self::read();
+            value.set_bit($bit, true);
+            Self::write(value);
+        }
     }
-
 }
 
 /// # I2C Control Register
@@ -442,6 +469,282 @@ impl<const PORT_PTR: usize> StatusRegister<PORT_PTR> {
 /// The interrupt flag 0 register for controlling interrupt flags for I2C related tasks, page 226-229 (MAX78000 User Guide)
 pub struct InterruptFlag0<const PORT_PTR: usize> {}
 reg_impl!(RW, InterruptFlag0, rro::I2C_INTFL0_OFFSET);
+
+impl<const PORT_PTR: usize> InterruptFlag0<PORT_PTR> {
+    bit_impl! {23, RW1C,
+    /// # Clear Slave Write Address Match Interrupt
+    /// If this bit is set, the current device (currently configured for slave mode) has just been accessed for a write (ie. receive)
+    /// and the address requested matches our I2C address (the bus is talking to us).
+    ///
+    /// 0: No Address Match
+    /// 1: Address Match
+    clear_slave_write_addr_match_interrupt,
+    /// # Is Slave Write Address Match Interrupt
+    /// If this bit is set, the current device (currently configured for slave mode) has just been accessed for a write (ie. receive)
+    /// and the address requested matches our I2C address (the bus is talking to us).
+    ///
+    /// 0: No Address Match
+    /// 1: Address Match
+    is_slave_write_addr_match_interrupt}
+
+    bit_impl! {22, RW1C,
+    /// # Clear Slave Write Address Match Interrupt
+    /// If this bit is set, the current device (currently configured for slave mode) has just been accessed for a read (ie. write)
+    /// and the address requested matches our I2C address (the bus is talking to us).
+    ///
+    /// 0: No Address Match
+    /// 1: Address Match
+    clear_slave_read_addr_match_interrupt,
+    /// # Is Slave Write Address Match Interrupt
+    /// If this bit is set, the current device (currently configured for slave mode) has just been accessed for a read (ie. write)
+    /// and the address requested matches our I2C address (the bus is talking to us).
+    ///
+    /// 0: No Address Match
+    /// 1: Address Match
+    is_slave_read_addr_match_interrupt}
+
+    bit_impl! {16, RW1C,
+    /// # Clear MAMI Interrupt Flag
+    // FIXME: The MAX78000 User Guide Page 227 does not contain info about this register, we should find out what it does.
+    clear_mami_interrupt_flag,
+    /// # Is MAMI Interrupt Flag
+    // FIXME: The MAX78000 User Guide Page 227 does not contain info about this register, we should find out what it does.
+    is_mami_interrupt_flag}
+
+    bit_impl! {15, RW1C,
+    /// # Clear Transmit FIFO Locked
+    /// If this flag is set, the transmit FIFO is currently locked. If any more data is pushed to the transmit FIFO, it will be
+    /// ignored. The flag must be cleared for writes to be valid. While this register is set, the transmit FIFO is automaticlly flushed.
+    ///
+    /// 0: Transmit FIFO is not locked
+    /// 1: Transmit FIFO is currently locked
+    clear_transmit_fifo_locked,
+    /// # Is Transmit FIFO Locked
+    /// If this flag is set, the transmit FIFO is currently locked. If any more data is pushed to the transmit FIFO, it will be
+    /// ignored. The flag must be cleared for writes to be valid. While this register is set, the transmit FIFO is automaticlly flushed.
+    ///
+    /// 0: Transmit FIFO is not locked
+    /// 1: Transmit FIFO is currently locked
+    is_transmit_fifo_locked}
+
+    bit_impl! {14, RW1C,
+    /// # Clear Out Of Sequence STOP flag
+    /// If this flag is set, a STOP condition occured out of sequence.
+    ///
+    /// 0: Normal Operation
+    /// 1: Out of sequence STOP condition occurred
+    clear_out_of_sequence_stop_flag,
+    /// # Is Out Of Sequence STOP flag
+    /// If this flag is set, a STOP condition occured out of sequence.
+    ///
+    /// 0: Normal Operation
+    /// 1: Out of sequence STOP condition occurred
+    is_out_of_sequence_stop_flag}
+
+    bit_impl! {13, RW1C,
+    /// # Clear Out Of Sequence START Flag
+    /// If this flag is set, a START condition occured out of sequence.
+    ///
+    /// 0: Normal Operation
+    /// 1: Out of sequence START condition occurred
+    clear_out_of_sequence_start_flag,
+    /// # Is Out Of Sequence START Flag
+    /// If this flag is set, a START condition occured out of sequence.
+    ///
+    /// 0: Normal Operation
+    /// 1: Out of sequence START condition occurred
+    is_out_of_sequence_start_flag}
+
+    bit_impl! {12, RW1C,
+    /// # Clear Slave Mode Do-Not-Respond
+    /// If this flag is set the controller received an address match, but the transmit FIFO or receive FIFO are not ready.
+    ///
+    /// 0: Normal Operation
+    /// 1: FIFO not configured
+    clear_slave_mode_do_not_respond,
+    /// # Is Slave Mode Do-Not-Respond
+    /// If this flag is set the controller received an address match, but the transmit FIFO or receive FIFO are not ready.
+    ///
+    /// 0: Normal Operation
+    /// 1: FIFO not configured
+    is_slave_mode_do_not_respond_fla}
+
+    bit_impl! {11, RW1C,
+    /// # Clear Master Data NACK from External Slave Error
+    /// If this flag is set, the current device has received a NACK from a slave device (only if the current device is
+    /// configured to be in master mode).
+    ///
+    /// 0: Normal Operation
+    /// 1: Data NACK received from a Slave
+    clear_master_data_nack_from_slave_err,
+    /// # Is Master Data NACK from External Slave Error
+    /// If this flag is set, the current device has received a NACK from a slave device (only if the current device is
+    /// configured to be in master mode).
+    ///
+    /// 0: Normal Operation
+    /// 1: Data NACK received from a Slave
+    is_master_data_nack_from_slave_err_flag}
+
+    bit_impl! {10, RW1C,
+    /// # Clear Master Address NACK from Slave Error
+    /// If this flag is set, the current device has received a NACK from a slave device (only if the current device is
+    /// configured to be in master mode).
+    ///
+    /// 0: Normal Operation
+    /// 1: Address NACK received from a Slave
+    clear_master_address_nack_from_slave_err,
+    /// # Is Master Address NACK from Slave Error
+    /// If this flag is set, the current device has received a NACK from a slave device (only if the current device is
+    /// configured to be in master mode).
+    ///
+    /// 0: Normal Operation
+    /// 1: Address NACK received from a Slave
+    is_master_address_nack_from_slave_err_flag}
+
+    bit_impl! {9, RW1C,
+    /// # Clear Timeout Error Flag
+    /// If this flag is set, the current device has held SCL low for longer than the timeout value. This is valid either
+    /// in master or slave operation.
+    ///
+    /// 0: Normal Operation
+    /// 1: Timeout occurred
+    clear_timeout_error_flag,
+    /// # Is Timeout Error Flag
+    /// If this flag is set, the current device has held SCL low for longer than the timeout value. This is valid either
+    /// in master or slave operation.
+    ///
+    /// 0: Normal Operation
+    /// 1: Timeout occurred
+    is_timeout_error_flag_set}
+
+    bit_impl! {8, RW1C,
+    /// # Clear Master Mode Arbitration Lost
+    /// If this flag is set than the device has lost arbitration.
+    ///
+    /// 0: Normal Operation
+    /// 1: Condition occurred
+    clear_master_mode_arbitration_lost,
+    /// # Is Master Mode Arbitration Lost
+    /// If this flag is set than the device has lost arbitration.
+    ///
+    /// 0: Normal Operation
+    /// 1: Condition occurred
+    is_master_mode_arbitration_lost_flag}
+
+    bit_impl! {7, RW1C,
+    /// # Clear Master ACK from External Slave
+    /// If this flag is set, then this device (currently configured to be bus master) has just received an ACK from
+    /// a slave device.
+    ///
+    /// 0: Normal Operation
+    /// 1: Ack Recveived
+    clear_master_ack_from_external_slave,
+    /// # Is Master ACK from External Slave
+    /// If this flag is set, then this device (currently configured to be bus master) has just received an ACK from
+    /// a slave device.
+    ///
+    /// 0: Normal Operation
+    /// 1: Ack Recveived
+    is_master_ack_from_external_slave_flag}
+
+    bit_impl! {6, RW1C,
+    /// # Clear Slave Mode STOP Condition
+    /// When this flag is set, the hardware noticed a STOP condition.
+    ///
+    /// 0: Normal Operation
+    /// 1: STOP condition occurred
+    clear_slave_mode_stop_condition,
+    /// # Is Slave Mode STOP Condition
+    /// When this flag is set, the hardware noticed a STOP condition.
+    ///
+    /// 0: Normal Operation
+    /// 1: STOP condition occurred
+    is_slave_mode_stop_condition}
+
+    bit_impl! {5, RO,
+    /// # Is Transmit FIFO Threshold Level
+    /// (MAYBE ERROR IN DOCUMENTATION PAGE 228 MAX78000 USER GUIDE)
+    ///
+    /// When this flag is set, the transmit FIFO has less then or equal to the number of threshold bytes set. This
+    /// flag is automatically cleared when the transmit FIFO contains (MORE/LESS) bytes then the threshold level.
+    ///
+    /// 0: Transmit FIFO contains more bytes than the transmit threshold level.
+    /// 1: Transmit FIFO contains less bytes than the transmit threshold level.
+    is_transmit_fifo_threshold_level}
+
+    bit_impl! {4, RO,
+    /// # Is Receive FIFO Threshold Level
+    /// (MAYBE ERROR IN DOCUMENTATION PAGE 228 MAX78000 USER GUIDE)
+    ///
+    /// When this flag is set, the receive FIFO has less then or equal to the number of threshold bytes set. This
+    /// flag is automatically cleared when the receive FIFO contains (MORE/LESS) bytes then the threshold level.
+    ///
+    /// 0: Receive FIFO contains more bytes than the transmit threshold level.
+    /// 1: Receive FIFO contains less bytes than the transmit threshold level.
+    is_receive_fifo_threshold_leve}
+
+    bit_impl! {3, RW1C,
+    /// # Clear Slave mode Incoming Addresss Match Status
+    /// If the controller is configured for Slave mode, the hardware will set this flag is the incoming address
+    /// has been matched to ours. (Depends on this device being configured for Slave Mode)
+    ///
+    /// 0: Slave Mode Address Match has not occurred
+    /// 1: Slave Mode Address Match has occurred
+    clear_slave_incoming_address_match_status,
+    /// # Is Slave mode Incoming Addresss Match Status
+    /// If the controller is configured for Slave mode, the hardware will set this flag is the incoming address
+    /// has been matched to ours. (Depends on this device being configured for Slave Mode)
+    ///
+    /// 0: Slave Mode Address Match has not occurred
+    /// 1: Slave Mode Address Match has occurred
+    is_slave_incoming_address_match_status}
+
+    bit_impl! {2, RW1C,
+    /// # Clear Slave General Call Address Match Received
+    /// If the controller is configured for Slave mode, the hardware will set this flag if the general call
+    /// address match has occurred. (Depends on this device being configured for Slave Mode)
+    ///
+    /// 0: Normal Operation
+    /// 1: General Call Address Match occured
+    clear_slave_general_call_address_match_received,
+    /// # Is Slave General Call Address Match Received
+    /// If the controller is configured for Slave mode, the hardware will set this flag if the general call
+    /// address match has occurred. (Depends on this device being configured for Slave Mode)
+    ///
+    /// 0: Normal Operation
+    /// 1: General Call Address Match occured
+    is_slave_general_call_address_match_received}
+
+    bit_impl! {1, RW1C,
+    /// # Clear IRXM Interrupt Flag
+    /// Determains if the IRXM flag is set.
+    ///
+    /// 0: Normal Operation
+    /// 1: Interrupt Condition occurred
+    clear_irxm_interrupt_flag,
+    /// # Is IRXM Interrupt Flag
+    /// Determains if the IRXM flag is set.
+    ///
+    /// 0: Normal Operation
+    /// 1: Interrupt Condition occurred
+    is_irxm_interrupt_flag}
+
+    bit_impl! {0, RW1C,
+    /// # Clear Transfer Complete Flag
+    /// The controller sets this flag when the current transaction has completed. This flag is both valid for
+    /// slave mode transfer and for master mode transfer.
+    ///
+    /// 0: Transfer is not complete
+    /// 1: Transfer is complete
+    clear_transfer_complete_flag,
+    /// # Is Transfer Complete Flag
+    /// The controller sets this flag when the current transaction has completed. This flag is both valid for
+    /// slave mode transfer and for master mode transfer.
+    ///
+    /// 0: Transfer is not complete
+    /// 1: Transfer is complete
+    is_transfer_complete}
+}
 
 /// # I2C Interrupt Enable 0 Register
 /// The interrupt enable 0 register for controlling if interrupts are enabled for I2C, page 229-230 (MAX78000 User Guide)
