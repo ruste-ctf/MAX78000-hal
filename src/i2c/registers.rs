@@ -4,7 +4,7 @@ use crate::memory_map::mmio;
 use crate::{bit_impl, reg_impl};
 use core::ptr;
 
-/// # Realative Register Offsets
+/// # Relative Register Offsets
 /// These are the offsets for the I2C registers that the
 /// Maxim Integrated - spec shows. Found on page 224.
 mod rro {
@@ -72,7 +72,7 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     /// to true, the device must only be used with slave devices. No other
     /// masters should be attached to the bus. When using one master mode,
     /// it must also be true that no slave devices will hold SCL low for
-    /// any given reason (i.e clock streaching).
+    /// any given reason (i.e clock stretching).
     ///
     /// - 0: Disabled
     /// - 1: Enabled
@@ -116,7 +116,7 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     /// Tell the controller to either use software mode (i.e the SCL and SDA are managed
     /// by the software) or to use the on-board I2C controller hardware. This does not mean
     /// that the on-board I2C controller will do all communication by itself, more, it means
-    /// the onboard hardware will generate basic I2C based signals (provided you tell it to).
+    /// the on-board hardware will generate basic I2C based signals (provided you tell it to).
     ///
     /// - 0: The I2C controller will manage I2C in hardware.
     /// - 1: SDA and SCL will need to be "bit-banged" by software by setting them manually.
@@ -143,36 +143,36 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
 
     bit_impl! {7, RW,
     /// # Set SDA Hardware Pin Released
-    /// Set the state of the SDA hardware pin. (Activly pull the pin low, or leave it floating). This
+    /// Set the state of the SDA hardware pin. (Actively pull the pin low, or leave it floating). This
     /// mode is only active during `software_i2c_mode_enabled`, and other state is to be undefined.
     ///
-    /// - 0: Activly Pull SDA Low
+    /// - 0: Actively Pull SDA Low
     /// - 1: Leave SDA floating
     set_sda_hardware_pin_released,
     /// # Is SDA Hardware Pin Released
     /// Check if the SDA hardware pin is being pulled low, or is being released.
     ///
-    /// - 0: Activly Pulled low
+    /// - 0: Actively Pulled low
     /// - 1: SDA is currently floating
     is_sda_hardware_pin_released}
 
     bit_impl! {6, RW,
     /// # Set SCL Hardware Pin Released
-    /// Set the state of the SCL hardware pin. (Activly pull the pin low, or leave it floating). This
+    /// Set the state of the SCL hardware pin. (Actively pull the pin low, or leave it floating). This
     /// mode is only active during `software_i2c_mode_enabled`, and other state is to be undefined.
     ///
-    /// - 0: Activly Pull SCL Low
+    /// - 0: Actively Pull SCL Low
     /// - 1: Leave SCL floating
     set_scl_hardware_pin_released,
     /// # Is SCL Hardware Pin Released
     /// Check if the SCL hardware pin is being pulled low, or is being released.
     ///
-    /// - 0: Activly Pulled low
+    /// - 0: Actively Pulled low
     /// - 1: SCL is currently floating
     is_scl_hardware_pin_released}
 
     bit_impl! {4, RW,
-    /// # Set IRXM Responce `NACK`
+    /// # Set IRXM Response `NACK`
     /// If the IRXM is currently enabled, this will set if the IRXM response will be an `ACK`, or
     /// a `NACK`. This also requires that the IRXM be enabled.
     ///
@@ -183,7 +183,7 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     /// Check to see if the IRXM will respond with `ACK`, or `NACK`.
     ///
     /// - 0: The controller will respond with `ACK`
-    /// - 1: The controller will repsond with `NACK`
+    /// - 1: The controller will respond with `NACK`
     is_irxm_responding_with_nack}
 
     bit_impl! {3, RW,
@@ -203,17 +203,17 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     is_irxm_enabled}
 
     bit_impl! {2, RW,
-    /// # Set Acknowledge Gneral Call
-    /// Set the I2C controller to acknowledge the general call address, and repsond with ACK.
+    /// # Set Acknowledge General Call
+    /// Set the I2C controller to acknowledge the general call address, and respond with ACK.
     ///
-    /// - 0: Ignore Gneral Call Address
+    /// - 0: Ignore General Call Address
     /// - 1: Acknowledge General Call Address
     set_acknowledge_general_call,
     /// # Is Acknowledging General Call
     /// Checks is the controller is currently configured to acknowledge the general call
     /// addressing.
     ///
-    /// - 0: Ignore Gneral Call Address
+    /// - 0: Ignore General Call Address
     /// - 1: Acknowledge General Call Address
     is_acknowledging_general_call}
 
@@ -272,7 +272,7 @@ impl<const PORT_PTR: usize> StatusRegister<PORT_PTR> {
     is_transmit_fifo_full}
 
     bit_impl! {3, RO,
-    /// # Is Trasmit FIFO Empty
+    /// # Is Transmit FIFO Empty
     /// Checks to see if the transmit FIFO is currently empty.
     ///
     /// - 0: Not Empty
@@ -280,8 +280,8 @@ impl<const PORT_PTR: usize> StatusRegister<PORT_PTR> {
     is_transmit_fifo_empty}
 
     bit_impl! {2, RO,
-    /// # Is Recieve FIFO Full
-    /// Checks to see if the current recieve FIFO is full.
+    /// # Is Receive FIFO Full
+    /// Checks to see if the current receive FIFO is full.
     ///
     /// - 0: Not Full
     /// - 1: Full
@@ -359,14 +359,14 @@ impl<const PORT_PTR: usize> InterruptFlag0<PORT_PTR> {
     bit_impl! {15, RW1C,
     /// # Clear Transmit FIFO Locked
     /// If this flag is set, the transmit FIFO is currently locked. If any more data is pushed to the transmit FIFO, it will be
-    /// ignored. The flag must be cleared for writes to be valid. While this register is set, the transmit FIFO is automaticlly flushed.
+    /// ignored. The flag must be cleared for writes to be valid. While this register is set, the transmit FIFO is automatically flushed.
     ///
     /// - 0: Transmit FIFO is not locked
     /// - 1: Transmit FIFO is currently locked
     clear_transmit_fifo_locked,
     /// # Is Transmit FIFO Locked
     /// If this flag is set, the transmit FIFO is currently locked. If any more data is pushed to the transmit FIFO, it will be
-    /// ignored. The flag must be cleared for writes to be valid. While this register is set, the transmit FIFO is automaticlly flushed.
+    /// ignored. The flag must be cleared for writes to be valid. While this register is set, the transmit FIFO is automatically flushed.
     ///
     /// - 0: Transmit FIFO is not locked
     /// - 1: Transmit FIFO is currently locked
@@ -374,13 +374,13 @@ impl<const PORT_PTR: usize> InterruptFlag0<PORT_PTR> {
 
     bit_impl! {14, RW1C,
     /// # Clear Out Of Sequence STOP flag
-    /// If this flag is set, a STOP condition occured out of sequence.
+    /// If this flag is set, a STOP condition occurred out of sequence.
     ///
     /// - 0: Normal Operation
     /// - 1: Out of sequence STOP condition occurred
     clear_out_of_sequence_stop_flag,
     /// # Is Out Of Sequence STOP flag
-    /// If this flag is set, a STOP condition occured out of sequence.
+    /// If this flag is set, a STOP condition occurred out of sequence.
     ///
     /// - 0: Normal Operation
     /// - 1: Out of sequence STOP condition occurred
@@ -388,13 +388,13 @@ impl<const PORT_PTR: usize> InterruptFlag0<PORT_PTR> {
 
     bit_impl! {13, RW1C,
     /// # Clear Out Of Sequence START Flag
-    /// If this flag is set, a START condition occured out of sequence.
+    /// If this flag is set, a START condition occurred out of sequence.
     ///
     /// - 0: Normal Operation
     /// - 1: Out of sequence START condition occurred
     clear_out_of_sequence_start_flag,
     /// # Is Out Of Sequence START Flag
-    /// If this flag is set, a START condition occured out of sequence.
+    /// If this flag is set, a START condition occurred out of sequence.
     ///
     /// - 0: Normal Operation
     /// - 1: Out of sequence START condition occurred
@@ -482,14 +482,14 @@ impl<const PORT_PTR: usize> InterruptFlag0<PORT_PTR> {
     /// a slave device.
     ///
     /// - 0: Normal Operation
-    /// - 1: Ack Recveived
+    /// - 1: ACK Received
     clear_master_ack_from_external_slave,
     /// # Is Master ACK from External Slave
     /// If this flag is set, then this device (currently configured to be bus master) has just received an ACK from
     /// a slave device.
     ///
     /// - 0: Normal Operation
-    /// - 1: Ack Recveived
+    /// - 1: ACK Received
     is_master_ack_from_external_slave_flag}
 
     bit_impl! {6, RW1C,
@@ -529,14 +529,14 @@ impl<const PORT_PTR: usize> InterruptFlag0<PORT_PTR> {
     is_receive_fifo_threshold_leve}
 
     bit_impl! {3, RW1C,
-    /// # Clear Slave mode Incoming Addresss Match Status
+    /// # Clear Slave mode Incoming Address Match Status
     /// If the controller is configured for Slave mode, the hardware will set this flag is the incoming address
     /// has been matched to ours. (Depends on this device being configured for Slave Mode)
     ///
     /// - 0: Slave Mode Address Match has not occurred
     /// - 1: Slave Mode Address Match has occurred
     clear_slave_incoming_address_match_status,
-    /// # Is Slave mode Incoming Addresss Match Status
+    /// # Is Slave mode Incoming Address Match Status
     /// If the controller is configured for Slave mode, the hardware will set this flag is the incoming address
     /// has been matched to ours. (Depends on this device being configured for Slave Mode)
     ///
@@ -550,25 +550,25 @@ impl<const PORT_PTR: usize> InterruptFlag0<PORT_PTR> {
     /// address match has occurred. (Depends on this device being configured for Slave Mode)
     ///
     /// - 0: Normal Operation
-    /// - 1: General Call Address Match occured
+    /// - 1: General Call Address Match occurred
     clear_slave_general_call_address_match_received,
     /// # Is Slave General Call Address Match Received
     /// If the controller is configured for Slave mode, the hardware will set this flag if the general call
     /// address match has occurred. (Depends on this device being configured for Slave Mode)
     ///
     /// - 0: Normal Operation
-    /// - 1: General Call Address Match occured
+    /// - 1: General Call Address Match occurred
     is_slave_general_call_address_match_received}
 
     bit_impl! {1, RW1C,
     /// # Clear IRXM Interrupt Flag
-    /// Determains if the IRXM flag is set.
+    /// Determines if the IRXM flag is set.
     ///
     /// - 0: Normal Operation
     /// - 1: Interrupt Condition occurred
     clear_irxm_interrupt_flag,
     /// # Is IRXM Interrupt Flag
-    /// Determains if the IRXM flag is set.
+    /// Determines if the IRXM flag is set.
     ///
     /// - 0: Normal Operation
     /// - 1: Interrupt Condition occurred
@@ -654,13 +654,13 @@ impl<const PORT_PTR: usize> InterruptEnable0<PORT_PTR> {
     is_transmit_fifo_lock_out_interrupt_enabled}
 
     bit_impl! {14, RW,
-    /// # Set Out Of Sequence STOP condidtion Interrupt Enable
+    /// # Set Out Of Sequence STOP condition Interrupt Enable
     /// Set this interrupt to fire if the selected condition is met.
     ///
     /// - 0: Interrupts Disabled
     /// - 1: Interrupts Enabled
     set_out_of_sequence_stop_condition_interrupt_enable,
-    /// # Is Out Of Sequence STOP condidtion Interrupt Enable
+    /// # Is Out Of Sequence STOP condition Interrupt Enable
     /// Set this interrupt to fire if the selected condition is met.
     ///
     /// - 0: Interrupts Disabled
@@ -668,13 +668,13 @@ impl<const PORT_PTR: usize> InterruptEnable0<PORT_PTR> {
     is_out_of_sequence_stop_condition_interrupt_enabled}
 
     bit_impl! {13, RW,
-    /// # Set Out-Of-Sequence START condidtion Interrupt Enable
+    /// # Set Out-Of-Sequence START condition Interrupt Enable
     /// Set this interrupt to fire if the selected condition is met.
     ///
     /// - 0: Interrupts Disabled
     /// - 1: Interrupts Enabled
     set_out_of_sequence_start_condidtion_interrupt_enable,
-    /// # Is Out-Of-Sequence START condidtion Interrupt Enable
+    /// # Is Out-Of-Sequence START condition Interrupt Enable
     /// Set this interrupt to fire if the selected condition is met.
     ///
     /// - 0: Interrupts Disabled
@@ -794,13 +794,13 @@ impl<const PORT_PTR: usize> InterruptEnable0<PORT_PTR> {
     is_transmit_fifo_threshold_level_interrupt_enabled}
 
     bit_impl! {4, RW,
-    /// # Set Reveive FIFO Threshold Level Interrupt Enable
+    /// # Set Receive FIFO Threshold Level Interrupt Enable
     /// Set this interrupt to fire if the selected condition is met.
     ///
     /// - 0: Interrupts Disabled
     /// - 1: Interrupts Enabled
     set_receive_fifo_threshold_level_interrupt_enable,
-    /// # Is Reveive FIFO Threshold Level Interrupt Enable
+    /// # Is Receive FIFO Threshold Level Interrupt Enable
     /// Set this interrupt to fire if the selected condition is met.
     ///
     /// - 0: Interrupts Disabled
@@ -880,13 +880,13 @@ impl<const PORT_PTR: usize> InterruptFlag1<PORT_PTR> {
     /// The I2C hardware will set this flag if it detects a START condition on the bus.
     ///
     /// - 0: START condition has not been detected
-    /// - 1: START condidtion has been detected
+    /// - 1: START condition has been detected
     clear_start_condition_flag,
     /// # Is START Condition Flag
     /// The I2C hardware will set this flag if it detects a START condition on the bus.
     ///
     /// - 0: START condition has not been detected
-    /// - 1: START condidtion has been detected
+    /// - 1: START condition has been detected
     is_start_condidtion_flag}
 
     bit_impl! {1, RW1C,
@@ -896,7 +896,7 @@ impl<const PORT_PTR: usize> InterruptFlag1<PORT_PTR> {
     /// directly after the previous byte transfer is complete.
     ///
     /// - 0: Slave Mode FIFO has not had an underflow
-    /// - 1: Slave Mode FIFO has underflowed
+    /// - 1: Slave Mode FIFO has underflow
     clear_slave_mode_transmit_fifo_underflow_flag,
     /// # Is Slave Mode Transmit FIFO Underflow Flag
     /// While the device is configured for slave mode operation, the hardware will enable this flag
@@ -904,7 +904,7 @@ impl<const PORT_PTR: usize> InterruptFlag1<PORT_PTR> {
     /// directly after the previous byte transfer is complete.
     ///
     /// - 0: Slave Mode FIFO has not had an underflow
-    /// - 1: Slave Mode FIFO has underflowed
+    /// - 1: Slave Mode FIFO has underflow
     is_slave_mode_trasmit_fifo_underflow_flag}
 
     bit_impl! {0, RW1C,
@@ -978,7 +978,7 @@ pub struct ReceiveControl0<const PORT_PTR: usize> {}
 reg_impl!(RW, ReceiveControl0, rro::I2C_RXCTRL0_OFFSET);
 
 /// # I2C Receive Control 1 Register
-/// The receive control register is used to set receive FIFO byte count configuration, and read byte cound, page 232-233 (MAX78000 User Guide)
+/// The receive control register is used to set receive FIFO byte count configuration, and read byte count, page 232-233 (MAX78000 User Guide)
 pub struct ReceiveControl1<const PORT_PTR: usize> {}
 reg_impl!(RW, ReceiveControl1, rro::I2C_RXCTRL1_OFFSET);
 
@@ -988,7 +988,7 @@ pub struct TransmitControl0<const PORT_PTR: usize> {}
 reg_impl!(RW, TransmitControl0, rro::I2C_TXCTRL0_OFFSET);
 
 /// # I2C Transmit Control 1 Register
-/// The trasmit control register is used to control transmitting related I2C tasks, page 234-235 (MAX78000 User Guide)
+/// The transmit control register is used to control transmitting related I2C tasks, page 234-235 (MAX78000 User Guide)
 pub struct TransmitControl1<const PORT_PTR: usize> {}
 reg_impl!(RW, TransmitControl1, rro::I2C_TXCTRL1_OFFSET);
 
@@ -1022,7 +1022,7 @@ reg_impl!(RW, HighSpeedClockControl, rro::I2C_HSCLK_OFFSET);
 pub struct TimeoutControl<const PORT_PTR: usize> {}
 reg_impl!(RW, TimeoutControl, rro::I2C_TIMEOUT_OFFSET);
 
-/// # i2C DMA Enable Register
+/// # I2C DMA Enable Register
 /// The DMA control register used to control direct memory accessing for the I2C bus, page 237 (MAX78000 User Guide)
 pub struct DMAControl<const PORT_PTR: usize> {}
 reg_impl!(RW, DMAControl, rro::I2C_DMA_OFFSET);

@@ -11,8 +11,8 @@ pub enum ErrorKind {
     /// The device that was attempted to be reached is not valid
     /// or has not been found.
     NoDevice,
-    /// # Bad Param
-    /// The provided param was invalid, and operation could not continue.
+    /// # Bad Pram
+    /// The provided argument was invalid, and operation could not continue.
     BadParam,
     /// # Invalid
     /// The operation or value is invalid and will not be accepted.
@@ -27,7 +27,7 @@ pub enum ErrorKind {
     /// # Bad State
     /// Current state is not allowed in the current state.
     BadState,
-    /// # Uknown
+    /// # Unknown
     /// The error was unknown.
     Unknown,
     /// # Com Error

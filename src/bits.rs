@@ -1,5 +1,5 @@
 /// # Bit Manipulation
-/// A Simple trait to help with setting and unsetting bits in types.
+/// A Simple trait to help with setting and un-setting bits in types.
 pub trait BitManipulation {
     /// # Set Bit
     /// Set a single bit in the given type.

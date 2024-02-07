@@ -27,7 +27,7 @@ macro_rules! reg_impl {
         /// memory read.
         ///
         /// # Safety
-        /// It is ultimatily up to the caller to determain that any read
+        /// It is ultimately up to the caller to determine that any read
         /// from this register will be safe. Mostly, reading from registers
         /// do not change processor state, but it should still be warned
         /// that reading could be unsafe in some cases.
@@ -36,7 +36,7 @@ macro_rules! reg_impl {
         /// This read function will preform **1** volatile `read` from the given
         /// register. Each register's helper functions will call this very function
         /// to read, and thus each register's helper functions conform to the same
-        /// saftey and volatility of this function.
+        /// safety and volatility of this function.
         #[inline]
         pub fn read() -> u32 {
             unsafe { ptr::read_volatile(Self::get_ptr()) }
@@ -46,7 +46,7 @@ macro_rules! reg_impl {
         /// # Read Masked
         /// Get the value stored at this register, but mask the value with
         /// all RW1C register locations. This is important because when
-        /// writting back the value, we must not change the _'write 1 to
+        /// writing back the value, we must not change the _'write 1 to
         /// clear'_ based registers.
         #[inline]
         pub fn read_masked() -> u32 {
@@ -108,13 +108,13 @@ macro_rules! bit_impl {
     ($bit:literal, RO, $(#[$meta_get:meta])* $get:ident) => {
         $(#[$meta_get])*
         ///
-        /// # Saftey
+        /// # Safety
         /// It is ultimately up to the caller to ensure this function will
-        /// never cause any side effects. However, useally reading from
+        /// never cause any side effects. However, usually reading from
         /// registers does not modify any processor state (just looks at it).
         ///
-        /// # Volitle
-        /// This function only preforms **1** volitle *read* and immediatly copies
+        /// # Volatile
+        /// This function only preforms **1** volatile *read* and immediately copies
         /// the value to test the flag and return the result.
         ///
         #[inline]
@@ -125,7 +125,7 @@ macro_rules! bit_impl {
     ($bit:literal, WO, $(#[$meta_set:meta])* $set:ident) => {
         $(#[$meta_set])*
         ///
-        /// # Saftey
+        /// # Safety
         /// It is up to the caller to verify that this register write will not
         /// cause any side effects. There could be an event that setting this
         /// register could cause undefined behavior elsewhere in the program.
@@ -135,10 +135,10 @@ macro_rules! bit_impl {
         /// register's status. In these cases, it is up to the caller to properly
         /// set this register to a valid (and ONLY valid value).
         ///
-        /// # Volitle
-        /// This function only preforms **1** volitle *read* using `Self::read()`,
-        /// immediately modifies the flag and does **1** volitle *write* using
-        /// the interal provided function `Self::write(value)`.
+        /// # Volatile
+        /// This function only preforms **1** volatile *read* using `Self::read()`,
+        /// immediately modifies the flag and does **1** volatile *write* using
+        /// the internal provided function `Self::write(value)`.
         #[inline]
         pub unsafe fn $set(flag: bool) {
             let mut value = Self::read();
@@ -149,7 +149,7 @@ macro_rules! bit_impl {
     ($bit:literal, RESET, $(#[$meta_set:meta])* $set:ident) => {
         $(#[$meta_set])*
         ///
-        /// # Saftey
+        /// # Safety
         /// It is up to the caller to verify that this register write will not
         /// cause any side effects. There could be an event that setting this
         /// register could cause undefined behavior elsewhere in the program.
@@ -159,10 +159,10 @@ macro_rules! bit_impl {
         /// register's status. In these cases, it is up to the caller to properly
         /// set this register to a valid (and ONLY valid value).
         ///
-        /// # Volitle
-        /// This function only preforms **1** volitle *read* using `Self::read()`,
-        /// immediately modifies the flag and does **1** volitle *write* using
-        /// the interal provided function `Self::write(value)`.
+        /// # Volatile
+        /// This function only preforms **1** volatile *read* using `Self::read()`,
+        /// immediately modifies the flag and does **1** volatile *write* using
+        /// the internal provided function `Self::write(value)`.
         #[inline]
         pub unsafe fn $set() {
             let mut value = Self::read_masked();

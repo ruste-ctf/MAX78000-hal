@@ -10,13 +10,13 @@ pub mod mmio {
     /// The System Initialization Registers ptr.
     pub const SYSTEM_INTERFACE: usize = 0x4000_0400;
     /// # Function Control (FCR)
-    /// The Function Control Registers prt.
+    /// The Function Control Registers ptr.
     pub const FUNCTION_CONTROL: usize = 0x4000_0800;
     /// # Watchdog Timer 0 (WDT0)
-    /// The Watchgog Timer 0 ptr.
+    /// The Watchdog Timer 0 ptr.
     pub const WATCHDOG_TIMER0: usize = 0x4000_3000;
-    /// # Dynamic Voltage Scalling (DVS)
-    /// The Dynamic Voltage Scaling Controler ptr.
+    /// # Dynamic Voltage Scaling (DVS)
+    /// The Dynamic Voltage Scaling Controller ptr.
     pub const DYNAMIC_VOLTAGE_SCALING: usize = 0x4000_3C00;
     /// # SIMO (SIMO)
     /// The Single Input Multiple Output ptr.
@@ -37,25 +37,25 @@ pub mod mmio {
     /// The Power Sequencer ptr.
     pub const POWER_SEQUENCER: usize = 0x4000_6800;
     /// # Miscellaneous Control (MCR)
-    /// The Miscellaneous Control Register prt.
+    /// The Miscellaneous Control Register ptr.
     pub const MISCELLANEOUS_CONTROL: usize = 0x4000_6c00;
     /// # AES (AES)
-    /// The AES prt.
+    /// The AES ptr.
     pub const AES: usize = 0x4000_7400;
     /// # AES KEYS (AESKEY)
     /// The AES Key ptr.
     pub const AES_KEYS: usize = 0x4000_7800;
     /// # GPIO Port 0 (GPIO0)
-    /// The GPIO Port 0 prt.
+    /// The GPIO Port 0 ptr.
     pub const GPIO_PORT_0: usize = 0x4000_8000;
     /// # GPIO Port 1 (GPIO1)
-    /// The GPIO Port 1 prt.
+    /// The GPIO Port 1 ptr.
     pub const GPIO_PORT_1: usize = 0x4000_9000;
-    /// # Parallel Camara Interface (PCIF)
-    /// The Parallel Camara Interface ptr.
+    /// # Parallel Camera Interface (PCIF)
+    /// The Parallel Camera Interface ptr.
     pub const PARALLEL_CAMERA_INTERFACE: usize = 0x4000_e000;
     /// # CRC (CRC)
-    /// The CRC prt.
+    /// The CRC ptr.
     pub const CRC: usize = 0x4000_f000;
     /// # Timer 0 (TMR0)
     /// The Timer 0 ptr.
@@ -85,10 +85,10 @@ pub mod mmio {
     /// The Flash Controller 0 ptr.
     pub const FLASH_CONTROLLER_0: usize = 0x4002_9000;
     /// # ICC 0 CM4 (ICC0)
-    /// The Instruction Cache Controler 0 (CM4) ptr.
+    /// The Instruction Cache Controller 0 (CM4) ptr.
     pub const ICC_0_CM4: usize = 0x4002_a000;
     /// # ICC 1 RV32 (ICC1)
-    /// The Instruction Cache Controler 1 (RV32) ptr.
+    /// The Instruction Cache Controller 1 (RV32) ptr.
     pub const ICC_1_RV32: usize = 0x4002_a800;
     /// # ADC (ADC)
     /// The ADC ptr.
@@ -139,7 +139,7 @@ pub mod mmio {
     /// The Low Power UART 0 ptr.
     pub const LOW_POWER_UART_0: usize = 0x4008_1400;
     /// # Low Power Comparators (LPCMP)
-    /// The Low Power Comparator ptr.
+    /// The Low Power `Comparator` ptr.
     pub const LOW_POWER_COMPARATORS: usize = 0x4008_8000;
     /// # SPI 0 (SPI0)
     /// The SPI 0 ptr.
@@ -151,7 +151,7 @@ pub mod mmio {
     /// The CNNx16 Quadrant 0 ptr.
     pub const CNNX16_QUADRANT_0: usize = 0x5010_0000;
     /// # CNNx16 Quadrant 1 (CNNx16_1)
-    /// The CNNx16 Quadrant 11ptr.
+    /// The CNNx16 Quadrant 11 ptr.
     pub const CNNX16_QUADRANT_1: usize = 0x5050_0000;
     /// # CNNx16 Quadrant 2 (CNNx16_2)
     /// The CNNx16 Quadrant 2 ptr.
