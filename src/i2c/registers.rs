@@ -753,6 +753,84 @@ impl<const PORT_PTR: usize> InterruptFlag0<PORT_PTR> {
 pub struct InterruptEnable0<const PORT_PTR: usize> {}
 reg_impl!(RW, InterruptEnable0, rro::I2C_INTEN0_OFFSET);
 
+impl<const PORT_PTR: usize> InterruptEnable0<PORT_PTR> {
+    bit_impl! {23, RW,
+    set_slave_write_address_match_interrupt_enable,
+    is_slave_write_address_match_interrupt_enabled}
+
+    bit_impl! {22, RW,
+    set_slave_read_address_match_interrupt_enable,
+    is_slave_read_address_match_interrupt_enabled}
+
+    bit_impl! {16, RW,
+    set_mami_interrupt_enable,
+    is_mami_interrupts_enabled}
+
+    bit_impl! {15, RW,
+    set_transmit_fifo_lock_out_interrupt_enable,
+    is_transmit_fifo_lock_out_interrupt_enabled}
+
+    bit_impl! {14, RW,
+    set_out_of_sequence_stop_condition_interrupt_enable,
+    is_out_of_sequence_stop_condition_interrupt_enabled}
+
+    bit_impl! {13, RW,
+    set_out_of_sequence_start_condidtion_interrupt_enable,
+    is_out_of_sequence_start_condidtion_interrupt_enabled}
+
+    bit_impl! {12, RW,
+    set_slave_mode_do_not_respond_interrupt_enable,
+    is_slave_mode_do_not_respond_interrupt_enabled}
+
+    bit_impl! {11, RW,
+    set_master_received_data_nack_from_slave_interrupt_enable,
+    is_master_received_data_nack_from_slave_interrupt_enabled}
+
+    bit_impl! {10, RW,
+    set_master_received_address_nack_from_slave_interrupt_enable,
+    is_master_received_address_nack_from_slave_interrupt_enabled}
+
+    bit_impl! {9, RW,
+    set_timeout_error_interrupt_enabled,
+    is_timeout_error_interrupt_enabled}
+
+    bit_impl! {8, RW,
+    set_master_mode_arbitration_lost_interrupt_enable,
+    is_master_mode_arbitration_lost_interrupt_enabled}
+
+    bit_impl! {7, RW,
+    set_received_address_ack_from_slave_interrupt_enable,
+    is_received_address_ack_from_slave_interrupt_enabled}
+
+    bit_impl! {6, RW,
+    set_stop_condition_detected_interrupt_enable,
+    is_stop_condition_detected_interrupt_enabled}
+
+    bit_impl! {5, RW,
+    set_transmit_fifo_threshold_level_interrupt_enabled,
+    is_transmit_fifo_threshold_level_interrupt_enabled}
+
+    bit_impl! {4, RW,
+    set_receive_fifo_threshold_level_interrupt_enable,
+    is_receive_fifo_threshold_level_interrupt_enabled}
+
+    bit_impl! {3, RW,
+    set_slave_mode_incoming_address_match_interrupt_enable,
+    is_slave_mode_incoming_address_match_interrupt_enabled}
+
+    bit_impl! {2, RW,
+    set_slave_general_call_address_match_received_interrupt_enable,
+    is_slave_general_call_address_match_received_interrupt_enabled}
+
+    bit_impl! {1, RW,
+    set_irxm_interrupt_enable,
+    is_irxm_interrupt_enabled}
+
+    bit_impl! {0, RW,
+    set_transfer_complete_interrupt_enable,
+    is_transfer_complete_interrupt_enabled}
+}
+
 /// # I2C Interrupt Flag 1 Register
 /// The interrupt flag 1 register for controlling interrupt flags for I2C related tasks, page 230-231 (MAX78000 User Guide)
 pub struct InterruptFlag1<const PORT_PTR: usize> {}
