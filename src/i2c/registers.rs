@@ -222,8 +222,8 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     set_high_speed_mode,
     /// # Is High Speed Mode Enabled
     /// Check if I2C is set to high speed mode, or if its set to low speed mode.
-    /// 0: Disabled
-    /// 1: Enabled
+    /// - 0: Disabled
+    /// - 1: Enabled
     is_high_speed_mode_enabled}
 
     bit_impl! {13, RW,
@@ -234,15 +234,15 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     /// it must also be true that no slave devices will hold SCL low for
     /// any given reason (i.e clock streaching).
     ///
-    /// 0: Disabled
-    /// 1: Enabled
+    /// - 0: Disabled
+    /// - 1: Enabled
     set_one_master_mode,
     /// # Is One Master Mode Enabled
     /// Check to see if the device is in single master mode. When in single
     /// device master mode, there must be only one master on the bus.
     ///
-    /// 0: Disabled
-    /// 1: Enabled
+    /// - 0: Disabled
+    /// - 1: Enabled
     is_one_master_mode_enabled}
 
     bit_impl! {12, RW,
@@ -251,16 +251,16 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     /// also be true that `one_master_mode` must also be set since slave devices
     /// will be pulling SCL low.
     ///
-    /// 0: Enabled
-    /// 1: Disabled
+    /// - 0: Enabled
+    /// - 1: Disabled
     set_disable_slave_clock_stretching,
     /// # Is Slave Clock Stretching Disabled
     /// Check to see if the device is currently disabling slave devices from using
     /// clock stretching on the bus. If this mode is active, it must also be true
     /// that `one_master_mode` must also be active.
     ///
-    /// 0: Enabled
-    /// 1: Disabled
+    /// - 0: Enabled
+    /// - 1: Disabled
     is_slave_clock_stretching_disabled}
 
     bit_impl! {11, RO,
@@ -278,8 +278,8 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     /// that the on-board I2C controller will do all communication by itself, more, it means
     /// the onboard hardware will generate basic I2C based signals (provided you tell it to).
     ///
-    /// 0: The I2C controller will manage I2C in hardware.
-    /// 1: SDA and SCL will need to be "bit-banged" by software by setting them manually.
+    /// - 0: The I2C controller will manage I2C in hardware.
+    /// - 1: SDA and SCL will need to be "bit-banged" by software by setting them manually.
     set_software_i2c_mode,
     /// # Is Software I2C Mode Enabled
     /// Checks if the hardware I2C controller will be managing the SCL and SDA pins.
@@ -289,16 +289,16 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     /// # Get SDA Pin
     /// Get the `SDA` pin status, whether it be high or low.
     ///
-    /// 0: The `SDA` pin is logic low
-    /// 1: The `SDA` pin is logic high
+    /// - 0: The `SDA` pin is logic low
+    /// - 1: The `SDA` pin is logic high
     get_sda_pin}
 
     bit_impl! {8, RO,
     /// # Get SCL Pin
     /// Get the `SCL` pin status, whether it be high or low.
     ///
-    /// 0: The `SCL` pin is logic low
-    /// 1: The `SCL` pin is logic high
+    /// - 0: The `SCL` pin is logic low
+    /// - 1: The `SCL` pin is logic high
     get_scl_pin}
 
     bit_impl! {7, RW,
@@ -306,14 +306,14 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     /// Set the state of the SDA hardware pin. (Activly pull the pin low, or leave it floating). This
     /// mode is only active during `software_i2c_mode_enabled`, and other state is to be undefined.
     ///
-    /// 0: Activly Pull SDA Low
-    /// 1: Leave SDA floating
+    /// - 0: Activly Pull SDA Low
+    /// - 1: Leave SDA floating
     set_sda_hardware_pin_released,
     /// # Is SDA Hardware Pin Released
     /// Check if the SDA hardware pin is being pulled low, or is being released.
     ///
-    /// 0: Activly Pulled low
-    /// 1: SDA is currently floating
+    /// - 0: Activly Pulled low
+    /// - 1: SDA is currently floating
     is_sda_hardware_pin_released}
 
     bit_impl! {6, RW,
@@ -321,14 +321,14 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     /// Set the state of the SCL hardware pin. (Activly pull the pin low, or leave it floating). This
     /// mode is only active during `software_i2c_mode_enabled`, and other state is to be undefined.
     ///
-    /// 0: Activly Pull SCL Low
-    /// 1: Leave SCL floating
+    /// - 0: Activly Pull SCL Low
+    /// - 1: Leave SCL floating
     set_scl_hardware_pin_released,
     /// # Is SCL Hardware Pin Released
     /// Check if the SCL hardware pin is being pulled low, or is being released.
     ///
-    /// 0: Activly Pulled low
-    /// 1: SCL is currently floating
+    /// - 0: Activly Pulled low
+    /// - 1: SCL is currently floating
     is_scl_hardware_pin_released}
 
     bit_impl! {4, RW,
@@ -336,14 +336,14 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     /// If the IRXM is currently enabled, this will set if the IRXM response will be an `ACK`, or
     /// a `NACK`. This also requires that the IRXM be enabled.
     ///
-    /// 0: Respond to IRXM with `ACK`
-    /// 1: Respond to IRXM with `NACK`
+    /// - 0: Respond to IRXM with `ACK`
+    /// - 1: Respond to IRXM with `NACK`
     set_irxm_responce_nack,
     /// # Is IRXM Responding with `NACK`
     /// Check to see if the IRXM will respond with `ACK`, or `NACK`.
     ///
-    /// 0: The controller will respond with `ACK`
-    /// 1: The controller will repsond with `NACK`
+    /// - 0: The controller will respond with `ACK`
+    /// - 1: The controller will repsond with `NACK`
     is_irxm_responding_with_nack}
 
     bit_impl! {3, RW,
@@ -352,29 +352,29 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     /// interrupts for each byte of data received. Configuration of if the hardware will send
     /// an `ACK` to IRXM is with `set_irxm_response_nack`.
     ///
-    /// 0: Disabled
-    /// 1: Enabled
+    /// - 0: Disabled
+    /// - 1: Enabled
     set_irxm_enable,
     /// # Is IRXM Enabled
     /// Check if IRXM (interactive receive mode) will send interrupts for each byte of data received.
     ///
-    /// 0: Disabled
-    /// 1: Enabled
+    /// - 0: Disabled
+    /// - 1: Enabled
     is_irxm_enabled}
 
     bit_impl! {2, RW,
     /// # Set Acknowledge Gneral Call
     /// Set the I2C controller to acknowledge the general call address, and repsond with ACK.
     ///
-    /// 0: Ignore Gneral Call Address
-    /// 1: Acknowledge General Call Address
+    /// - 0: Ignore Gneral Call Address
+    /// - 1: Acknowledge General Call Address
     set_acknowledge_general_call,
     /// # Is Acknowledging General Call
     /// Checks is the controller is currently configured to acknowledge the general call
     /// addressing.
     ///
-    /// 0: Ignore Gneral Call Address
-    /// 1: Acknowledge General Call Address
+    /// - 0: Ignore Gneral Call Address
+    /// - 1: Acknowledge General Call Address
     is_acknowledging_general_call}
 
     bit_impl! {1, RW,
@@ -383,28 +383,28 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     /// are available during master mode. It is important to know which mode the
     /// controller is in to use other functions.
     ///
-    /// 0: Slave Mode Enabled
-    /// 1: Master Mode Enabled
+    /// - 0: Slave Mode Enabled
+    /// - 1: Master Mode Enabled
     set_master_mode_enable,
     /// # Is Master Mode Enabled
     /// Checks if the controller is currently configured to use I2C bus master mode.
     ///
-    /// 0: Slave Mode Enabled
-    /// 1: Master Mode Enabled
+    /// - 0: Slave Mode Enabled
+    /// - 1: Master Mode Enabled
     is_master_mode_enabled}
 
     bit_impl! {0, RW,
     /// # Set I2C Peripheral Enable
     /// Enables the I2C bus. Allows communication to be sent over to I2C peripherals.
     ///
-    /// 0: Disabled
-    /// 1: Enabled
+    /// - 0: Disabled
+    /// - 1: Enabled
     set_i2c_peripheral_enable,
     /// # Is I2C Peripheral Enabled
     /// Checks if the I2C peripheral bus is currently enabled.
     ///
-    /// 0: Disabled
-    /// 1: Enabled
+    /// - 0: Disabled
+    /// - 1: Enabled
     is_i2c_peripheral_enabled}
 }
 
@@ -419,40 +419,40 @@ impl<const PORT_PTR: usize> StatusRegister<PORT_PTR> {
     /// When the controller is in master mode, and is currently processing a transaction,
     /// then this flag will be set for the duration that `START` until `STOP`.
     ///
-    /// 0: Device is currently not driving the SCL clock
-    /// 1: Device is currently driving the SCL clock
+    /// - 0: Device is currently not driving the SCL clock
+    /// - 1: Device is currently driving the SCL clock
     is_master_busy}
 
     bit_impl! {4, RO,
     /// # Is Transmit FIFO Full
     /// Checks to see if the transmit FIFO is currently full.
     ///
-    /// 0: Not Full
-    /// 1: Full
+    /// - 0: Not Full
+    /// - 1: Full
     is_transmit_fifo_full}
 
     bit_impl! {3, RO,
     /// # Is Trasmit FIFO Empty
     /// Checks to see if the transmit FIFO is currently empty.
     ///
-    /// 0: Not Empty
-    /// 1: Empty
+    /// - 0: Not Empty
+    /// - 1: Empty
     is_transmit_fifo_empty}
 
     bit_impl! {2, RO,
     /// # Is Recieve FIFO Full
     /// Checks to see if the current recieve FIFO is full.
     ///
-    /// 0: Not Full
-    /// 1: Full
+    /// - 0: Not Full
+    /// - 1: Full
     is_receive_fifo_full}
 
     bit_impl! {1, RO,
     /// # Is Receive FIFO Empty
     /// Checks to see if the current FIFO is currently empty.
     ///
-    /// 0: Not Empty
-    /// 1: Empty
+    /// - 0: Not Empty
+    /// - 1: Empty
     is_receive_fifo_empty}
 
     bit_impl! {0, RO,
@@ -460,14 +460,16 @@ impl<const PORT_PTR: usize> StatusRegister<PORT_PTR> {
     /// Checks to see (either in master or slave mode) if the I2C controller is currently
     /// processing a transaction.
     ///
-    /// 0: I2C bus is idle
-    /// 1: I2C bus is busy
+    /// - 0: I2C bus is idle
+    /// - 1: I2C bus is busy
     is_transaction_active}
 }
 
 /// # I2C Interrupt Flag 0 Register
 /// The interrupt flag 0 register for controlling interrupt flags for I2C related tasks, page 226-229 (MAX78000 User Guide)
 pub struct InterruptFlag0<const PORT_PTR: usize> {}
+// FIXME: the reg_impl! might need to be changed because of how interrupt flag clearing works. We should write zeros instead
+//        of the flag we read from R/W1C based flags. VERY IMPORTANT FIX!!
 reg_impl!(RW, InterruptFlag0, rro::I2C_INTFL0_OFFSET);
 
 impl<const PORT_PTR: usize> InterruptFlag0<PORT_PTR> {
@@ -476,15 +478,15 @@ impl<const PORT_PTR: usize> InterruptFlag0<PORT_PTR> {
     /// If this bit is set, the current device (currently configured for slave mode) has just been accessed for a write (ie. receive)
     /// and the address requested matches our I2C address (the bus is talking to us).
     ///
-    /// 0: No Address Match
-    /// 1: Address Match
+    /// - 0: No Address Match
+    /// - 1: Address Match
     clear_slave_write_addr_match_interrupt,
     /// # Is Slave Write Address Match Interrupt
     /// If this bit is set, the current device (currently configured for slave mode) has just been accessed for a write (ie. receive)
     /// and the address requested matches our I2C address (the bus is talking to us).
     ///
-    /// 0: No Address Match
-    /// 1: Address Match
+    /// - 0: No Address Match
+    /// - 1: Address Match
     is_slave_write_addr_match_interrupt}
 
     bit_impl! {22, RW1C,
@@ -492,15 +494,15 @@ impl<const PORT_PTR: usize> InterruptFlag0<PORT_PTR> {
     /// If this bit is set, the current device (currently configured for slave mode) has just been accessed for a read (ie. write)
     /// and the address requested matches our I2C address (the bus is talking to us).
     ///
-    /// 0: No Address Match
-    /// 1: Address Match
+    /// - 0: No Address Match
+    /// - 1: Address Match
     clear_slave_read_addr_match_interrupt,
     /// # Is Slave Write Address Match Interrupt
     /// If this bit is set, the current device (currently configured for slave mode) has just been accessed for a read (ie. write)
     /// and the address requested matches our I2C address (the bus is talking to us).
     ///
-    /// 0: No Address Match
-    /// 1: Address Match
+    /// - 0: No Address Match
+    /// - 1: Address Match
     is_slave_read_addr_match_interrupt}
 
     bit_impl! {16, RW1C,
@@ -516,57 +518,57 @@ impl<const PORT_PTR: usize> InterruptFlag0<PORT_PTR> {
     /// If this flag is set, the transmit FIFO is currently locked. If any more data is pushed to the transmit FIFO, it will be
     /// ignored. The flag must be cleared for writes to be valid. While this register is set, the transmit FIFO is automaticlly flushed.
     ///
-    /// 0: Transmit FIFO is not locked
-    /// 1: Transmit FIFO is currently locked
+    /// - 0: Transmit FIFO is not locked
+    /// - 1: Transmit FIFO is currently locked
     clear_transmit_fifo_locked,
     /// # Is Transmit FIFO Locked
     /// If this flag is set, the transmit FIFO is currently locked. If any more data is pushed to the transmit FIFO, it will be
     /// ignored. The flag must be cleared for writes to be valid. While this register is set, the transmit FIFO is automaticlly flushed.
     ///
-    /// 0: Transmit FIFO is not locked
-    /// 1: Transmit FIFO is currently locked
+    /// - 0: Transmit FIFO is not locked
+    /// - 1: Transmit FIFO is currently locked
     is_transmit_fifo_locked}
 
     bit_impl! {14, RW1C,
     /// # Clear Out Of Sequence STOP flag
     /// If this flag is set, a STOP condition occured out of sequence.
     ///
-    /// 0: Normal Operation
-    /// 1: Out of sequence STOP condition occurred
+    /// - 0: Normal Operation
+    /// - 1: Out of sequence STOP condition occurred
     clear_out_of_sequence_stop_flag,
     /// # Is Out Of Sequence STOP flag
     /// If this flag is set, a STOP condition occured out of sequence.
     ///
-    /// 0: Normal Operation
-    /// 1: Out of sequence STOP condition occurred
+    /// - 0: Normal Operation
+    /// - 1: Out of sequence STOP condition occurred
     is_out_of_sequence_stop_flag}
 
     bit_impl! {13, RW1C,
     /// # Clear Out Of Sequence START Flag
     /// If this flag is set, a START condition occured out of sequence.
     ///
-    /// 0: Normal Operation
-    /// 1: Out of sequence START condition occurred
+    /// - 0: Normal Operation
+    /// - 1: Out of sequence START condition occurred
     clear_out_of_sequence_start_flag,
     /// # Is Out Of Sequence START Flag
     /// If this flag is set, a START condition occured out of sequence.
     ///
-    /// 0: Normal Operation
-    /// 1: Out of sequence START condition occurred
+    /// - 0: Normal Operation
+    /// - 1: Out of sequence START condition occurred
     is_out_of_sequence_start_flag}
 
     bit_impl! {12, RW1C,
     /// # Clear Slave Mode Do-Not-Respond
     /// If this flag is set the controller received an address match, but the transmit FIFO or receive FIFO are not ready.
     ///
-    /// 0: Normal Operation
-    /// 1: FIFO not configured
+    /// - 0: Normal Operation
+    /// - 1: FIFO not configured
     clear_slave_mode_do_not_respond,
     /// # Is Slave Mode Do-Not-Respond
     /// If this flag is set the controller received an address match, but the transmit FIFO or receive FIFO are not ready.
     ///
-    /// 0: Normal Operation
-    /// 1: FIFO not configured
+    /// - 0: Normal Operation
+    /// - 1: FIFO not configured
     is_slave_mode_do_not_respond_fla}
 
     bit_impl! {11, RW1C,
@@ -574,15 +576,15 @@ impl<const PORT_PTR: usize> InterruptFlag0<PORT_PTR> {
     /// If this flag is set, the current device has received a NACK from a slave device (only if the current device is
     /// configured to be in master mode).
     ///
-    /// 0: Normal Operation
-    /// 1: Data NACK received from a Slave
+    /// - 0: Normal Operation
+    /// - 1: Data NACK received from a Slave
     clear_master_data_nack_from_slave_err,
     /// # Is Master Data NACK from External Slave Error
     /// If this flag is set, the current device has received a NACK from a slave device (only if the current device is
     /// configured to be in master mode).
     ///
-    /// 0: Normal Operation
-    /// 1: Data NACK received from a Slave
+    /// - 0: Normal Operation
+    /// - 1: Data NACK received from a Slave
     is_master_data_nack_from_slave_err_flag}
 
     bit_impl! {10, RW1C,
@@ -590,15 +592,15 @@ impl<const PORT_PTR: usize> InterruptFlag0<PORT_PTR> {
     /// If this flag is set, the current device has received a NACK from a slave device (only if the current device is
     /// configured to be in master mode).
     ///
-    /// 0: Normal Operation
-    /// 1: Address NACK received from a Slave
+    /// - 0: Normal Operation
+    /// - 1: Address NACK received from a Slave
     clear_master_address_nack_from_slave_err,
     /// # Is Master Address NACK from Slave Error
     /// If this flag is set, the current device has received a NACK from a slave device (only if the current device is
     /// configured to be in master mode).
     ///
-    /// 0: Normal Operation
-    /// 1: Address NACK received from a Slave
+    /// - 0: Normal Operation
+    /// - 1: Address NACK received from a Slave
     is_master_address_nack_from_slave_err_flag}
 
     bit_impl! {9, RW1C,
@@ -606,29 +608,29 @@ impl<const PORT_PTR: usize> InterruptFlag0<PORT_PTR> {
     /// If this flag is set, the current device has held SCL low for longer than the timeout value. This is valid either
     /// in master or slave operation.
     ///
-    /// 0: Normal Operation
-    /// 1: Timeout occurred
+    /// - 0: Normal Operation
+    /// - 1: Timeout occurred
     clear_timeout_error_flag,
     /// # Is Timeout Error Flag
     /// If this flag is set, the current device has held SCL low for longer than the timeout value. This is valid either
     /// in master or slave operation.
     ///
-    /// 0: Normal Operation
-    /// 1: Timeout occurred
+    /// - 0: Normal Operation
+    /// - 1: Timeout occurred
     is_timeout_error_flag_set}
 
     bit_impl! {8, RW1C,
     /// # Clear Master Mode Arbitration Lost
     /// If this flag is set than the device has lost arbitration.
     ///
-    /// 0: Normal Operation
-    /// 1: Condition occurred
+    /// - 0: Normal Operation
+    /// - 1: Condition occurred
     clear_master_mode_arbitration_lost,
     /// # Is Master Mode Arbitration Lost
     /// If this flag is set than the device has lost arbitration.
     ///
-    /// 0: Normal Operation
-    /// 1: Condition occurred
+    /// - 0: Normal Operation
+    /// - 1: Condition occurred
     is_master_mode_arbitration_lost_flag}
 
     bit_impl! {7, RW1C,
@@ -636,29 +638,29 @@ impl<const PORT_PTR: usize> InterruptFlag0<PORT_PTR> {
     /// If this flag is set, then this device (currently configured to be bus master) has just received an ACK from
     /// a slave device.
     ///
-    /// 0: Normal Operation
-    /// 1: Ack Recveived
+    /// - 0: Normal Operation
+    /// - 1: Ack Recveived
     clear_master_ack_from_external_slave,
     /// # Is Master ACK from External Slave
     /// If this flag is set, then this device (currently configured to be bus master) has just received an ACK from
     /// a slave device.
     ///
-    /// 0: Normal Operation
-    /// 1: Ack Recveived
+    /// - 0: Normal Operation
+    /// - 1: Ack Recveived
     is_master_ack_from_external_slave_flag}
 
     bit_impl! {6, RW1C,
     /// # Clear Slave Mode STOP Condition
     /// When this flag is set, the hardware noticed a STOP condition.
     ///
-    /// 0: Normal Operation
-    /// 1: STOP condition occurred
+    /// - 0: Normal Operation
+    /// - 1: STOP condition occurred
     clear_slave_mode_stop_condition,
     /// # Is Slave Mode STOP Condition
     /// When this flag is set, the hardware noticed a STOP condition.
     ///
-    /// 0: Normal Operation
-    /// 1: STOP condition occurred
+    /// - 0: Normal Operation
+    /// - 1: STOP condition occurred
     is_slave_mode_stop_condition}
 
     bit_impl! {5, RO,
@@ -668,8 +670,8 @@ impl<const PORT_PTR: usize> InterruptFlag0<PORT_PTR> {
     /// When this flag is set, the transmit FIFO has less then or equal to the number of threshold bytes set. This
     /// flag is automatically cleared when the transmit FIFO contains (MORE/LESS) bytes then the threshold level.
     ///
-    /// 0: Transmit FIFO contains more bytes than the transmit threshold level.
-    /// 1: Transmit FIFO contains less bytes than the transmit threshold level.
+    /// - 0: Transmit FIFO contains more bytes than the transmit threshold level.
+    /// - 1: Transmit FIFO contains less bytes than the transmit threshold level.
     is_transmit_fifo_threshold_level}
 
     bit_impl! {4, RO,
@@ -679,8 +681,8 @@ impl<const PORT_PTR: usize> InterruptFlag0<PORT_PTR> {
     /// When this flag is set, the receive FIFO has less then or equal to the number of threshold bytes set. This
     /// flag is automatically cleared when the receive FIFO contains (MORE/LESS) bytes then the threshold level.
     ///
-    /// 0: Receive FIFO contains more bytes than the transmit threshold level.
-    /// 1: Receive FIFO contains less bytes than the transmit threshold level.
+    /// - 0: Receive FIFO contains more bytes than the transmit threshold level.
+    /// - 1: Receive FIFO contains less bytes than the transmit threshold level.
     is_receive_fifo_threshold_leve}
 
     bit_impl! {3, RW1C,
@@ -688,15 +690,15 @@ impl<const PORT_PTR: usize> InterruptFlag0<PORT_PTR> {
     /// If the controller is configured for Slave mode, the hardware will set this flag is the incoming address
     /// has been matched to ours. (Depends on this device being configured for Slave Mode)
     ///
-    /// 0: Slave Mode Address Match has not occurred
-    /// 1: Slave Mode Address Match has occurred
+    /// - 0: Slave Mode Address Match has not occurred
+    /// - 1: Slave Mode Address Match has occurred
     clear_slave_incoming_address_match_status,
     /// # Is Slave mode Incoming Addresss Match Status
     /// If the controller is configured for Slave mode, the hardware will set this flag is the incoming address
     /// has been matched to ours. (Depends on this device being configured for Slave Mode)
     ///
-    /// 0: Slave Mode Address Match has not occurred
-    /// 1: Slave Mode Address Match has occurred
+    /// - 0: Slave Mode Address Match has not occurred
+    /// - 1: Slave Mode Address Match has occurred
     is_slave_incoming_address_match_status}
 
     bit_impl! {2, RW1C,
@@ -704,29 +706,29 @@ impl<const PORT_PTR: usize> InterruptFlag0<PORT_PTR> {
     /// If the controller is configured for Slave mode, the hardware will set this flag if the general call
     /// address match has occurred. (Depends on this device being configured for Slave Mode)
     ///
-    /// 0: Normal Operation
-    /// 1: General Call Address Match occured
+    /// - 0: Normal Operation
+    /// - 1: General Call Address Match occured
     clear_slave_general_call_address_match_received,
     /// # Is Slave General Call Address Match Received
     /// If the controller is configured for Slave mode, the hardware will set this flag if the general call
     /// address match has occurred. (Depends on this device being configured for Slave Mode)
     ///
-    /// 0: Normal Operation
-    /// 1: General Call Address Match occured
+    /// - 0: Normal Operation
+    /// - 1: General Call Address Match occured
     is_slave_general_call_address_match_received}
 
     bit_impl! {1, RW1C,
     /// # Clear IRXM Interrupt Flag
     /// Determains if the IRXM flag is set.
     ///
-    /// 0: Normal Operation
-    /// 1: Interrupt Condition occurred
+    /// - 0: Normal Operation
+    /// - 1: Interrupt Condition occurred
     clear_irxm_interrupt_flag,
     /// # Is IRXM Interrupt Flag
     /// Determains if the IRXM flag is set.
     ///
-    /// 0: Normal Operation
-    /// 1: Interrupt Condition occurred
+    /// - 0: Normal Operation
+    /// - 1: Interrupt Condition occurred
     is_irxm_interrupt_flag}
 
     bit_impl! {0, RW1C,
@@ -734,15 +736,15 @@ impl<const PORT_PTR: usize> InterruptFlag0<PORT_PTR> {
     /// The controller sets this flag when the current transaction has completed. This flag is both valid for
     /// slave mode transfer and for master mode transfer.
     ///
-    /// 0: Transfer is not complete
-    /// 1: Transfer is complete
+    /// - 0: Transfer is not complete
+    /// - 1: Transfer is complete
     clear_transfer_complete_flag,
     /// # Is Transfer Complete Flag
     /// The controller sets this flag when the current transaction has completed. This flag is both valid for
     /// slave mode transfer and for master mode transfer.
     ///
-    /// 0: Transfer is not complete
-    /// 1: Transfer is complete
+    /// - 0: Transfer is not complete
+    /// - 1: Transfer is complete
     is_transfer_complete}
 }
 
