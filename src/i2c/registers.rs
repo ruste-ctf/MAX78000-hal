@@ -1028,15 +1028,51 @@ reg_impl!(RW, InterruptFlag1, rro::I2C_INTFL1_OFFSET);
 
 impl<const PORT_PTR: usize> InterruptFlag1<PORT_PTR> {
     bit_impl! {2, RW1C,
+    /// # Clear START Condition Flag
+    /// The I2C hardware will set this flag if it detects a START condition on the bus.
+    ///
+    /// - 0: START condition has not been detected
+    /// - 1: START condidtion has been detected
     clear_start_condition_flag,
+    /// # Is START Condition Flag
+    /// The I2C hardware will set this flag if it detects a START condition on the bus.
+    ///
+    /// - 0: START condition has not been detected
+    /// - 1: START condidtion has been detected
     is_start_condidtion_flag}
 
     bit_impl! {1, RW1C,
+    /// # Clear Slave Mode Transmit FIFO Underflow Flag
+    /// While the device is configured for slave mode operation, the hardware will enable this flag
+    /// if the transmit FIFO is currently empty and the bus master requests more data by sending an ACK
+    /// directly after the previous byte transfer is complete.
+    ///
+    /// - 0: Slave Mode FIFO has not had an underflow
+    /// - 1: Slave Mode FIFO has underflowed
     clear_slave_mode_transmit_fifo_underflow_flag,
+    /// # Is Slave Mode Transmit FIFO Underflow Flag
+    /// While the device is configured for slave mode operation, the hardware will enable this flag
+    /// if the transmit FIFO is currently empty and the bus master requests more data by sending an ACK
+    /// directly after the previous byte transfer is complete.
+    ///
+    /// - 0: Slave Mode FIFO has not had an underflow
+    /// - 1: Slave Mode FIFO has underflowed
     is_slave_mode_trasmit_fifo_underflow_flag}
 
     bit_impl! {0, RW1C,
+    /// # Clear Slave Mode Receive FIFO Overflow Flag
+    /// While the device is configured for slave mode operation, the hardware will enable this flag
+    /// if the receive FIFO is currently full and the bus master sent us data. (DATA LOSS)
+    ///
+    /// - 0: Slave Mode FIFO has not overflowed
+    /// - 1: Slave Mode FIFO has overflowed (DATA HAS BEEN LOST)
     clear_slave_mode_receive_fifo_overflow_flag,
+    /// # Is Slave Mode Receive FIFO Overflow Flag
+    /// While the device is configured for slave mode operation, the hardware will enable this flag
+    /// if the receive FIFO is currently full and the bus master sent us data. (DATA LOSS)
+    ///
+    /// - 0: Slave Mode FIFO has not overflowed
+    /// - 1: Slave Mode FIFO has overflowed (DATA HAS BEEN LOST)
     is_slave_mode_receive_fifo_overflow_flag}
 }
 
