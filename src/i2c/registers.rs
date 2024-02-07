@@ -755,79 +755,269 @@ reg_impl!(RW, InterruptEnable0, rro::I2C_INTEN0_OFFSET);
 
 impl<const PORT_PTR: usize> InterruptEnable0<PORT_PTR> {
     bit_impl! {23, RW,
+    /// # Set Slave Write Address Match Interrupt Enable
+    /// Set this interrupt to fire if the selected condition is met.
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
     set_slave_write_address_match_interrupt_enable,
+    /// # Is Slave Write Address Match Interrupt Enable
+    /// Set this interrupt to fire if the selected condition is met.
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
     is_slave_write_address_match_interrupt_enabled}
 
     bit_impl! {22, RW,
+    /// # Set Slave Read Address Match Interrupt Enable
+    /// Set this interrupt to fire if the selected condition is met.
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
     set_slave_read_address_match_interrupt_enable,
+    /// # Is Slave Read Address Match Interrupt Enable
+    /// Set this interrupt to fire if the selected condition is met.
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
     is_slave_read_address_match_interrupt_enabled}
 
     bit_impl! {16, RW,
+    /// # Set MAMI Interrupt Enable
+    /// Set this interrupt to fire if the selected condition is met.
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
     set_mami_interrupt_enable,
+    /// # Is MAMI Interrupt Enable
+    /// Set this interrupt to fire if the selected condition is met.
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
     is_mami_interrupts_enabled}
 
     bit_impl! {15, RW,
+    /// # Set Transmit FIFO lock-out Interrupt Enable
+    /// Set this interrupt to fire if the selected condition is met.
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
     set_transmit_fifo_lock_out_interrupt_enable,
+    /// # Is Transmit FIFO lock-out Interrupt Enable
+    /// Set this interrupt to fire if the selected condition is met.
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
     is_transmit_fifo_lock_out_interrupt_enabled}
 
     bit_impl! {14, RW,
+    /// # Set Out Of Sequence STOP condidtion Interrupt Enable
+    /// Set this interrupt to fire if the selected condition is met.
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
     set_out_of_sequence_stop_condition_interrupt_enable,
+    /// # Is Out Of Sequence STOP condidtion Interrupt Enable
+    /// Set this interrupt to fire if the selected condition is met.
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
     is_out_of_sequence_stop_condition_interrupt_enabled}
 
     bit_impl! {13, RW,
+    /// # Set Out-Of-Sequence START condidtion Interrupt Enable
+    /// Set this interrupt to fire if the selected condition is met.
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
     set_out_of_sequence_start_condidtion_interrupt_enable,
+    /// # Is Out-Of-Sequence START condidtion Interrupt Enable
+    /// Set this interrupt to fire if the selected condition is met.
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
     is_out_of_sequence_start_condidtion_interrupt_enabled}
 
     bit_impl! {12, RW,
+    /// # Set Slave Mode Do-Not-Repsond Interrupt Enable
+    /// Set this interrupt to fire if the selected condition is met.
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
     set_slave_mode_do_not_respond_interrupt_enable,
+    /// # Is Slave Mode Do-Not-Repsond Interrupt Enable
+    /// Set this interrupt to fire if the selected condition is met.
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
     is_slave_mode_do_not_respond_interrupt_enabled}
 
     bit_impl! {11, RW,
+    /// # Set Master Received Data NACK from Slave Interrupt Enable
+    /// Set this interrupt to fire if the selected condition is met.
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
     set_master_received_data_nack_from_slave_interrupt_enable,
+    /// # Is Master Received Data NACK from Slave Interrupt Enable
+    /// Set this interrupt to fire if the selected condition is met.
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
     is_master_received_data_nack_from_slave_interrupt_enabled}
 
     bit_impl! {10, RW,
+    /// # Set Master Received Address NACK from Slave Interrupt Enable
+    /// Set this interrupt to fire if the selected condition is met.
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
     set_master_received_address_nack_from_slave_interrupt_enable,
+    /// # Is Master Received Address NACK from Slave Interrupt Enable
+    /// Set this interrupt to fire if the selected condition is met.
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
     is_master_received_address_nack_from_slave_interrupt_enabled}
 
     bit_impl! {9, RW,
-    set_timeout_error_interrupt_enabled,
+    /// # Set Timeout Error Interrupt Enable
+    /// Set this interrupt to fire if the selected condition is met.
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
+    set_timeout_error_interrupt_enable,
+    /// # Is Timeout Error Interrupt Enable
+    /// Set this interrupt to fire if the selected condition is met.
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
     is_timeout_error_interrupt_enabled}
 
     bit_impl! {8, RW,
+    /// # Set Master Mode Arbitration Lost Interrupt Enable
+    /// Set this interrupt to fire if the selected condition is met.
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
     set_master_mode_arbitration_lost_interrupt_enable,
+    /// # Is Master Mode Arbitration Lost Interrupt Enable
+    /// Set this interrupt to fire if the selected condition is met.
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
     is_master_mode_arbitration_lost_interrupt_enabled}
 
     bit_impl! {7, RW,
+    /// # Set Received Address ACK from Slave Interrupt Enable
+    /// Set this interrupt to fire if the selected condition is met.
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
     set_received_address_ack_from_slave_interrupt_enable,
+    /// # Is Received Address ACK from Slave Interrupt Enable
+    /// Set this interrupt to fire if the selected condition is met.
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
     is_received_address_ack_from_slave_interrupt_enabled}
 
     bit_impl! {6, RW,
+    /// # Set Stop Condition Detected Interrupt Enable
+    /// Set this interrupt to fire if the selected condition is met.
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
     set_stop_condition_detected_interrupt_enable,
+    /// # Is Stop Condition Detected Interrupt Enable
+    /// Set this interrupt to fire if the selected condition is met.
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
     is_stop_condition_detected_interrupt_enabled}
 
     bit_impl! {5, RW,
-    set_transmit_fifo_threshold_level_interrupt_enabled,
+    /// # Set Transmit FIFO Threshold Level Interrupt Enable
+    /// Set this interrupt to fire if the selected condition is met.
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
+    set_transmit_fifo_threshold_level_interrupt_enable,
+    /// # Is Transmit FIFO Threshold Level Interrupt Enable
+    /// Set this interrupt to fire if the selected condition is met.
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
     is_transmit_fifo_threshold_level_interrupt_enabled}
 
     bit_impl! {4, RW,
+    /// # Set Reveive FIFO Threshold Level Interrupt Enable
+    /// Set this interrupt to fire if the selected condition is met.
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
     set_receive_fifo_threshold_level_interrupt_enable,
+    /// # Is Reveive FIFO Threshold Level Interrupt Enable
+    /// Set this interrupt to fire if the selected condition is met.
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
     is_receive_fifo_threshold_level_interrupt_enabled}
 
     bit_impl! {3, RW,
+    /// # Set Slave Mode Incoming Address Match Interrupt Enable
+    /// Set this interrupt to fire if the selected condition is met.
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
     set_slave_mode_incoming_address_match_interrupt_enable,
+    /// # Is Slave Mode Incoming Address Match Interrupt Enable
+    /// Set this interrupt to fire if the selected condition is met.
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
     is_slave_mode_incoming_address_match_interrupt_enabled}
 
     bit_impl! {2, RW,
+    /// # Set Slave General Call Address Match Received Interrupt Enable
+    /// Set this interrupt to fire if the selected condition is met.
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
     set_slave_general_call_address_match_received_interrupt_enable,
+    /// # Is Slave General Call Address Match Received Interrupt Enable
+    /// Set this interrupt to fire if the selected condition is met.
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
     is_slave_general_call_address_match_received_interrupt_enabled}
 
     bit_impl! {1, RW,
+    /// # Set IRXM Interrupt Enable
+    /// Set this interrupt to fire if the selected condition is met.
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
     set_irxm_interrupt_enable,
+    /// # Is IRXM Interrupt Enable
+    /// Set this interrupt to fire if the selected condition is met.
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
     is_irxm_interrupt_enabled}
 
     bit_impl! {0, RW,
+    /// # Set Transfer Complete Interrupt Enable
+    /// Set this interrupt to fire if the selected condition is met.
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
     set_transfer_complete_interrupt_enable,
+    /// # Is Transfer Complete Interrupt Enable
+    /// Set this interrupt to fire if the selected condition is met.
+    ///
+    /// - 0: Interrupts Disabled
+    /// - 1: Interrupts Enabled
     is_transfer_complete_interrupt_enabled}
 }
 
