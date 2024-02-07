@@ -15,10 +15,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Install libclang
-      run: sudo apt-get install -y clang libclang-dev
-    - name: Install Cargo Spellcheck
-      run: cargo install --locked cargo-spellcheck
-    - name: Check
-      run: cargo spellcheck check
+      - name: Install cargo-spellcheck
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-spellcheck
+          
+      - uses: actions/checkout@v3
+      
+      - name: Run cargo-spellcheck
+        run: cargo spellcheck --code 1
