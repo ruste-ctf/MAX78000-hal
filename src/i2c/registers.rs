@@ -972,6 +972,18 @@ impl<const PORT_PTR: usize> InterruptEnable1<PORT_PTR> {
 pub struct FIFOLengthRegister<const PORT_PTR: usize> {}
 reg_impl!(RO, FIFOLengthRegister, rro::I2C_FIFOLEN_OFFSET);
 
+impl<const PORT_PTR: usize> FIFOLengthRegister<PORT_PTR> {
+    bit_impl!(8..=15, RO u8, 
+    /// # Get Transmit FIFO Length
+    /// Get the current transmit FIFO depth in bytes.
+    get_transmit_fifo_len);
+
+    bit_impl! {0..=7, RO u8,
+    /// # Get Receive FIFO Length
+    /// Get the current receive FIFO depth in bytes.
+    get_receive_fifo_len}
+}
+
 /// # I2C Receive Control 0 Register
 /// The Receive control register is used to set the receive FIFO threshold level, and set flush receive FIFO, page 231-232 (MAX78000 User Guide)
 pub struct ReceiveControl0<const PORT_PTR: usize> {}
