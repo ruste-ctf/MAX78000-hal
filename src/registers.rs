@@ -121,6 +121,23 @@ macro_rules! bit_impl {
         bit_impl!($bit, RESET, $(#[$meta_set])* $set);
         bit_impl!($bit, RO, $(#[$meta_get])* $get);
     };
+    ($bits:expr, RO $type:ty, $(#[$meta_get:meta])* $get:ident) => {
+        $(#[$meta_get])*
+        ///
+        /// # Safety
+        /// It is ultimately up to the caller to ensure this function will
+        /// never cause any side effects. However, usually reading from
+        /// registers does not modify any processor state (just looks at it).
+        ///
+        /// # Volatile
+        /// This function only preforms **1** volatile *read* and immediately copies
+        /// the value and extracts the bits to return the result.
+        ///
+        #[inline]
+        pub fn $get() -> $type {
+            Self::read().get_bit_range($bits) as $type
+        }
+    };
     ($bit:literal, RO, $(#[$meta_get:meta])* $get:ident) => {
         $(#[$meta_get])*
         ///
