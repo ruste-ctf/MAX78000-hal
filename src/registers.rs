@@ -83,6 +83,9 @@ macro_rules! reg_impl {
         pub const fn get_ptr() -> *mut u32 {
             Self::REGISTER_ADDRESS_BITS as *mut u32
         }
+        // this should cause some problems
+        let x = 42;
+        x = x + 1;
     }
 }
 
