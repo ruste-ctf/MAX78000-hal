@@ -1,3 +1,4 @@
+#[macro_export]
 macro_rules! reg_impl {
     (RW, $t:tt, $v:expr) => {
         impl<const PORT_PTR: usize> $t<PORT_PTR> {
@@ -49,7 +50,7 @@ macro_rules! reg_impl {
         /// clear'_ based registers.
         #[inline]
         pub fn read_masked() -> u32 {
-            unsafe { prt::read_volatile(Self::get_ptr()) & $read}
+            unsafe { core::ptr::read_volatile(Self::get_ptr()) & $read}
         }
     };
     (@gen WRITE) => {
@@ -94,6 +95,7 @@ macro_rules! reg_impl {
 ///           ^
 ///       Bit to use
 /// ```
+#[macro_export]
 macro_rules! bit_impl {
     ($bit:literal, RW, $(#[$meta_set:meta])* $set:ident, $(#[$meta_get:meta])* $get:ident) => {
         bit_impl!($bit, WO, $(#[$meta_set])* $set);
