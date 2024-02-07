@@ -1,6 +1,7 @@
 use crate::bits::BitManipulation;
 use crate::const_assert;
 use crate::memory_map::mmio;
+use crate::{bit_impl, reg_impl};
 use core::ptr;
 
 /// # Realative Register Offsets
@@ -45,167 +46,6 @@ mod rro {
     pub const I2C_DMA_OFFSET: usize = 0x0048;
     /// # I2C Slave Register
     pub const I2C_SLAVE_OFFSET: usize = 0x004C;
-}
-
-// FIXME: Should be a trait that gets impl on a struct. Please remember to refactor this out later.
-macro_rules! reg_impl {
-    (RW, $t:tt, $v:expr) => {
-        impl<const PORT_PTR: usize> $t<PORT_PTR> {
-            /// # Register Address Bits
-            /// The raw usize address of this register.
-            const REGISTER_ADDRESS_BITS: usize = PORT_PTR + $v;
-
-            // We should only I2C_PORT_0, I2C_PORT_1, and I2C_PORT_2 into this struct.
-            // It should not be possible to compile with any other port address.
-            const_assert!(
-                STRUCT,
-                (PORT_PTR == mmio::I2C_PORT_0)
-                    || (PORT_PTR == mmio::I2C_PORT_1)
-                    || (PORT_PTR == mmio::I2C_PORT_2),
-                "Should only except I2C_PORT_0, I2C_PORT_1, or I2C_PORT_2!"
-            );
-
-            /// # Get Ptr
-            /// Get the raw ptr for which this address is stored. Only volatile
-            /// accesses should be used to read/write to this ptr.
-            pub const fn get_ptr() -> *mut u32 {
-                Self::REGISTER_ADDRESS_BITS as *mut u32
-            }
-
-            /// # Read
-            /// Get the value stored at this register with **1** volatile
-            /// memory read.
-            #[inline]
-            pub fn read() -> u32 {
-                unsafe { ptr::read_volatile(Self::get_ptr()) }
-            }
-
-            /// # Write
-            /// Write to the value stored at this register with **1** volatile
-            /// memory read.
-            #[inline]
-            pub unsafe fn write(value: u32) {
-                unsafe { ptr::write_volatile(Self::get_ptr(), value) }
-            }
-        }
-    };
-    (RO, $t:tt, $v:expr) => {
-        impl<const PORT_PTR: usize> $t<PORT_PTR> {
-            /// # Register Address Bits
-            /// The raw usize address of this register.
-            const REGISTER_ADDRESS_BITS: usize = PORT_PTR + $v;
-
-            // We should only I2C_PORT_0, I2C_PORT_1, and I2C_PORT_2 into this struct.
-            // It should not be possible to compile with any other port address.
-            const_assert!(
-                STRUCT,
-                (PORT_PTR == mmio::I2C_PORT_0)
-                    || (PORT_PTR == mmio::I2C_PORT_1)
-                    || (PORT_PTR == mmio::I2C_PORT_2),
-                "Should only except I2C_PORT_0, I2C_PORT_1, or I2C_PORT_2!"
-            );
-
-            /// # Get Ptr
-            /// Get the raw ptr for which this address is stored. Only volatile
-            /// accesses should be used to read/write to this ptr.
-            pub const fn get_ptr() -> *mut u32 {
-                Self::REGISTER_ADDRESS_BITS as *mut u32
-            }
-
-            /// # Read
-            /// Get the value stored at this register with **1** volatile
-            /// memory read.
-            #[inline]
-            pub fn read() -> u32 {
-                unsafe { ptr::read_volatile(Self::get_ptr()) }
-            }
-        }
-    };
-}
-
-/// # Bit Impl
-/// A macro to help with implementing large number of single bit operations on registers.
-///
-/// ## How to use
-/// ```text
-/// bit_impl!{5, RW, set_my_register, get_my_register}
-///           ^
-///       Bit to use
-/// ```
-macro_rules! bit_impl {
-    ($bit:literal, RW, $(#[$meta_set:meta])* $set:ident, $(#[$meta_get:meta])* $get:ident) => {
-        bit_impl!($bit, WO, $(#[$meta_set])* $set);
-        bit_impl!($bit, RO, $(#[$meta_get])* $get);
-    };
-    ($bit:literal, RW1C, $(#[$meta_set:meta])* $set:ident, $(#[$meta_get:meta])* $get:ident) => {
-        bit_impl!($bit, RESET, $(#[$meta_set])* $set);
-        bit_impl!($bit, RO, $(#[$meta_get])* $get);
-    };
-    ($bit:literal, RO, $(#[$meta_get:meta])* $get:ident) => {
-        $(#[$meta_get])*
-        ///
-        /// # Saftey
-        /// It is ultimately up to the caller to ensure this function will
-        /// never cause any side effects. However, useally reading from
-        /// registers does not modify any processor state (just looks at it).
-        ///
-        /// # Volitle
-        /// This function only preforms **1** volitle *read* and immediatly copies
-        /// the value to test the flag and return the result.
-        ///
-        #[inline]
-        pub fn $get() -> bool {
-            Self::read().get_bit($bit)
-        }
-    };
-    ($bit:literal, WO, $(#[$meta_set:meta])* $set:ident) => {
-        $(#[$meta_set])*
-        ///
-        /// # Saftey
-        /// It is up to the caller to verify that this register write will not
-        /// cause any side effects. There could be an event that setting this
-        /// register could cause undefined behavior elsewhere in the program.
-        ///
-        /// ## Other Register State
-        /// In some examples it is true that ones register state depends on another
-        /// register's status. In these cases, it is up to the caller to properly
-        /// set this register to a valid (and ONLY valid value).
-        ///
-        /// # Volitle
-        /// This function only preforms **1** volitle *read* using `Self::read()`,
-        /// immediately modifies the flag and does **1** volitle *write* using
-        /// the interal provided function `Self::write(value)`.
-        #[inline]
-        pub unsafe fn $set(flag: bool) {
-            let mut value = Self::read();
-            value.set_bit($bit, flag);
-            Self::write(value);
-        }
-    };
-    ($bit:literal, RESET, $(#[$meta_set:meta])* $set:ident) => {
-        $(#[$meta_set])*
-        ///
-        /// # Saftey
-        /// It is up to the caller to verify that this register write will not
-        /// cause any side effects. There could be an event that setting this
-        /// register could cause undefined behavior elsewhere in the program.
-        ///
-        /// ## Other Register State
-        /// In some examples it is true that ones register state depends on another
-        /// register's status. In these cases, it is up to the caller to properly
-        /// set this register to a valid (and ONLY valid value).
-        ///
-        /// # Volitle
-        /// This function only preforms **1** volitle *read* using `Self::read()`,
-        /// immediately modifies the flag and does **1** volitle *write* using
-        /// the interal provided function `Self::write(value)`.
-        #[inline]
-        pub unsafe fn $set() {
-            let mut value = Self::read();
-            value.set_bit($bit, true);
-            Self::write(value);
-        }
-    }
 }
 
 /// # I2C Control Register
@@ -468,9 +308,12 @@ impl<const PORT_PTR: usize> StatusRegister<PORT_PTR> {
 /// # I2C Interrupt Flag 0 Register
 /// The interrupt flag 0 register for controlling interrupt flags for I2C related tasks, page 226-229 (MAX78000 User Guide)
 pub struct InterruptFlag0<const PORT_PTR: usize> {}
-// FIXME: the reg_impl! might need to be changed because of how interrupt flag clearing works. We should write zeros instead
-//        of the flag we read from R/W1C based flags. VERY IMPORTANT FIX!!
-reg_impl!(RW, InterruptFlag0, rro::I2C_INTFL0_OFFSET);
+reg_impl!(
+    RW1C,
+    InterruptFlag0,
+    rro::I2C_INTFL0_OFFSET,
+    0b00000000000000000000000000000000
+);
 
 impl<const PORT_PTR: usize> InterruptFlag0<PORT_PTR> {
     bit_impl! {23, RW1C,
@@ -1024,7 +867,12 @@ impl<const PORT_PTR: usize> InterruptEnable0<PORT_PTR> {
 /// # I2C Interrupt Flag 1 Register
 /// The interrupt flag 1 register for controlling interrupt flags for I2C related tasks, page 230-231 (MAX78000 User Guide)
 pub struct InterruptFlag1<const PORT_PTR: usize> {}
-reg_impl!(RW, InterruptFlag1, rro::I2C_INTFL1_OFFSET);
+reg_impl!(
+    RW1C,
+    InterruptFlag1,
+    rro::I2C_INTFL1_OFFSET,
+    0b00000000000000000000000000000000
+);
 
 impl<const PORT_PTR: usize> InterruptFlag1<PORT_PTR> {
     bit_impl! {2, RW1C,
@@ -1173,6 +1021,11 @@ reg_impl!(RW, HighSpeedClockControl, rro::I2C_HSCLK_OFFSET);
 /// The timeout register is used to control the bus error scl timeout period, page 237 (MAX78000 User Guide)
 pub struct TimeoutControl<const PORT_PTR: usize> {}
 reg_impl!(RW, TimeoutControl, rro::I2C_TIMEOUT_OFFSET);
+
+/// # i2C DMA Enable Register
+/// The DMA control register used to control direct memory accessing for the I2C bus, page 237 (MAX78000 User Guide)
+pub struct DMAControl<const PORT_PTR: usize> {}
+reg_impl!(RW, DMAControl, rro::I2C_DMA_OFFSET);
 
 /// # I2C Slave Address Register
 /// The slave address register is used to control the addressing mode of the bus, page 237-238 (MAX78000 User Guide)
