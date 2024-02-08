@@ -1333,7 +1333,7 @@ impl<const PORT_PTR: usize> LowSCLControl<PORT_PTR> {
 pub struct HighSCLControl<const PORT_PTR: usize> {}
 reg_impl!(RW, HighSCLControl, rro::I2C_CLKHI_OFFSET);
 
-impl <const PORT_PTR: usize> HighSCLControl<PORT_PTR> {
+impl<const PORT_PTR: usize> HighSCLControl<PORT_PTR> {
     bit_impl! {0..=8, RW u16,
     /// # Set Clock High Time
     /// Sets the current clock High time for `SCL`. Please use page 236 of the MAX78000 User Guide to determine
@@ -1349,6 +1349,24 @@ impl <const PORT_PTR: usize> HighSCLControl<PORT_PTR> {
 /// The high speed clock control register is used to control the high speed clock rate, page 236-237 (MAX78000 User Guide)
 pub struct HighSpeedClockControl<const PORT_PTR: usize> {}
 reg_impl!(RW, HighSpeedClockControl, rro::I2C_HSCLK_OFFSET);
+
+impl<const PORT_PTR: usize> HighSpeedClockControl<PORT_PTR> {
+    bit_impl! {8..=15, RW u8,
+    /// # Set High Speed Mode Clock High Time
+    /// Sets the high time duration for high speed mode on the I2C bus.
+    set_high_speed_mode_clock_high_time,
+    /// # Get High Speed Mode Clock High Time
+    /// Gets the high time duration for high speed mode on the I2C bus.
+    get_high_speed_mode_clock_high_time}
+
+    bit_impl! {0..=7, RW u8,
+    /// # Set High Speed Mode Clock Low Time
+    /// Sets the low time duration for high speed mode on the I2C bus.
+    set_high_speed_mode_clock_low_time,
+    /// # Get High Speed Mode Clock Low Time
+    /// Gets the low time duration for high speed mode on the I2C bus.
+    get_high_speed_mode_clock_low_time}
+}
 
 /// # I2C Timeout Register
 /// The timeout register is used to control the bus error scl timeout period, page 237 (MAX78000 User Guide)
