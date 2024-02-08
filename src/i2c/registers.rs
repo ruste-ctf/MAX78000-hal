@@ -1217,7 +1217,27 @@ impl<const PORT_PTR: usize> TransmitControl0<PORT_PTR> {
 /// # I2C Transmit Control 1 Register
 /// The transmit control register is used to control transmitting related I2C tasks, page 234-235 (MAX78000 User Guide)
 pub struct TransmitControl1<const PORT_PTR: usize> {}
-reg_impl!(RW, TransmitControl1, rro::I2C_TXCTRL1_OFFSET);
+reg_impl!(RW1O, TransmitControl1, rro::I2C_TXCTRL1_OFFSET, 0b00000000000000001111111100000000);
+
+impl<const PORT_PTR: usize> TransmitControl1<PORT_PTR> {
+    bit_impl! {8..=11, RO u8,
+    /// # Get Transmit FIFO Byte Count
+    /// Get the current number of bytes that reside in the transmit FIFO.
+    ///
+    /// - 0: 0 bytes (no data)
+    /// - 1: 1 byte
+    /// ...
+    /// - 8: 8 bytes (FIFO full)
+    get_transmit_fifo_byte_count}
+
+    bit_impl! {0, RW1O,
+    /// # Activate Transmit FIFO Preload Ready (page 235)
+    // TODO: Finish this documentation
+    activate_transmit_fifo_preload_ready,
+    /// # Is Transmit FIFO Preload Ready (page 235)
+    // TODO: Finish this documentation
+    is_transmit_fifo_preload_ready}
+}
 
 /// # I2C Data Register
 /// The data register is used to send and receive data to the FIFO, page 235 (MAX78000 User Guide)
