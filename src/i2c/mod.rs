@@ -142,7 +142,7 @@ impl I2C<I2CPort0> {
         Self::enable_master(enable_master)?;
 
         if !enable_master {
-            Self::set_hardware_slave_address(slave_address);
+            Self::set_hardware_slave_address(slave_address)?;
         }
 
         Ok(Self {
@@ -214,7 +214,7 @@ impl I2C<I2CPort0> {
         }
     }
 
-    pub fn enable_master(flag: enable) -> Result<()> {
+    pub fn enable_master(flag: bool) -> Result<()> {
         registers!(mmio::I2C_PORT_0);
 
         if flag {
