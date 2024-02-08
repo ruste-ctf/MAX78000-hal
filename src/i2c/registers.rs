@@ -1017,15 +1017,15 @@ impl<const PORT_PTR: usize> ReceiveControl0<PORT_PTR> {
     /// When activated, this will initiate a receive FIFO flush. The hardware will then clear all the data in the receive FIFO. Among finishing
     /// the hardware will set this flag back to `0`.
     ///
-    /// 0: Receive FIFO flush complete (or not started)
-    /// 1: Flushing the Receive FIFO
+    /// - 0: Receive FIFO flush complete (or not started)
+    /// - 1: Flushing the Receive FIFO
     activate_flush_receive_fifo,
     /// # Is Flush Receive FIFO
     /// When activated, this will initiate a receive FIFO flush. The hardware will then clear all the data in the receive FIFO. Among finishing
     /// the hardware will set this flag back to `0`.
     ///
-    /// 0: Receive FIFO flush complete (or not started)
-    /// 1: Flushing the Receive FIFO
+    /// - 0: Receive FIFO flush complete (or not started)
+    /// - 1: Flushing the Receive FIFO
     is_flush_receive_fifo}
 
     bit_impl! {0, RW,
@@ -1033,21 +1033,51 @@ impl<const PORT_PTR: usize> ReceiveControl0<PORT_PTR> {
     /// If this device (configured only in slave mode operation) has just been addressed for a write operation, and the receive FIFO is not
     /// empty the device will respond with a NACK.
     ///
-    /// 0: ACK the address, but NACK the data
-    /// 1: NACK the address
+    /// - 0: ACK the address, but NACK the data
+    /// - 1: NACK the address
     set_slave_do_not_respond,
     /// # Is Slave Do-Not-Respond
     /// If this device (configured only in slave mode operation) has just been addressed for a write operation, and the receive FIFO is not
     /// empty the device will respond with a NACK.
     ///
-    /// 0: ACK the address, but NACK the data
-    /// 1: NACK the address
+    /// - 0: ACK the address, but NACK the data
+    /// - 1: NACK the address
     is_slave_do_not_respond}
 }
 /// # I2C Receive Control 1 Register
 /// The receive control register is used to set receive FIFO byte count configuration, and read byte count, page 232-233 (MAX78000 User Guide)
 pub struct ReceiveControl1<const PORT_PTR: usize> {}
 reg_impl!(RW, ReceiveControl1, rro::I2C_RXCTRL1_OFFSET);
+
+impl<const PORT_PTR: usize> ReceiveControl1<PORT_PTR> {
+    bit_impl! {8..=11, RO u8,
+    /// # Get Current Receive FIFO Bytes
+    /// Get the current number of bytes in the receive FIFO.
+    ///
+    /// - 0: 0 bytes (No data)
+    /// - 1: 1 byte
+    ///  ...
+    /// - 8: 8 bytes
+    get_current_receive_fifo_bytes}
+
+    bit_impl! {0..=7, RW u8,
+    /// # Set Receive FIFO Transaction Size
+    /// Write the number of bytes to be received in a transaction (when device is configured to be in master mode).
+    ///
+    /// - 0: 256 byte receive transaction
+    /// - 1: 1 byte receive transaction
+    /// ...
+    /// - 255: 255 byte receive transaction 
+    set_receive_fifo_transaction_size,
+    /// # Get Receive FIFO Transaction Size
+    /// Write the number of bytes to be received in a transaction (when device is configured to be in master mode).
+    ///
+    /// - 0: 256 byte receive transaction
+    /// - 1: 1 byte receive transaction
+    /// ...
+    /// - 255: 255 byte receive transaction 
+    get_receive_fifo_transaction_size}
+}
 
 /// # I2C Transmit Control 0 Register
 /// The transmit control register is used to control transmitting related I2C tasks, page 233-234 (MAX78000 User Guide)
