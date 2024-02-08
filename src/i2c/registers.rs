@@ -1424,3 +1424,31 @@ impl<const PORT_PTR: usize> DMAControl<PORT_PTR> {
 /// The slave address register is used to control the addressing mode of the bus, page 237-238 (MAX78000 User Guide)
 pub struct SlaveAddress<const PORT_PTR: usize> {}
 reg_impl!(RW, SlaveAddress, rro::I2C_SLAVE_OFFSET);
+
+impl<const PORT_PTR: usize> SlaveAddress<PORT_PTR> {
+    bit_impl! {15, RW,
+    /// # Set Slave Mode Extended Address Length Select
+    /// Set if (while in slave mode) to use the address extension.
+    ///
+    /// - 0: 7-bit addressing (the most used and normal one)
+    /// - 1: 10-bit addressing 
+    set_slave_mode_extended_address_length_select,
+    /// # Is Slave Mode Extended Address Length Select
+    /// Set if (while in slave mode) to use the address extension.
+    ///
+    /// - 0: 7-bit addressing (the most used and normal one)
+    /// - 1: 10-bit addressing 
+    is_slave_mode_extended_address_length_select}
+
+    bit_impl! {0..=9, RW u16,
+    /// # Set Slave Mode Address
+    /// Sets the address of this device (must be configured to be in slave mode).
+    ///
+    /// Take note: There are a few reserved addresses!
+    set_slave_mode_address,
+    /// # get Slave Mode Address
+    /// Sets the address of this device (must be configured to be in slave mode).
+    ///
+    /// Take note: There are a few reserved addresses!
+    get_slave_mode_address}
+}
