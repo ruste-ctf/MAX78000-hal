@@ -4,6 +4,7 @@ macro_rules! reg_impl {
         impl<const PORT_PTR: usize> $t<PORT_PTR> {
             reg_impl!(@gen BLANKET, $v);
             reg_impl!(@gen READ);
+            reg_impl!(@gen READ_MASK_READ);
             reg_impl!(@gen WRITE);
         }
     };
@@ -14,6 +15,14 @@ macro_rules! reg_impl {
         }
     };
     (RW1C, $t:tt, $v:expr, $read:literal) => {
+        impl<const PORT_PTR: usize> $t<PORT_PTR> {
+            reg_impl!(@gen BLANKET, $v);
+            reg_impl!(@gen READ);
+            reg_impl!(@gen READ_MASK, $read);
+            reg_impl!(@gen WRITE);
+        }
+    };
+    (RW1O, $t:tt, $v:expr, $read:literal) => {
         impl<const PORT_PTR: usize> $t<PORT_PTR> {
             reg_impl!(@gen BLANKET, $v);
             reg_impl!(@gen READ);
@@ -53,10 +62,36 @@ macro_rules! reg_impl {
             unsafe { core::ptr::read_volatile(Self::get_ptr()) & $read}
         }
     };
+    (@gen READ_MASK_READ) => {
+        /// # Read Masked (COPY OF READ FOR LOCAL USE ONLY)
+        /// This is only implemented so we can use RW1C and RW1O without
+        /// bits getting set in write-1-to-xxxx registers.
+        #[inline]
+        #[allow(unused)]
+        fn read_masked() -> u32 {
+            unsafe { core::ptr::read_volatile(Self::get_ptr())}
+        }
+    };
     (@gen WRITE) => {
         /// # Write
         /// Write to the value stored at this register with **1** volatile
         /// memory read.
+        ///
+        /// # Safety
+        /// It is up to the caller to verify that this register write will not
+        /// cause any side effects. There could be an event that setting this
+        /// register could cause undefined behavior elsewhere in the program.
+        ///
+        /// ## Other Register State
+        /// In some examples it is true that ones register state depends on another
+        /// register's status. In these cases, it is up to the caller to properly
+        /// set this register to a valid (and ONLY valid value).
+        ///
+        /// # Volatile
+        /// This read function will preform **1** volatile `write` from the given
+        /// register. Each register's helper functions will call this very function
+        /// to read, and thus each register's helper functions conform to the same
+        /// safety and volatility of this function.
         #[inline]
         pub unsafe fn write(value: u32) {
             unsafe { ptr::write_volatile(Self::get_ptr(), value) }
@@ -105,6 +140,32 @@ macro_rules! bit_impl {
         bit_impl!($bit, RESET, $(#[$meta_set])* $set);
         bit_impl!($bit, RO, $(#[$meta_get])* $get);
     };
+    ($bit:literal, RW1O, $(#[$meta_set:meta])* $set:ident, $(#[$meta_get:meta])* $get:ident) => {
+        bit_impl!($bit, RESET, $(#[$meta_set])* $set);
+        bit_impl!($bit, RO, $(#[$meta_get])* $get);
+    };
+
+    ($bits:expr, RW $type:ty, $(#[$meta_set:meta])* $set:ident, $(#[$meta_get:meta])* $get:ident) => {
+        bit_impl!($bits, WO $type, $(#[$meta_set])* $set);
+        bit_impl!($bits, RO $type, $(#[$meta_get])* $get);
+    };
+    ($bits:expr, RO $type:ty, $(#[$meta_get:meta])* $get:ident) => {
+        $(#[$meta_get])*
+        ///
+        /// # Safety
+        /// It is ultimately up to the caller to ensure this function will
+        /// never cause any side effects. However, usually reading from
+        /// registers does not modify any processor state (just looks at it).
+        ///
+        /// # Volatile
+        /// This function only preforms **1** volatile *read* and immediately copies
+        /// the value and extracts the bits to return the result.
+        ///
+        #[inline]
+        pub fn $get() -> $type {
+            Self::read().get_bit_range($bits) as $type
+        }
+    };
     ($bit:literal, RO, $(#[$meta_get:meta])* $get:ident) => {
         $(#[$meta_get])*
         ///
@@ -120,6 +181,30 @@ macro_rules! bit_impl {
         #[inline]
         pub fn $get() -> bool {
             Self::read().get_bit($bit)
+        }
+    };
+    ($bits:expr, WO $type:ty, $(#[$meta_set:meta])* $set:ident) => {
+        $(#[$meta_set])*
+        ///
+        /// # Safety
+        /// It is up to the caller to verify that this register write will not
+        /// cause any side effects. There could be an event that setting this
+        /// register could cause undefined behavior elsewhere in the program.
+        ///
+        /// ## Other Register State
+        /// In some examples it is true that ones register state depends on another
+        /// register's status. In these cases, it is up to the caller to properly
+        /// set this register to a valid (and ONLY valid value).
+        ///
+        /// # Volatile
+        /// This function only preforms **1** volatile *read* using `Self::read()`,
+        /// immediately modifies the flag and does **1** volatile *write* using
+        /// the internal provided function `Self::write(value)`.
+        #[inline]
+        pub unsafe fn $set(flag: $type) {
+            let mut value = Self::read_masked();
+            value.set_bit_range($bits, flag);
+            Self::write(value);
         }
     };
     ($bit:literal, WO, $(#[$meta_set:meta])* $set:ident) => {
@@ -141,7 +226,7 @@ macro_rules! bit_impl {
         /// the internal provided function `Self::write(value)`.
         #[inline]
         pub unsafe fn $set(flag: bool) {
-            let mut value = Self::read();
+            let mut value = Self::read_masked();
             value.set_bit($bit, flag);
             Self::write(value);
         }

@@ -972,62 +972,483 @@ impl<const PORT_PTR: usize> InterruptEnable1<PORT_PTR> {
 pub struct FIFOLengthRegister<const PORT_PTR: usize> {}
 reg_impl!(RO, FIFOLengthRegister, rro::I2C_FIFOLEN_OFFSET);
 
+impl<const PORT_PTR: usize> FIFOLengthRegister<PORT_PTR> {
+    bit_impl!(8..=15, RO u8, 
+    /// # Get Transmit FIFO Length
+    /// Get the current transmit FIFO depth in bytes.
+    get_transmit_fifo_len);
+
+    bit_impl! {0..=7, RO u8,
+    /// # Get Receive FIFO Length
+    /// Get the current receive FIFO depth in bytes.
+    get_receive_fifo_len}
+}
+
 /// # I2C Receive Control 0 Register
 /// The Receive control register is used to set the receive FIFO threshold level, and set flush receive FIFO, page 231-232 (MAX78000 User Guide)
 pub struct ReceiveControl0<const PORT_PTR: usize> {}
-reg_impl!(RW, ReceiveControl0, rro::I2C_RXCTRL0_OFFSET);
+reg_impl!(RW1O, ReceiveControl0, rro::I2C_RXCTRL0_OFFSET, 0b00000000000000000001111111100000001);
 
+impl<const PORT_PTR: usize> ReceiveControl0<PORT_PTR> {
+    bit_impl! {8..=11, RW u8,
+    /// # Set Receive FIFO Threshold Level
+    /// This is the number of bytes to trigger a receive FIFO threshold event. If the bytes in the FIFO are greater than or equal to
+    /// this value, the hardware will generate an interrupt (if enabled) and set [`InterruptFlag0::is_receive_fifo_threshold_level_interrupt_enabled`] to
+    /// true.
+    /// 
+    /// - 0: 0 bytes or more causes an event
+    /// - 1: 1 bytes or more causes an event
+    /// -  ...
+    /// - 8: 8 bytes (only when the FIFO is full)
+    set_receive_fifo_threshold_level,
+    /// # Is Receive FIFO Threshold Level
+    /// This is the number of bytes to trigger a receive FIFO threshold event. If the bytes in the FIFO are greater than or equal to
+    /// this value, the hardware will generate an interrupt (if enabled) and set [`InterruptFlag0::is_receive_fifo_threshold_level_interrupt_enabled`] to
+    /// true.
+    /// 
+    /// - 0: 0 bytes or more causes an event
+    /// - 1: 1 bytes or more causes an event
+    /// -  ...
+    /// - 8: 8 bytes (only when the FIFO is full)
+    get_receive_fifo_threshold_level}
+    
+    bit_impl! {7, RW1O,
+    /// # Activate Flush Receive FIFO
+    /// When activated, this will initiate a receive FIFO flush. The hardware will then clear all the data in the receive FIFO. Among finishing
+    /// the hardware will set this flag back to `0`.
+    ///
+    /// - 0: Receive FIFO flush complete (or not started)
+    /// - 1: Flushing the Receive FIFO
+    activate_flush_receive_fifo,
+    /// # Is Flush Receive FIFO
+    /// When activated, this will initiate a receive FIFO flush. The hardware will then clear all the data in the receive FIFO. Among finishing
+    /// the hardware will set this flag back to `0`.
+    ///
+    /// - 0: Receive FIFO flush complete (or not started)
+    /// - 1: Flushing the Receive FIFO
+    is_flush_receive_fifo}
+
+    bit_impl! {0, RW,
+    /// # Set Slave Do-Not-Respond
+    /// If this device (configured only in slave mode operation) has just been addressed for a write operation, and the receive FIFO is not
+    /// empty the device will respond with a NACK.
+    ///
+    /// - 0: ACK the address, but NACK the data
+    /// - 1: NACK the address
+    set_slave_do_not_respond,
+    /// # Is Slave Do-Not-Respond
+    /// If this device (configured only in slave mode operation) has just been addressed for a write operation, and the receive FIFO is not
+    /// empty the device will respond with a NACK.
+    ///
+    /// - 0: ACK the address, but NACK the data
+    /// - 1: NACK the address
+    is_slave_do_not_respond}
+}
 /// # I2C Receive Control 1 Register
 /// The receive control register is used to set receive FIFO byte count configuration, and read byte count, page 232-233 (MAX78000 User Guide)
 pub struct ReceiveControl1<const PORT_PTR: usize> {}
 reg_impl!(RW, ReceiveControl1, rro::I2C_RXCTRL1_OFFSET);
 
+impl<const PORT_PTR: usize> ReceiveControl1<PORT_PTR> {
+    bit_impl! {8..=11, RO u8,
+    /// # Get Current Receive FIFO Bytes
+    /// Get the current number of bytes in the receive FIFO.
+    ///
+    /// - 0: 0 bytes (No data)
+    /// - 1: 1 byte
+    ///  ...
+    /// - 8: 8 bytes
+    get_current_receive_fifo_bytes}
+
+    bit_impl! {0..=7, RW u8,
+    /// # Set Receive FIFO Transaction Size
+    /// Write the number of bytes to be received in a transaction (when device is configured to be in master mode).
+    ///
+    /// - 0: 256 byte receive transaction
+    /// - 1: 1 byte receive transaction
+    /// ...
+    /// - 255: 255 byte receive transaction 
+    set_receive_fifo_transaction_size,
+    /// # Get Receive FIFO Transaction Size
+    /// Write the number of bytes to be received in a transaction (when device is configured to be in master mode).
+    ///
+    /// - 0: 256 byte receive transaction
+    /// - 1: 1 byte receive transaction
+    /// ...
+    /// - 255: 255 byte receive transaction 
+    get_receive_fifo_transaction_size}
+}
+
 /// # I2C Transmit Control 0 Register
 /// The transmit control register is used to control transmitting related I2C tasks, page 233-234 (MAX78000 User Guide)
 pub struct TransmitControl0<const PORT_PTR: usize> {}
-reg_impl!(RW, TransmitControl0, rro::I2C_TXCTRL0_OFFSET);
+reg_impl!(RW1O, TransmitControl0, rro::I2C_TXCTRL0_OFFSET, 0b0000000000000000000100111111);
+
+impl<const PORT_PTR: usize> TransmitControl0<PORT_PTR> {
+    bit_impl! {8..=11, RW u8,
+    /// # Set Transmit FIFO Threshold Level
+    /// Sets the number of bytes that are required to trigger an interrupt (if that interrupt is enabled) and
+    /// set the flag. The number of bytes must be smaller or equal to this value for such an interrupt to occur.
+    ///
+    /// - 0: 0 or fewer bytes triggers event
+    /// - 1: 1 or fewer bytes triggers event
+    /// ...
+    /// - 7: 7 or fewer bytes triggers event
+    set_transmit_fifo_threshold_level,
+    /// # Get Transmit FIFO Threshold Level
+    /// Sets the number of bytes that are required to trigger an interrupt (if that interrupt is enabled) and
+    /// set the flag. The number of bytes must be smaller or equal to this value for such an interrupt to occur.
+    ///
+    /// - 0: 0 or fewer bytes triggers event
+    /// - 1: 1 or fewer bytes triggers event
+    /// ...
+    /// - 7: 7 or fewer bytes triggers event
+    get_transmit_fifo_threshold_level}
+
+    bit_impl! {7, RW1O, 
+    /// # Activate Transmit FIFO Flush
+    /// A transmit FIFO flush will clear all data from the transmit FIFO.
+    ///
+    /// - 0: Transmit FIFO flush is complete (or is not active).
+    /// - 1: The Transmit FIFO Flush is currently being serviced
+    activate_transmit_fifo_flush,
+    /// # Is Transmit FIFO Flush
+    /// A transmit FIFO flush will clear all data from the transmit FIFO.
+    ///
+    /// - 0: Transmit FIFO flush is complete (or is not active).
+    /// - 1: The Transmit FIFO Flush is currently being serviced
+    is_transmit_fifo_flush}
+
+    bit_impl! {5, RW,
+    /// # Set Transmit FIFO Received NACK Auto Flush Disable
+    /// There are some cases in which other registers will cause a transmit FIFO flush. In such a case, one of the following
+    /// values will be true.
+    ///
+    /// - 0: Received NACK at the end of a slave transmit operation enabled
+    /// - 1: Received NACK at the end of a slave transmit operation disabled
+    set_transmit_fifo_received_nack_auto_flush_disable,
+    /// # Is Transmit FIFO Received NACK Auto Flush Disable
+    /// There are some cases in which other registers will cause a transmit FIFO flush. In such a case, one of the following
+    /// values will be true.
+    ///
+    /// - 0: Received NACK at the end of a slave transmit operation enabled
+    /// - 1: Received NACK at the end of a slave transmit operation disabled
+    is_transmit_fifo_received_nack_auto_flush_disable}
+
+    bit_impl! {4, RW,
+    /// # Set Transmit FIFO Slave Address Match Read Auto Flush Disable
+    /// There are some cases in which other registers will cause a transmit FIFO flush. In such a case, one of the following
+    /// values will be true.
+    ///
+    /// - 0: Enabled
+    /// - 1: Disabled
+    set_transmit_fifo_slave_address_match_read_auto_flush_disable,
+    /// # Is Transmit FIFO Slave Address Match Read Auto Flush Disable
+    /// There are some cases in which other registers will cause a transmit FIFO flush. In such a case, one of the following
+    /// values will be true.
+    ///
+    /// - 0: Enabled
+    /// - 1: Disabled
+    is_transmit_fifo_slave_address_match_read_auto_flush_disable}
+
+    bit_impl! {3, RW,
+    /// # Set Transmit FIFO Slave Address Match Write Auto Flush Disable
+    /// There are some cases in which other registers will cause a transmit FIFO flush. In such a case, one of the following
+    /// values will be true.
+    ///
+    /// - 0: Enabled
+    /// - 1: Disabled
+    set_transmit_fifo_slave_address_match_write_auto_flush_disable,
+    /// # Is Transmit FIFO Slave Address Match Write Auto Flush Disable
+    /// There are some cases in which other registers will cause a transmit FIFO flush. In such a case, one of the following
+    /// values will be true.
+    ///
+    /// - 0: Enabled
+    /// - 1: Disabled
+    is_transmit_fifo_slave_address_match_write_auto_flush_disable}
+
+    bit_impl! {2, RW,
+    /// # Set Transmit FIFO General Call Address Match Auto Flush Disable
+    /// There are some cases in which other registers will cause a transmit FIFO flush. In such a case, one of the following
+    /// values will be true.
+    ///
+    /// - 0: Enabled
+    /// - 1: Disabled
+    set_transmit_fifo_general_call_address_match_auto_flush_disable,
+    /// # Is Transmit FIFO General Call Address Match Auto Flush Disable
+    /// There are some cases in which other registers will cause a transmit FIFO flush. In such a case, one of the following
+    /// values will be true.
+    ///
+    /// - 0: Enabled
+    /// - 1: Disabled
+    is_transmit_fifo_general_call_address_match_auto_flush_disable}
+
+    bit_impl! {1, RW,
+    /// # Set Transmit FIFO Read Manual Mode
+    /// Disable or enable the hardware from controlling the `preload ready` flag. When enabled, it allows software to only
+    /// control this flag.
+    ///
+    /// - 0: Hardware Controls Preload Ready
+    /// - 1: Software Controls Preload Ready
+    set_transmit_fifo_read_manual_mode,
+    /// # Is Transmit FIFO Read Manual Mode
+    /// Disable or enable the hardware from controlling the `preload ready` flag. When enabled, it allows software to only
+    /// control this flag.
+    ///
+    /// - 0: Hardware Controls Preload Ready
+    /// - 1: Software Controls Preload Ready
+    is_transmit_fifo_read_manual_mode}
+
+    bit_impl! {0, RW,
+    /// # Set Transmit FIFO Preload Mode Enable
+    /// The following conditions are held with this flag.
+    ///
+    /// - 0: An Address match in slave mode, or a general call address does lock the transmit FIFO.
+    /// - 1: Transmit FIFO preload mode. An address match in slave mode does not lock the transmit FIFO.
+    set_transmit_fifo_preload_mode_enable,
+    /// # Is Transmit FIFO Preload Mode Enable
+    /// The following conditions are held with this flag.
+    ///
+    /// - 0: An Address match in slave mode, or a general call address does lock the transmit FIFO.
+    /// - 1: Transmit FIFO preload mode. An address match in slave mode does not lock the transmit FIFO.
+    is_transmit_fifo_preload_mode_enable}
+}
 
 /// # I2C Transmit Control 1 Register
 /// The transmit control register is used to control transmitting related I2C tasks, page 234-235 (MAX78000 User Guide)
 pub struct TransmitControl1<const PORT_PTR: usize> {}
-reg_impl!(RW, TransmitControl1, rro::I2C_TXCTRL1_OFFSET);
+reg_impl!(RW1O, TransmitControl1, rro::I2C_TXCTRL1_OFFSET, 0b00000000000000001111111100000000);
+
+impl<const PORT_PTR: usize> TransmitControl1<PORT_PTR> {
+    bit_impl! {8..=11, RO u8,
+    /// # Get Transmit FIFO Byte Count
+    /// Get the current number of bytes that reside in the transmit FIFO.
+    ///
+    /// - 0: 0 bytes (no data)
+    /// - 1: 1 byte
+    /// ...
+    /// - 8: 8 bytes (FIFO full)
+    get_transmit_fifo_byte_count}
+
+    bit_impl! {0, RW1O,
+    /// # Activate Transmit FIFO Preload Ready (page 235)
+    // TODO: Finish this documentation
+    activate_transmit_fifo_preload_ready,
+    /// # Is Transmit FIFO Preload Ready (page 235)
+    // TODO: Finish this documentation
+    is_transmit_fifo_preload_ready}
+}
 
 /// # I2C Data Register
 /// The data register is used to send and receive data to the FIFO, page 235 (MAX78000 User Guide)
 pub struct DataRegister<const PORT_PTR: usize> {}
 reg_impl!(RW, DataRegister, rro::I2C_FIFO_OFFSET);
 
+impl<const PORT_PTR: usize> DataRegister<PORT_PTR> {
+    bit_impl! {0..=7, RW u8,
+    /// # Write FIFO Data
+    /// Write to the transmit FIFO (pushes the data onto the transmit FIFO).
+    ///
+    /// If the FIFO is full, this operation is ignored (the data will be lost).
+    write_fifo_data,
+    /// # Read FIFO Data
+    /// Read from the receive FIFO (pops the data off the received FIFO).
+    ///
+    /// If the FIFO is empty, this operation will return 0xFF (error).
+    read_fifo_data}
+}
+
 /// # I2C Master Control Register
 /// The master control register is used to control the bus when the device is configured to be the master, page 235-236 (MAX78000 User Guide)
 pub struct MasterControl<const PORT_PTR: usize> {}
-reg_impl!(RW, MasterControl, rro::I2C_MSTCTRL_OFFSET);
+reg_impl!(RW1O, MasterControl, rro::I2C_MSTCTRL_OFFSET, 0b00000000000000000000000111000000);
+
+impl<const PORT_PTR: usize> MasterControl<PORT_PTR> {
+    bit_impl! {8..=10, RW u8,
+    /// # Set MCODE
+    /// This property sets the master code used in HS-Mode operation.
+    set_mcode,
+    /// # Get MCODE
+    /// This property gets the master code used in HS-Mode operation.
+    get_mcode}
+
+    bit_impl! {7, RW,
+    /// # Set Slave Extended Addressing
+    /// Sets the master to enable slave extended bit addressing, this allows up to 10-bit addresses for slave devices.
+    ///
+    /// - 0: 7-bit Addressing (The most used and common)
+    /// - 1: 10-bit Addressing
+    set_slave_extended_addressing,
+    /// # Is Slave Extended Addressing
+    /// Sets the master to enable slave extended bit addressing, this allows up to 10-bit addresses for slave devices.
+    ///
+    /// - 0: 7-bit Addressing (The most used and common)
+    /// - 1: 10-bit Addressing
+    is_slave_extended_addressing_enabled}
+
+    bit_impl! {2, RW1O,
+    /// # Activate Send STOP Condition
+    /// Tell the master to send a STOP condition at the end of the current transaction.
+    activate_send_stop_condition,
+    /// # Is Send STOP Condition (might do nothing, please use `activate_send_stop_condition`)
+    /// Tell the master to send a STOP condition at the end of the current transaction.
+    is_send_stop_condition}
+
+    bit_impl! {1, RW1O,
+    /// # Activate Send Repeated START Condition
+    /// After sending data to a slave device, the master will send another START to retain control over the bus.
+    activate_send_repeated_start_condition,
+    /// # Is Send Repeated START Condition (might do nothing, please use `activate_send_repeated_start_condition`)
+    /// After sending data to a slave device, the master will send another START to retain control over the bus.
+    is_send_repeated_start_condition}
+
+    bit_impl! {0, RW1O,
+    /// # Activate Start Master Mode Transfer
+    /// Start a master mode transfer over the I2C bus. 
+    activate_start_master_mode_transfer,
+    /// # Is Start Master Mode Transfer (might do nothing, please use `activate_start_master_mode_transfer`)
+    /// Start a master mode transfer over the I2C bus. 
+    is_start_master_mode_transfer}
+}
 
 /// # I2C SCL Low Control Register
 /// The SCL low control register is used to control the clock low time of the bus, page 236 (MAX78000 User Guide)
 pub struct LowSCLControl<const PORT_PTR: usize> {}
 reg_impl!(RW, LowSCLControl, rro::I2C_CLKLO_OFFSET);
 
+impl<const PORT_PTR: usize> LowSCLControl<PORT_PTR> {
+    bit_impl! {0..=8, RW u16,
+    /// # Set Clock Low Time
+    /// Sets the current clock low time for `SCL`. Please use page 236 of the MAX78000 User Guide to determine
+    /// the math in setting this value.
+    set_clock_low_time,
+    /// # Get Clock Low Time
+    /// Gets the current clock low time for `SCL`. Please use page 236 of the MAX78000 User Guide to determine
+    /// the math in getting this value.
+    get_clock_low_time}
+}
+
 /// # I2C SCL High Control Register
 /// The SCL high control register is used to control the clock high time of the bus, page 236 (MAX78000 User Guide)
 pub struct HighSCLControl<const PORT_PTR: usize> {}
 reg_impl!(RW, HighSCLControl, rro::I2C_CLKHI_OFFSET);
+
+impl<const PORT_PTR: usize> HighSCLControl<PORT_PTR> {
+    bit_impl! {0..=8, RW u16,
+    /// # Set Clock High Time
+    /// Sets the current clock High time for `SCL`. Please use page 236 of the MAX78000 User Guide to determine
+    /// the math in setting this value.
+    set_clock_high_time,
+    /// # Get Clock High Time
+    /// Gets the current clock High time for `SCL`. Please use page 236 of the MAX78000 User Guide to determine
+    /// the math in setting this value.
+    get_clock_high_time}
+}
 
 /// # I2C High Speed Clock Control Register
 /// The high speed clock control register is used to control the high speed clock rate, page 236-237 (MAX78000 User Guide)
 pub struct HighSpeedClockControl<const PORT_PTR: usize> {}
 reg_impl!(RW, HighSpeedClockControl, rro::I2C_HSCLK_OFFSET);
 
+impl<const PORT_PTR: usize> HighSpeedClockControl<PORT_PTR> {
+    bit_impl! {8..=15, RW u8,
+    /// # Set High Speed Mode Clock High Time
+    /// Sets the high time duration for high speed mode on the I2C bus.
+    set_high_speed_mode_clock_high_time,
+    /// # Get High Speed Mode Clock High Time
+    /// Gets the high time duration for high speed mode on the I2C bus.
+    get_high_speed_mode_clock_high_time}
+
+    bit_impl! {0..=7, RW u8,
+    /// # Set High Speed Mode Clock Low Time
+    /// Sets the low time duration for high speed mode on the I2C bus.
+    set_high_speed_mode_clock_low_time,
+    /// # Get High Speed Mode Clock Low Time
+    /// Gets the low time duration for high speed mode on the I2C bus.
+    get_high_speed_mode_clock_low_time}
+}
+
 /// # I2C Timeout Register
 /// The timeout register is used to control the bus error scl timeout period, page 237 (MAX78000 User Guide)
 pub struct TimeoutControl<const PORT_PTR: usize> {}
 reg_impl!(RW, TimeoutControl, rro::I2C_TIMEOUT_OFFSET);
+
+impl<const PORT_PTR: usize> TimeoutControl<PORT_PTR> {
+    bit_impl! {0..=15, RW u16,
+    /// # Set Bus Error SCL Timeout Period
+    /// Sets the time that the SCL will be inactive after an error as occurred. Please use page 237
+    /// on the MAX78000 User Guide to determine the calculation.
+    set_bus_error_scl_timeout_period,
+    /// # Get Bus Error SCL Timeout Period
+    /// Sets the time that the SCL will be inactive after an error as occurred. Please use page 237
+    /// on the MAX78000 User Guide to determine the calculation.
+    get_bus_error_scl_timeout_period}
+}
 
 /// # I2C DMA Enable Register
 /// The DMA control register used to control direct memory accessing for the I2C bus, page 237 (MAX78000 User Guide)
 pub struct DMAControl<const PORT_PTR: usize> {}
 reg_impl!(RW, DMAControl, rro::I2C_DMA_OFFSET);
 
+impl<const PORT_PTR: usize> DMAControl<PORT_PTR> {
+    bit_impl! {1, RW,
+    /// # Set Receive DMA Channel Enable
+    /// Enable the DMA Receive channel.
+    /// 
+    /// - 0: Disabled
+    /// - 1: Enabled
+    set_receive_dma_channel_enable,
+    /// # Is Receive DMA Channel Enable
+    /// Enable the DMA Receive channel.
+    /// 
+    /// - 0: Disabled
+    /// - 1: Enabled
+    is_receive_dma_channel_enabled}
+
+    bit_impl! {0, RW,
+    /// # Set Transmit DMA Channel Enable
+    /// Enable the DMA Transmit channel.
+    /// 
+    /// - 0: Disabled
+    /// - 1: Enabled
+    set_transmit_dma_channel_enable,
+    /// # Is Transmit DMA Channel Enable
+    /// Enable the DMA Transmit channel.
+    /// 
+    /// - 0: Disabled
+    /// - 1: Enabled
+    is_transmit_dma_channel_enabled}
+}
+
 /// # I2C Slave Address Register
 /// The slave address register is used to control the addressing mode of the bus, page 237-238 (MAX78000 User Guide)
 pub struct SlaveAddress<const PORT_PTR: usize> {}
 reg_impl!(RW, SlaveAddress, rro::I2C_SLAVE_OFFSET);
+
+impl<const PORT_PTR: usize> SlaveAddress<PORT_PTR> {
+    bit_impl! {15, RW,
+    /// # Set Slave Mode Extended Address Length Select
+    /// Set if (while in slave mode) to use the address extension.
+    ///
+    /// - 0: 7-bit addressing (the most used and normal one)
+    /// - 1: 10-bit addressing 
+    set_slave_mode_extended_address_length_select,
+    /// # Is Slave Mode Extended Address Length Select
+    /// Set if (while in slave mode) to use the address extension.
+    ///
+    /// - 0: 7-bit addressing (the most used and normal one)
+    /// - 1: 10-bit addressing 
+    is_slave_mode_extended_address_length_select}
+
+    bit_impl! {0..=9, RW u16,
+    /// # Set Slave Mode Address
+    /// Sets the address of this device (must be configured to be in slave mode).
+    ///
+    /// Take note: There are a few reserved addresses!
+    set_slave_mode_address,
+    /// # get Slave Mode Address
+    /// Sets the address of this device (must be configured to be in slave mode).
+    ///
+    /// Take note: There are a few reserved addresses!
+    get_slave_mode_address}
+}

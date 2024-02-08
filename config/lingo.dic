@@ -1,4 +1,8 @@
 100
+0xFF
+MCODE
+preload
+RW1O
 I2C
 ptr
 PTR
