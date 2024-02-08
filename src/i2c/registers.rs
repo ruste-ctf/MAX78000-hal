@@ -1333,6 +1333,18 @@ impl<const PORT_PTR: usize> LowSCLControl<PORT_PTR> {
 pub struct HighSCLControl<const PORT_PTR: usize> {}
 reg_impl!(RW, HighSCLControl, rro::I2C_CLKHI_OFFSET);
 
+impl <const PORT_PTR: usize> HighSCLControl<PORT_PTR> {
+    bit_impl! {0..=8, RW u16,
+    /// # Set Clock High Time
+    /// Sets the current clock High time for `SCL`. Please use page 236 of the MAX78000 User Guide to determine
+    /// the math in setting this value.
+    set_clock_high_time,
+    /// # Get Clock High Time
+    /// Gets the current clock High time for `SCL`. Please use page 236 of the MAX78000 User Guide to determine
+    /// the math in setting this value.
+    get_clock_high_time}
+}
+
 /// # I2C High Speed Clock Control Register
 /// The high speed clock control register is used to control the high speed clock rate, page 236-237 (MAX78000 User Guide)
 pub struct HighSpeedClockControl<const PORT_PTR: usize> {}
