@@ -1244,6 +1244,20 @@ impl<const PORT_PTR: usize> TransmitControl1<PORT_PTR> {
 pub struct DataRegister<const PORT_PTR: usize> {}
 reg_impl!(RW, DataRegister, rro::I2C_FIFO_OFFSET);
 
+impl<const PORT_PTR: usize> DataRegister<PORT_PTR> {
+    bit_impl! {0..=7, RW u8,
+    /// # Write FIFO Data
+    /// Write to the transmit FIFO (pushes the data onto the transmit FIFO).
+    ///
+    /// If the FIFO is full, this operation is ignored (the data will be lost).
+    write_fifo_data,
+    /// # Read FIFO Data
+    /// Read from the receive FIFO (pops the data off the received FIFO).
+    ///
+    /// If the FIFO is empty, this operation will return 0xFF (error).
+    read_fifo_data}
+}
+
 /// # I2C Master Control Register
 /// The master control register is used to control the bus when the device is configured to be the master, page 235-236 (MAX78000 User Guide)
 pub struct MasterControl<const PORT_PTR: usize> {}
