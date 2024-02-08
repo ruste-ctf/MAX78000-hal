@@ -1082,7 +1082,137 @@ impl<const PORT_PTR: usize> ReceiveControl1<PORT_PTR> {
 /// # I2C Transmit Control 0 Register
 /// The transmit control register is used to control transmitting related I2C tasks, page 233-234 (MAX78000 User Guide)
 pub struct TransmitControl0<const PORT_PTR: usize> {}
-reg_impl!(RW, TransmitControl0, rro::I2C_TXCTRL0_OFFSET);
+reg_impl!(RW1O, TransmitControl0, rro::I2C_TXCTRL0_OFFSET, 0b0000000000000000000100111111);
+
+impl<const PORT_PTR: usize> TransmitControl0<PORT_PTR> {
+    bit_impl! {8..=11, RW u8,
+    /// # Set Transmit FIFO Threshold Level
+    /// Sets the number of bytes that are required to trigger an interrupt (if that interrupt is enabled) and
+    /// set the flag. The number of bytes must be smaller or equal to this value for such an interrupt to occur.
+    ///
+    /// - 0: 0 or fewer bytes triggers event
+    /// - 1: 1 or fewer bytes triggers event
+    /// ...
+    /// - 7: 7 or fewer bytes triggers event
+    set_transmit_fifo_threshold_level,
+    /// # Get Transmit FIFO Threshold Level
+    /// Sets the number of bytes that are required to trigger an interrupt (if that interrupt is enabled) and
+    /// set the flag. The number of bytes must be smaller or equal to this value for such an interrupt to occur.
+    ///
+    /// - 0: 0 or fewer bytes triggers event
+    /// - 1: 1 or fewer bytes triggers event
+    /// ...
+    /// - 7: 7 or fewer bytes triggers event
+    get_transmit_fifo_threshold_level}
+
+    bit_impl! {7, RW1O, 
+    /// # Activate Transmit FIFO Flush
+    /// A transmit FIFO flush will clear all data from the transmit FIFO.
+    ///
+    /// - 0: Transmit FIFO flush is complete (or is not active).
+    /// - 1: The Transmit FIFO Flush is currently being serviced
+    activate_transmit_fifo_flush,
+    /// # Is Transmit FIFO Flush
+    /// A transmit FIFO flush will clear all data from the transmit FIFO.
+    ///
+    /// - 0: Transmit FIFO flush is complete (or is not active).
+    /// - 1: The Transmit FIFO Flush is currently being serviced
+    is_transmit_fifo_flush}
+
+    bit_impl! {5, RW,
+    /// # Set Transmit FIFO Received NACK Auto Flush Disable
+    /// There are some cases in which other registers will cause a transmit FIFO flush. In such a case, one of the following
+    /// values will be true.
+    ///
+    /// - 0: Received NACK at the end of a slave transmit operation enabled
+    /// - 1: Received NACK at the end of a slave transmit operation disabled
+    set_transmit_fifo_received_nack_auto_flush_disable,
+    /// # Is Transmit FIFO Received NACK Auto Flush Disable
+    /// There are some cases in which other registers will cause a transmit FIFO flush. In such a case, one of the following
+    /// values will be true.
+    ///
+    /// - 0: Received NACK at the end of a slave transmit operation enabled
+    /// - 1: Received NACK at the end of a slave transmit operation disabled
+    is_transmit_fifo_received_nack_auto_flush_disable}
+
+    bit_impl! {4, RW,
+    /// # Set Transmit FIFO Slave Address Match Read Auto Flush Disable
+    /// There are some cases in which other registers will cause a transmit FIFO flush. In such a case, one of the following
+    /// values will be true.
+    ///
+    /// - 0: Enabled
+    /// - 1: Disabled
+    set_transmit_fifo_slave_address_match_read_auto_flush_disable,
+    /// # Is Transmit FIFO Slave Address Match Read Auto Flush Disable
+    /// There are some cases in which other registers will cause a transmit FIFO flush. In such a case, one of the following
+    /// values will be true.
+    ///
+    /// - 0: Enabled
+    /// - 1: Disabled
+    is_transmit_fifo_slave_address_match_read_auto_flush_disable}
+
+    bit_impl! {3, RW,
+    /// # Set Transmit FIFO Slave Address Match Write Auto Flush Disable
+    /// There are some cases in which other registers will cause a transmit FIFO flush. In such a case, one of the following
+    /// values will be true.
+    ///
+    /// - 0: Enabled
+    /// - 1: Disabled
+    set_transmit_fifo_slave_address_match_write_auto_flush_disable,
+    /// # Is Transmit FIFO Slave Address Match Write Auto Flush Disable
+    /// There are some cases in which other registers will cause a transmit FIFO flush. In such a case, one of the following
+    /// values will be true.
+    ///
+    /// - 0: Enabled
+    /// - 1: Disabled
+    is_transmit_fifo_slave_address_match_write_auto_flush_disable}
+
+    bit_impl! {2, RW,
+    /// # Set Transmit FIFO General Call Address Match Auto Flush Disable
+    /// There are some cases in which other registers will cause a transmit FIFO flush. In such a case, one of the following
+    /// values will be true.
+    ///
+    /// - 0: Enabled
+    /// - 1: Disabled
+    set_transmit_fifo_general_call_address_match_auto_flush_disable,
+    /// # Is Transmit FIFO General Call Address Match Auto Flush Disable
+    /// There are some cases in which other registers will cause a transmit FIFO flush. In such a case, one of the following
+    /// values will be true.
+    ///
+    /// - 0: Enabled
+    /// - 1: Disabled
+    is_transmit_fifo_general_call_address_match_auto_flush_disable}
+
+    bit_impl! {1, RW,
+    /// # Set Transmit FIFO Read Manual Mode
+    /// Disable or enable the hardware from controlling the `preload ready` flag. When enabled, it allows software to only
+    /// control this flag.
+    ///
+    /// - 0: Hardware Controls Preload Ready
+    /// - 1: Software Controls Preload Ready
+    set_transmit_fifo_read_manual_mode,
+    /// # Is Transmit FIFO Read Manual Mode
+    /// Disable or enable the hardware from controlling the `preload ready` flag. When enabled, it allows software to only
+    /// control this flag.
+    ///
+    /// - 0: Hardware Controls Preload Ready
+    /// - 1: Software Controls Preload Ready
+    is_transmit_fifo_read_manual_mode}
+
+    bit_impl! {0, RW,
+    /// # Set Transmit FIFO Preload Mode Enable
+    /// The following conditions are held with this flag.
+    ///
+    /// - 0: An Address match in slave mode, or a general call address does lock the transmit FIFO.
+    /// - 1: Transmit FIFO preload mode. An address match in slave mode does not lock the transmit FIFO.
+    set_transmit_fifo_preload_mode_enable,
+    /// # Is Transmit FIFO Preload Mode Enable
+    /// The following conditions are held with this flag.
+    ///
+    /// - 0: An Address match in slave mode, or a general call address does lock the transmit FIFO.
+    /// - 1: Transmit FIFO preload mode. An address match in slave mode does not lock the transmit FIFO.
+    is_transmit_fifo_preload_mode_enable}
+}
 
 /// # I2C Transmit Control 1 Register
 /// The transmit control register is used to control transmitting related I2C tasks, page 234-235 (MAX78000 User Guide)
