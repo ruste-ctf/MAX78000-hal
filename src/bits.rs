@@ -167,7 +167,7 @@ macro_rules! bit_manipulation_impl {
             mask <<= true_bit_start;
 
             // Combine everything together
-            *self = (*self & mask) | (set_bits << true_bit_start);
+            *self = (*self & !mask) | (set_bits << true_bit_start);
             self
         }
     }
