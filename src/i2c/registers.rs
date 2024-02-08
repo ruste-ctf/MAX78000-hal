@@ -1373,6 +1373,18 @@ impl<const PORT_PTR: usize> HighSpeedClockControl<PORT_PTR> {
 pub struct TimeoutControl<const PORT_PTR: usize> {}
 reg_impl!(RW, TimeoutControl, rro::I2C_TIMEOUT_OFFSET);
 
+impl<const PORT_PTR: usize> TimeoutControl<PORT_PTR> {
+    bit_impl! {0..=15, RW u16,
+    /// # Set Bus Error SCL Timeout Period
+    /// Sets the time that the SCL will be inactive after an error as occurred. Please use page 237
+    /// on the MAX78000 User Guide to determine the calculation.
+    set_bus_error_scl_timeout_period,
+    /// # Get Bus Error SCL Timeout Period
+    /// Sets the time that the SCL will be inactive after an error as occurred. Please use page 237
+    /// on the MAX78000 User Guide to determine the calculation.
+    get_bus_error_scl_timeout_period}
+}
+
 /// # I2C DMA Enable Register
 /// The DMA control register used to control direct memory accessing for the I2C bus, page 237 (MAX78000 User Guide)
 pub struct DMAControl<const PORT_PTR: usize> {}
