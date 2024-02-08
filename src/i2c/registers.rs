@@ -987,8 +987,63 @@ impl<const PORT_PTR: usize> FIFOLengthRegister<PORT_PTR> {
 /// # I2C Receive Control 0 Register
 /// The Receive control register is used to set the receive FIFO threshold level, and set flush receive FIFO, page 231-232 (MAX78000 User Guide)
 pub struct ReceiveControl0<const PORT_PTR: usize> {}
-reg_impl!(RW, ReceiveControl0, rro::I2C_RXCTRL0_OFFSET);
+reg_impl!(RW1O, ReceiveControl0, rro::I2C_RXCTRL0_OFFSET, 0b00000000000000000001111111100000001);
 
+impl<const PORT_PTR: usize> ReceiveControl0<PORT_PTR> {
+    bit_impl! {8..=11, RW u8,
+    /// # Set Receive FIFO Threshold Level
+    /// This is the number of bytes to trigger a receive FIFO threshold event. If the bytes in the FIFO are greator than or equal to
+    /// this value, the hardware will generate an interrupt (if enabled) and set [`InterruptFlag0::is_receive_fifo_threshold_level_interrupt_enabled`] to
+    /// true.
+    /// 
+    /// - 0: 0 bytes or more causes an event
+    /// - 1: 1 bytes or more causes an event
+    /// -  ...
+    /// - 8: 8 bytes (only when the FIFO is full)
+    set_receive_fifo_threshold_level,
+    /// # Is Receive FIFO Threshold Level
+    /// This is the number of bytes to trigger a receive FIFO threshold event. If the bytes in the FIFO are greator than or equal to
+    /// this value, the hardware will generate an interrupt (if enabled) and set [`InterruptFlag0::is_receive_fifo_threshold_level_interrupt_enabled`] to
+    /// true.
+    /// 
+    /// - 0: 0 bytes or more causes an event
+    /// - 1: 1 bytes or more causes an event
+    /// -  ...
+    /// - 8: 8 bytes (only when the FIFO is full)
+    get_receive_fifo_threshold_level}
+    
+    bit_impl! {7, RW1O,
+    /// # Activate Flush Receive FIFO
+    /// When activated, this will initiate a receive FIFO flush. The hardware will then clear all the data in the receive FIFO. Among finishing
+    /// the hardware will set this flag back to `0`.
+    ///
+    /// 0: Receive FIFO flush complete (or not started)
+    /// 1: Flushing the Receive FIFO
+    activate_flush_receive_fifo,
+    /// # Is Flush Receive FIFO
+    /// When activated, this will initiate a receive FIFO flush. The hardware will then clear all the data in the receive FIFO. Among finishing
+    /// the hardware will set this flag back to `0`.
+    ///
+    /// 0: Receive FIFO flush complete (or not started)
+    /// 1: Flushing the Receive FIFO
+    is_flush_receive_fifo}
+
+    bit_impl! {0, RW,
+    /// # Set Slave Do-Not-Respond
+    /// If this device (configured only in slave mode operation) has just been addressed for a write operation, and the receive FIFO is not
+    /// empty the device will respond with a NACK.
+    ///
+    /// 0: ACK the address, but NACK the data
+    /// 1: NACK the address
+    set_slave_do_not_respond,
+    /// # Is Slave Do-Not-Respond
+    /// If this device (configured only in slave mode operation) has just been addressed for a write operation, and the receive FIFO is not
+    /// empty the device will respond with a NACK.
+    ///
+    /// 0: ACK the address, but NACK the data
+    /// 1: NACK the address
+    is_slave_do_not_respond}
+}
 /// # I2C Receive Control 1 Register
 /// The receive control register is used to set receive FIFO byte count configuration, and read byte count, page 232-233 (MAX78000 User Guide)
 pub struct ReceiveControl1<const PORT_PTR: usize> {}
