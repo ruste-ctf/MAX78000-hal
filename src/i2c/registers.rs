@@ -1390,6 +1390,36 @@ impl<const PORT_PTR: usize> TimeoutControl<PORT_PTR> {
 pub struct DMAControl<const PORT_PTR: usize> {}
 reg_impl!(RW, DMAControl, rro::I2C_DMA_OFFSET);
 
+impl<const PORT_PTR: usize> DMAControl<PORT_PTR> {
+    bit_impl! {1, RW,
+    /// # Set Receive DMA Channel Enable
+    /// Enable the DMA Receive channel.
+    /// 
+    /// - 0: Disabled
+    /// - 1: Enabled
+    set_receive_dma_channel_enable,
+    /// # Is Receive DMA Channel Enable
+    /// Enable the DMA Receive channel.
+    /// 
+    /// - 0: Disabled
+    /// - 1: Enabled
+    is_receive_dma_channel_enabled}
+
+    bit_impl! {0, RW,
+    /// # Set Transmit DMA Channel Enable
+    /// Enable the DMA Transmit channel.
+    /// 
+    /// - 0: Disabled
+    /// - 1: Enabled
+    set_transmit_dma_channel_enable,
+    /// # Is Transmit DMA Channel Enable
+    /// Enable the DMA Transmit channel.
+    /// 
+    /// - 0: Disabled
+    /// - 1: Enabled
+    is_transmit_dma_channel_enabled}
+}
+
 /// # I2C Slave Address Register
 /// The slave address register is used to control the addressing mode of the bus, page 237-238 (MAX78000 User Guide)
 pub struct SlaveAddress<const PORT_PTR: usize> {}
