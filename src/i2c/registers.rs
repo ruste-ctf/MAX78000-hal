@@ -1261,7 +1261,55 @@ impl<const PORT_PTR: usize> DataRegister<PORT_PTR> {
 /// # I2C Master Control Register
 /// The master control register is used to control the bus when the device is configured to be the master, page 235-236 (MAX78000 User Guide)
 pub struct MasterControl<const PORT_PTR: usize> {}
-reg_impl!(RW, MasterControl, rro::I2C_MSTCTRL_OFFSET);
+reg_impl!(RW1O, MasterControl, rro::I2C_MSTCTRL_OFFSET, 0b00000000000000000000000111000000);
+
+impl<const PORT_PTR: usize> MasterControl<PORT_PTR> {
+    bit_impl! {8..=10, RW u8,
+    /// # Set `MCODE`
+    /// This property sets the master code used in HS-Mode operation.
+    set_mcode,
+    /// # Get `MCODE`
+    /// This property gets the master code used in HS-Mode operation.
+    get_mcode}
+
+    bit_impl! {7, RW,
+    /// # Set Slave Extended Addressing
+    /// Sets the master to enable slave extended bit addressing, this allows up to 10-bit addresses for slave devices.
+    ///
+    /// - 0: 7-bit Addressing (The most used and common)
+    /// - 1: 10-bit Addressing
+    set_slave_extended_addressing,
+    /// # Is Slave Extended Addressing
+    /// Sets the master to enable slave extended bit addressing, this allows up to 10-bit addresses for slave devices.
+    ///
+    /// - 0: 7-bit Addressing (The most used and common)
+    /// - 1: 10-bit Addressing
+    is_slave_extended_addressing_enabled}
+
+    bit_impl! {2, RW1O,
+    /// # Activate Send STOP Condition
+    /// Tell the master to send a STOP condition at the end of the current transaction.
+    activate_send_stop_condition,
+    /// # Is Send STOP Condition (might do nothing, please use `activate_send_stop_condition`)
+    /// Tell the master to send a STOP condition at the end of the current transaction.
+    is_send_stop_condition}
+
+    bit_impl! {1, RW1O,
+    /// # Activate Send Repeated START Condition
+    /// After sending data to a slave device, the master will send another START to retain control over the bus.
+    activate_send_repeated_start_condition,
+    /// # Is Send Repeated START Condition (might do nothing, please use `activate_send_repeated_start_condition`)
+    /// After sending data to a slave device, the master will send another START to retain control over the bus.
+    is_send_repeated_start_condition}
+
+    bit_impl! {0, RW1O,
+    /// # Activate Start Master Mode Transfer
+    /// Start a master mode transfer over the I2C bus. 
+    activate_start_master_mode_transfer,
+    /// # Is Start Master Mode Transfer (might do nothing, please use `activate_start_master_mode_transfer`)
+    /// Start a master mode transfer over the I2C bus. 
+    is_start_master_mode_transfer}
+}
 
 /// # I2C SCL Low Control Register
 /// The SCL low control register is used to control the clock low time of the bus, page 236 (MAX78000 User Guide)
