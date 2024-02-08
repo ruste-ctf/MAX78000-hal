@@ -1265,10 +1265,10 @@ reg_impl!(RW1O, MasterControl, rro::I2C_MSTCTRL_OFFSET, 0b0000000000000000000000
 
 impl<const PORT_PTR: usize> MasterControl<PORT_PTR> {
     bit_impl! {8..=10, RW u8,
-    /// # Set `MCODE`
+    /// # Set MCODE
     /// This property sets the master code used in HS-Mode operation.
     set_mcode,
-    /// # Get `MCODE`
+    /// # Get MCODE
     /// This property gets the master code used in HS-Mode operation.
     get_mcode}
 
@@ -1315,6 +1315,18 @@ impl<const PORT_PTR: usize> MasterControl<PORT_PTR> {
 /// The SCL low control register is used to control the clock low time of the bus, page 236 (MAX78000 User Guide)
 pub struct LowSCLControl<const PORT_PTR: usize> {}
 reg_impl!(RW, LowSCLControl, rro::I2C_CLKLO_OFFSET);
+
+impl<const PORT_PTR: usize> LowSCLControl<PORT_PTR> {
+    bit_impl! {0..=8, RW u16,
+    /// # Set Clock Low Time
+    /// Sets the current clock low time for `SCL`. Please use page 236 of the MAX78000 User Guide to determine
+    /// the math in setting this value.
+    set_clock_low_time,
+    /// # Get Clock Low Time
+    /// Gets the current clock low time for `SCL`. Please use page 236 of the MAX78000 User Guide to determine
+    /// the math in getting this value.
+    get_clock_low_time}
+}
 
 /// # I2C SCL High Control Register
 /// The SCL high control register is used to control the clock high time of the bus, page 236 (MAX78000 User Guide)
