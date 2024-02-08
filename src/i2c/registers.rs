@@ -992,7 +992,7 @@ reg_impl!(RW1O, ReceiveControl0, rro::I2C_RXCTRL0_OFFSET, 0b00000000000000000001
 impl<const PORT_PTR: usize> ReceiveControl0<PORT_PTR> {
     bit_impl! {8..=11, RW u8,
     /// # Set Receive FIFO Threshold Level
-    /// This is the number of bytes to trigger a receive FIFO threshold event. If the bytes in the FIFO are greator than or equal to
+    /// This is the number of bytes to trigger a receive FIFO threshold event. If the bytes in the FIFO are greater than or equal to
     /// this value, the hardware will generate an interrupt (if enabled) and set [`InterruptFlag0::is_receive_fifo_threshold_level_interrupt_enabled`] to
     /// true.
     /// 
@@ -1002,7 +1002,7 @@ impl<const PORT_PTR: usize> ReceiveControl0<PORT_PTR> {
     /// - 8: 8 bytes (only when the FIFO is full)
     set_receive_fifo_threshold_level,
     /// # Is Receive FIFO Threshold Level
-    /// This is the number of bytes to trigger a receive FIFO threshold event. If the bytes in the FIFO are greator than or equal to
+    /// This is the number of bytes to trigger a receive FIFO threshold event. If the bytes in the FIFO are greater than or equal to
     /// this value, the hardware will generate an interrupt (if enabled) and set [`InterruptFlag0::is_receive_fifo_threshold_level_interrupt_enabled`] to
     /// true.
     /// 
