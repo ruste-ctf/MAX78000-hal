@@ -176,5 +176,6 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     bit_impl! {9, RESET, // FIXME This needs to be renamed / changed
     /// # Activate Receive FIFO Flush
     /// Write a 1 to flush the receive FIFO
+    /// foo
     activate_receive_fifo_flush}
 }
