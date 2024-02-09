@@ -213,8 +213,7 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     /// # Check Transmit Parity Generation Enable
     check_transmit_parity_genration_enable}
 
-    bit_impl! {0..=3, RW u16,
-
+    bit_impl! {0..=3, RW u8,
     /// # Set Receive FIFO Threshold
     set_recieve_fifo_threshold,
     /// # Check Receive FIFO Threshold
