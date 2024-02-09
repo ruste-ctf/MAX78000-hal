@@ -18,6 +18,7 @@ impl private::I2CPortCompatable for I2CPort0 {}
 impl private::I2CPortCompatable for I2CPort1 {}
 impl private::I2CPortCompatable for I2CPort2 {}
 
+#[allow(dead_code)]
 pub struct I2C<Port: private::I2CPortCompatable = NoPort> {
     master_enabled: bool,
     slave_address: usize,
@@ -88,6 +89,46 @@ macro_rules! registers {
         #[allow(unused)]
         type TransmitControl1 = registers::TransmitControl1<{ $port }>;
     };
+}
+
+/// # I2C Bus Control Event
+/// Send a event marker to the I2C bus.
+///
+/// Event markers are messages (really just state changes) that significant
+/// a device that some operation is occurring. For example, you can send
+/// either `START`, `RESTART` (kinda), or `STOP` over the I2C bus.
+///
+/// # `START`
+/// When sending a start event, devices on the I2C bus are ready and waiting
+/// to receive their address. If a device is addressed (with RW bit) then it
+/// will be the one that is going to handle this transmission.
+///
+/// # `RESTART`
+/// When sending a restart event, devices on the I2C bus will not first be prompted
+/// to go into idle (if the device supports it). This is usually faster for slave devices
+/// to respond, so when sending a command immediately after another its a good idea
+/// to send `RESTART`
+///
+/// # `STOP`
+/// This signifies to the devices on the bus that this communication frame is over
+/// and the bus can go back to idle.
+///
+pub enum I2CBusControlEvent {
+    /// # `START`
+    /// When sending a start event, devices on the I2C bus are ready and waiting
+    /// to receive their address. If a device is addressed (with RW bit) then it
+    /// will be the one that is going to handle this transmission.
+    Start,
+    /// # `RESTART`
+    /// When sending a restart event, devices on the I2C bus will not first be prompted
+    /// to go into idle (if the device supports it). This is usually faster for slave devices
+    /// to respond, so when sending a command immediately after another its a good idea
+    /// to send `RESTART`
+    Restart,
+    /// # `STOP`
+    /// This signifies to the devices on the bus that this communication frame is over
+    /// and the bus can go back to idle.
+    Stop,
 }
 
 #[allow(unused)]
@@ -167,6 +208,42 @@ impl I2C<I2CPort0> {
 
         unsafe {
             SlaveAddress::set_slave_mode_address(address as u16);
+        }
+
+        Ok(())
+    }
+
+    fn master_transaction(
+        &self,
+        address: usize,
+        rx: Option<&mut [u8]>,
+        tx: Option<&[u8]>,
+    ) -> Result<()> {
+        let reading = rx.is_some();
+        let writing = tx.is_some();
+
+        if !reading || writing {}
+        todo!()
+    }
+
+    fn send_address_with_rw(&self, address: usize, is_writting: bool) {}
+
+    pub fn send_bus_event(&self, event: I2CBusControlEvent) -> Result<()> {
+        registers!(mmio::I2C_PORT_0);
+        if !self.master_enabled {
+            return Err(ErrorKind::BadState);
+        }
+
+        match event {
+            I2CBusControlEvent::Start => unsafe {
+                MasterControl::activate_start_master_mode_transfer();
+            },
+            I2CBusControlEvent::Restart => unsafe {
+                MasterControl::activate_send_repeated_start_condition();
+            },
+            I2CBusControlEvent::Stop => unsafe {
+                MasterControl::activate_send_stop_condition();
+            },
         }
 
         Ok(())
