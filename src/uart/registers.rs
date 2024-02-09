@@ -98,7 +98,7 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     /// - 1: Error detection is enabled
     is_bit_frame_error_detection_enabled}
 
-    bit_impl! {16..=17, RW u16,
+    bit_impl! {16..=17, RW u8,
     /// # Baud Clock Source
     /// Select the source for the baud generator (See Table 12-1)
     /// - 0: Clock 0
@@ -157,7 +157,7 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     /// - 1: 1.5 stop bit for 5 bit mode, 2 bit mode otherwise
     check_number_of_stop_bits}
 
-    bit_impl! {10..=11, RW u16,
+    bit_impl! {10..=11, RW u8,
     /// # Set Character Length
     /// Set the number of bits in a character in an UART frame.
     /// - 0: 5 bits
