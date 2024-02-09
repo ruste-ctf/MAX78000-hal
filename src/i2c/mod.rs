@@ -94,7 +94,7 @@ macro_rules! registers {
 /// # I2C Bus Control Event
 /// Send a event marker to the I2C bus.
 ///
-/// Event markers are messages (really just state changes) that significant
+/// Event markers are messages (really just state changes) that signify
 /// a device that some operation is occurring. For example, you can send
 /// either `START`, `RESTART` (kinda), or `STOP` over the I2C bus.
 ///
@@ -222,11 +222,20 @@ impl I2C<I2CPort0> {
         let reading = rx.is_some();
         let writing = tx.is_some();
 
-        if !reading || writing {}
+        if !reading || writing {
+            self.send_address_with_rw(address, true);
+            self.send_bus_event(I2CBusControlEvent::Start)?;
+        }
         todo!()
     }
 
-    fn send_address_with_rw(&self, address: usize, is_writting: bool) {}
+    fn send_address_with_rw(&self, address: usize, is_writting: bool) {
+        registers!(mmio::I2C_PORT_0);
+        let writting_value = if is_writting { 0 } else { 1 };
+        unsafe {
+            DataRegister::write_fifo_data((address << 1 | writting_value) as u8);
+        }
+    }
 
     pub fn send_bus_event(&self, event: I2CBusControlEvent) -> Result<()> {
         registers!(mmio::I2C_PORT_0);
