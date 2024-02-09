@@ -98,7 +98,7 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     /// - 1: Error detection is enabled
     is_bit_frame_error_detection_enabled}
 
-    bit_impl! {17..=16, RW u16,
+    bit_impl! {16..=17, RW u16,
     /// # Baud Clock Source
     /// Select the source for the baud generator (See Table 12-1)
     /// - 0: Clock 0
@@ -127,8 +127,8 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     is_baud_clock_enable}
 
     bit_impl! {14, WO, // <- FIXME What should this be? Datasheet says RO, but that does not seem right
-    /// # Hardware Flow Control RTS Deassert Condition.
-    /// Discribes the conditions when RTS is deasserted
+    /// # Hardware Flow Control RTS Deassert    Condition.
+    /// Describes the conditions when RTS is deasserted
     /// - 0: When FIFO level = C_RX_FIFO_DEPTH, RTS is deasserted
     /// - 1: When FIFO level >= UART_CTRL.rx_thd_val, RTS is deasserted
     set_hardware_flow_rts_deassert_condition}
@@ -157,16 +157,16 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     /// - 1: 1.5 stop bit for 5 bit mode, 2 bit mode otherwise
     check_number_of_stop_bits}
 
-    bit_impl! {11..=10, RW u16,
+    bit_impl! {10..=11, RW u16,
     /// # Set Character Length
-    /// Set the number of bits in a character in an uart frame.
+    /// Set the number of bits in a character in an UART frame.
     /// - 0: 5 bits
     /// - 1: 6 bits
     /// - 2: 7 bits
     /// - 3: 8 bits
     set_character_length,
     /// # Check Character Length
-    /// Checks the current number of bits in a character in a uart frame
+    /// Checks the current number of bits in a character in a UART frame
     /// - 0: 5 bits
     /// - 1: 6 bits
     /// - 2: 7 bits
@@ -175,6 +175,6 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
 
     bit_impl! {9, RESET, // FIXME This needs to be renamed / changed
     /// # Activate Receive FIFO Flush
-    /// Write a 1 to flush the receive fifo
+    /// Write a 1 to flush the receive FIFO
     activate_receive_fifo_flush}
 }
