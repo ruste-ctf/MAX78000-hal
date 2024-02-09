@@ -227,7 +227,6 @@ reg_impl!(RW, StatusRegister, uro::UART_CTRL);
 
 impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     bit_impl! {12..=15, RO u8,
-
     /// # Transmit FIFO Level
     get_transmit_fifo_level}
 
@@ -267,7 +266,6 @@ reg_impl!(RW, InterruptEnableRegister, uro::UART_CTRL);
 
 impl<const PORT_PTR: usize> InterruptEnableRegister<PORT_PTR> {
     bit_impl! {6, RW,
-
     /// # Set Transmit FIFO Half-Empty Event Interrupt Enable
     set_transmit_fifo_half_empty_event,
     /// # Get Transmit FIFO Half-Empty Event Interrupt Enable
@@ -286,9 +284,9 @@ impl<const PORT_PTR: usize> InterruptEnableRegister<PORT_PTR> {
     get_receive_fifo_thershold_event}
 
     bit_impl! {2, RW,
-    /// # Set CTS Signal Change Event Interrupt Enable
+    /// # Set `CTS` Signal Change Event Interrupt Enable
     set_cts_signal_change_event,
-    /// # Get CTS Signal Change Event Interrupt Enable
+    /// # Get `CTS` Signal Change Event Interrupt Enable
     get_cts_signal_change_event}
 
     bit_impl! {1, RW,
