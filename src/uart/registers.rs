@@ -5,7 +5,7 @@ use crate::{bit_impl, reg_impl};
 use core::ptr;
 
 /// # UART Register Offsets
-/// See Max 78000 User Guide Page 180, Table 12-7
+/// See Max 78000 User Guide Page 180, Table 12-7.
 mod uro {
     /// # UART Control Register
     pub const UART_CTRL: usize = 0x0000;
