@@ -176,6 +176,34 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     bit_impl! {9, RESET, // FIXME This needs to be renamed / changed
     /// # Activate Receive FIFO Flush
     /// Write a 1 to flush the receive FIFO
-    /// foo
     activate_receive_fifo_flush}
+
+    bit_impl! {8, RESET, // FIXME This need to be renamed / changed
+    /// # Activate Transmit FIFO Flush
+    /// Write a 1 to flush the transmit FIFO
+    activiate_transmit_fifo_flush}
+
+    bit_impl! {7, RW,
+    /// # Set CTS Sampling Disable
+    /// Choose to enable or disable CTS (Clear To Send)
+    /// - 0: Enabled
+    /// - 1: Disabled
+    set_cts_sampling_disable,
+    /// # Check CTS Sampling Disable
+    /// Check the current state of CTS disable
+    /// - 0: Enabled
+    /// - 1: Disabled
+    check_cts_sampling_disable}
+
+    bit_impl! {6, RW,
+    /// # Set Parity Value
+    set_parity_value,
+    /// # Check Parity Value
+    check_parity_value}
+
+    bit_impl! {5, RW,
+    /// # Parity Odd Even Select
+    set_parity_odd_even,
+    /// # Check Parity Odd Even Select
+    check_parity_odd_even}
 }
