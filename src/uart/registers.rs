@@ -195,7 +195,7 @@ impl<const PORT_PTR: usize> OversamplingControlRegister<PORT_PTR> {
 /// # UART Transmit FIFO Register
 /// The UART Transmit FIFO Register. See Page 184, Table 12-14.
 pub struct TransmitFIFORegister<const PORT_PTR: usize> {}
-reg_impl!(RO, TransmitFIFORegister, uro::UART_OSR);
+reg_impl!(RO, TransmitFIFORegister, uro::UART_TXPEEK);
 
 impl<const PORT_PTR: usize> TransmitFIFORegister<PORT_PTR> {
     bit_impl! {0..=7, RO u8,
