@@ -179,6 +179,23 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     activate_receive_fifo_flush}
 }
 
+/// # UART Data Register
+/// The UART Data Register. See Page 185, Table 12-16.
+pub struct DataRegister<const PORT_PTR: usize> {}
+reg_impl!(RW, DataRegister, uro::UART_FIFO);
+
+impl<const PORT_PTR: usize> DataRegister<PORT_PTR> {
+    bit_impl! {8, RO,
+    /// # Get Receive FIFO Byte Parity
+    get_receive_fifo_byte_parity}
+
+    bit_impl! {0..=7, RW u8,
+    /// # Get Transmit/Receive FIFO Data
+    get_transmit_receive_fifo_data,
+    /// # Set Transmit/Receive FIFO Data
+    set_transmit_receive_fifo_data}
+}
+
 /// # UART DMA Register
 /// The UART DMA Register. See Page 185, Table 12-17.
 pub struct DMARegister<const PORT_PTR: usize> {}
