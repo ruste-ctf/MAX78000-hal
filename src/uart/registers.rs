@@ -237,8 +237,7 @@ impl<const PORT_PTR: usize> ClockDivisorRegister<PORT_PTR> {
     /// # Get Baud Rate Divisor
     get_baud_rate_divisor,
     /// # Set Baud Rate Divisor
-    set_baud_rate_divisor,
-    }
+    set_baud_rate_divisor}
 }
 
 /// # UART Oversampling Control Register
