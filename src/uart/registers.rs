@@ -179,6 +179,20 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     activate_receive_fifo_flush}
 }
 
+/// # UART Clock Divisor Register
+/// The UART Clock Divisor Register. See Page 183-184, Table 12-12
+pub struct ClockDivisorRegister<const PORT_PTR: usize> {}
+reg_impl!(RW, ClockDivisorRegister, uro::UART_CLKDIV);
+
+impl<const PORT_PTR: usize> ClockDivisorRegister<PORT_PTR> {
+    bit_impl! {0..=19, RW u32,
+    /// # Get Baud Rate Divisor
+    get_baud_rate_divisor,
+    /// # Set Baud Rate Divisor
+    set_baud_rate_divisor,
+    }
+}
+
 /// # UART Oversampling Control Register
 /// The UART Oversampling Control Register. See Page 184, Table 12-13
 pub struct OversamplingControlRegister<const PORT_PTR: usize> {}
