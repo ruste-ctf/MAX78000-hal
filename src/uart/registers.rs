@@ -179,6 +179,17 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     activate_receive_fifo_flush}
 }
 
+/// # UART Transmit FIFO Register
+/// The UART Transmit FIFO Register. See Page 184, Table 12-14.
+pub struct TransmitFIFORegister<const PORT_PTR: usize> {}
+reg_impl!(RO, TransmitFIFORegister, uro::UART_OSR);
+
+impl<const PORT_PTR: usize> TransmitFIFORegister<PORT_PTR> {
+    bit_impl! {0..=7, RO u8,
+    /// Get Transmit FIFO Data
+    get_transmit_fifo_data}
+}
+
 /// # UART Pin Control Register
 /// The UART Pin Control Register. See Page 184-185, Table 12-15.
 pub struct PinControlRegister<const PORT_PTR: usize> {}
