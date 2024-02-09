@@ -219,3 +219,43 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     /// # Check Receive FIFO Threshold
     check_recieve_fifo_threshold}
 }
+
+/// # UART Status Register
+/// The UART Status Register. See page 182, table 12-9
+pub struct StatusRegister<const PORT_PTR: usize> {}
+reg_impl!(RW, StatusRegister, uro::UART_CTRL);
+
+impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
+    bit_impl! {12..=15, RO u8,
+
+    /// # Transmit FIFO Level
+    get_transmit_fifo_level}
+
+    bit_impl! {8..=11, RO u8,
+    /// # Receive FIFO Level
+    get_receive_fifo_level}
+
+    bit_impl! {7, RO,
+    /// # Transmit FIFO Full
+    is_transmit_fifo_full}
+
+    bit_impl! {6, RO,
+    /// # Transmit FIFO Empty
+    is_transmit_fifo_empty}
+
+    bit_impl! {5, RO,
+    /// # Receive FIFO Full
+    is_receive_fifo_full}
+
+    bit_impl! {4, RO,
+    /// # Receive FIFO Empty
+    is_receive_fifo_empty}
+
+    bit_impl! {1, RO,
+    /// # Receive Busy
+    is_receive_busy}
+
+    bit_impl! {0, RO,
+    /// # Transmit Busy
+    is_transmit_buys}
+}
