@@ -259,3 +259,47 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     /// # Transmit Busy
     is_transmit_buys}
 }
+
+/// # UART Interrupt Enable Register
+/// The UART Interrupt Enable Register. See page 182, table 12-10
+pub struct InterruptEnableRegister<const PORT_PTR: usize> {}
+reg_impl!(RW, InterruptEnableRegister, uro::UART_CTRL);
+
+impl<const PORT_PTR: usize> InterruptEnableRegister<PORT_PTR> {
+    bit_impl! {6, RW,
+
+    /// # Set Transmit FIFO Half-Empty Event Interrupt Enable
+    set_transmit_fifo_half_empty_event,
+    /// # Get Transmit FIFO Half-Empty Event Interrupt Enable
+    get_transmit_fifo_half_empty_event}
+
+    bit_impl! {4, RW,
+    /// # Set Receive FIFO Half-Empty Event Interrupt Enable
+    set_receive_fifo_half_empty_even,
+    /// # Get Receive FIFO Half-Empty Event Interrupt Enable
+    get_receive_fifo_half_empty_even}
+
+    bit_impl! {3, RW,
+    /// # Set Receive FIFO Threshold Event Interrupt Enable
+    set_receive_fifo_thershold_event,
+    /// # Get Receive FIFO Threshold Event Interrupt Enable
+    get_receive_fifo_thershold_event}
+
+    bit_impl! {2, RW,
+    /// # Set CTS Signal Change Event Interrupt Enable
+    set_cts_signal_change_event,
+    /// # Get CTS Signal Change Event Interrupt Enable
+    get_cts_signal_change_event}
+
+    bit_impl! {1, RW,
+    /// # Set Receive Parity Event Interrupt Enable
+    set_receive_parity_event,
+    /// # Get Receive Parity Event Interrupt Enable
+    get_receive_parity_event}
+
+    bit_impl! {0, RW,
+    /// # Set Receive Frame Error Event Interrupt Enable
+    set_receive_frame_error_event,
+    /// # Get Receive Frame Error Event Interrupt Enable
+    get_receive_frame_error_event}
+}
