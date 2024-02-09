@@ -1,4 +1,4 @@
-100
+200
 Init
 0xFF
 MCODE
@@ -161,4 +161,15 @@ UTF-8
 whitespace/MS
 workspace/MS
 YOLO
-
+Deassert 
+deassert 
+RTS
+Deasserted
+deasserted
+UART_CTRL
+rx_thd_val
+=
+>=
+<=
+!=
+C_RX_FIFO_DEPTH
