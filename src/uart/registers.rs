@@ -223,7 +223,7 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
 /// # UART Status Register
 /// The UART Status Register. See page 182, table 12-9
 pub struct StatusRegister<const PORT_PTR: usize> {}
-reg_impl!(RW, StatusRegister, uro::UART_CTRL);
+reg_impl!(RO, StatusRegister, uro::UART_CTRL);
 
 impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     bit_impl! {12..=15, RO u8,
