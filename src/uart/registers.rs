@@ -98,7 +98,7 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     /// - 1: Error detection is enabled
     is_bit_frame_error_detection_enabled}
 
-    bit_impl! {16..=17, RW u16,
+    bit_impl! {16..=17, RW u8,
     /// # Baud Clock Source
     /// Select the source for the baud generator (See Table 12-1)
     /// - 0: Clock 0
@@ -157,7 +157,7 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     /// - 1: 1.5 stop bit for 5 bit mode, 2 bit mode otherwise
     check_number_of_stop_bits}
 
-    bit_impl! {10..=11, RW u16,
+    bit_impl! {10..=11, RW u8,
     /// # Set Character Length
     /// Set the number of bits in a character in an UART frame.
     /// - 0: 5 bits
@@ -177,4 +177,127 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     /// # Activate Receive FIFO Flush
     /// Write a 1 to flush the receive FIFO
     activate_receive_fifo_flush}
+
+    bit_impl! {8, RESET, // FIXME This need to be renamed / changed
+    /// # Activate Transmit FIFO Flush
+    /// Write a 1 to flush the transmit FIFO
+    activiate_transmit_fifo_flush}
+
+    bit_impl! {7, RW,
+    /// # Set `CTS` Sampling Disable
+    /// Choose to enable or disable `CTS` (Clear To Send)
+    /// - 0: Enabled
+    /// - 1: Disabled
+    set_cts_sampling_disable,
+    /// # Check `CTS` Sampling Disable
+    /// Check the current state of CT disable
+    /// - 0: Enabled
+    /// - 1: Disabled
+    check_cts_sampling_disable}
+
+    bit_impl! {6, RW,
+    /// # Set Parity Value
+    set_parity_value,
+    /// # Check Parity Value
+    check_parity_value}
+
+    bit_impl! {5, RW,
+    /// # Parity Odd Even Select
+    set_parity_odd_even,
+    /// # Check Parity Odd Even Select
+    check_parity_odd_even}
+
+    bit_impl! {4, RW,
+    /// # Set Transmit Parity Generation Enable
+    set_transmit_parity_generation_enable,
+    /// # Check Transmit Parity Generation Enable
+    check_transmit_parity_genration_enable}
+
+    bit_impl! {0..=3, RW u8,
+    /// # Set Receive FIFO Threshold
+    set_recieve_fifo_threshold,
+    /// # Check Receive FIFO Threshold
+    check_recieve_fifo_threshold}
+}
+
+/// # UART Status Register
+/// The UART Status Register. See page 182, table 12-9
+pub struct StatusRegister<const PORT_PTR: usize> {}
+reg_impl!(RO, StatusRegister, uro::UART_CTRL);
+
+impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
+    bit_impl! {12..=15, RO u8,
+    /// # Transmit FIFO Level
+    get_transmit_fifo_level}
+
+    bit_impl! {8..=11, RO u8,
+    /// # Receive FIFO Level
+    get_receive_fifo_level}
+
+    bit_impl! {7, RO,
+    /// # Transmit FIFO Full
+    is_transmit_fifo_full}
+
+    bit_impl! {6, RO,
+    /// # Transmit FIFO Empty
+    is_transmit_fifo_empty}
+
+    bit_impl! {5, RO,
+    /// # Receive FIFO Full
+    is_receive_fifo_full}
+
+    bit_impl! {4, RO,
+    /// # Receive FIFO Empty
+    is_receive_fifo_empty}
+
+    bit_impl! {1, RO,
+    /// # Receive Busy
+    is_receive_busy}
+
+    bit_impl! {0, RO,
+    /// # Transmit Busy
+    is_transmit_buys}
+}
+
+/// # UART Interrupt Enable Register
+/// The UART Interrupt Enable Register. See page 182, table 12-10
+pub struct InterruptEnableRegister<const PORT_PTR: usize> {}
+reg_impl!(RW, InterruptEnableRegister, uro::UART_CTRL);
+
+impl<const PORT_PTR: usize> InterruptEnableRegister<PORT_PTR> {
+    bit_impl! {6, RW,
+    /// # Set Transmit FIFO Half-Empty Event Interrupt Enable
+    set_transmit_fifo_half_empty_event,
+    /// # Get Transmit FIFO Half-Empty Event Interrupt Enable
+    get_transmit_fifo_half_empty_event}
+
+    bit_impl! {4, RW,
+    /// # Set Receive FIFO Half-Empty Event Interrupt Enable
+    set_receive_fifo_half_empty_even,
+    /// # Get Receive FIFO Half-Empty Event Interrupt Enable
+    get_receive_fifo_half_empty_even}
+
+    bit_impl! {3, RW,
+    /// # Set Receive FIFO Threshold Event Interrupt Enable
+    set_receive_fifo_thershold_event,
+    /// # Get Receive FIFO Threshold Event Interrupt Enable
+    get_receive_fifo_thershold_event}
+
+    bit_impl! {2, RW,
+    /// # Set `CTS` Signal Change Event Interrupt Enable
+    set_cts_signal_change_event,
+    /// # Get `CTS` Signal Change Event Interrupt Enable
+    get_cts_signal_change_event}
+
+    bit_impl! {1, RW,
+    /// # Set Receive Parity Event Interrupt Enable
+    set_receive_parity_event,
+    /// # Get Receive Parity Event Interrupt Enable
+    get_receive_parity_event}
+
+    bit_impl! {0, RW,
+    /// # Set Receive Frame Error Event Interrupt Enable
+    set_receive_frame_error_event,
+    /// # Get Receive Frame Error Event Interrupt Enable
+    get_receive_frame_error_event}
 }
