@@ -179,6 +179,41 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     activate_receive_fifo_flush}
 }
 
+/// # UART DMA Register
+/// The UART DMA Register. See Page 185, Table 12-17.
+pub struct DMARegister<const PORT_PTR: usize> {}
+reg_impl!(RW, DMARegister, uro::UART_DMA);
+
+impl<const PORT_PTR: usize> DMARegister<PORT_PTR> {
+    bit_impl! {9, RW,
+    /// # Set Receive DMA Channel Enable
+    /// The documentation has a typo for this bit's access.
+    /// It says "0" while it should say "R/W".
+    set_receive_dma_channel_enable,
+    /// # Get Receive DMA Channel Enable
+    is_receive_dma_channel_enable}
+
+    bit_impl! {5..=8, RW u8,
+    /// # Set Receive FIFO Level DMA Threshold
+    /// The documentation has a typo for this bit's access.
+    /// It says "0" while it should say "R/W".
+    set_receive_fifo_level_dma_threshold,
+    /// # Get Receive FIFO Level DMA Threshold
+    get_receive_fifo_level_dma_threshold}
+
+    bit_impl! {4, RW,
+    /// # Set Transmit DMA Channel Enable
+    set_transmit_dma_channel_enable,
+    /// # Get Transmit DMA Channel Enable
+    get_transmit_dma_channel_enable}
+
+    bit_impl! {0..=3, RW u8,
+    /// # Set Transmit FIFO Level DMA Threshold
+    set_transmit_dma_level_dma_threshold,
+    /// # Get Transmit FIFO Level DMA Threshold
+    get_transmit_dma_level_dma_threshold}
+}
+
 /// # UART Wakeup Enable
 /// The UART Wakeup Enable Register. See Page 185-186, Table 12-18.
 pub struct WakeupEnableRegister<const PORT_PTR: usize> {}
