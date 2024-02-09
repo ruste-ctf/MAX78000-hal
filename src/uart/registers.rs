@@ -127,10 +127,10 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     is_baud_clock_enable}
 
     bit_impl! {14, WO, // <- FIXME What should this be? Datasheet says RO, but that does not seem right
-    /// # Hardware Flow Control RTS Deassert    Condition.
+    /// # Hardware Flow Control RTS `Deassert` Condition.
     /// Describes the conditions when RTS is deasserted
     /// - 0: When FIFO level = C_RX_FIFO_DEPTH, RTS is deasserted
-    /// - 1: When FIFO level >= UART_CTRL.rx_thd_val, RTS is deasserted
+    /// - 1: When FIFO level `>=` UART_CTRL.rx_thd_val, RTS is deasserted
     set_hardware_flow_rts_deassert_condition}
 
     bit_impl! {13, RW,
