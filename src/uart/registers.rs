@@ -179,6 +179,23 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     activate_receive_fifo_flush}
 }
 
+/// # UART Pin Control Register
+/// The UART Pin Control Register. See Page 184-185, Table 12-15.
+pub struct PinControlRegister<const PORT_PTR: usize> {}
+reg_impl!(RW, PinControlRegister, uro::UART_PNR);
+
+impl<const PORT_PTR: usize> PinControlRegister<PORT_PTR> {
+    bit_impl! {1, RW,
+    /// # Get RTS Output State
+    get_rts_output_state,
+    /// # Set RTS Output State
+    set_rts_output_state}
+
+    bit_impl! {0, RO,
+    /// # Get CTS Pin State
+    get_cts_pin_state}
+}
+
 /// # UART Data Register
 /// The UART Data Register. See Page 185, Table 12-16.
 pub struct DataRegister<const PORT_PTR: usize> {}
