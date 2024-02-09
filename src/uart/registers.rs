@@ -196,13 +196,13 @@ impl<const PORT_PTR: usize> ClockDivisorRegister<PORT_PTR> {
 /// # UART Oversampling Control Register
 /// The UART Oversampling Control Register. See Page 184, Table 12-13
 pub struct OversamplingControlRegister<const PORT_PTR: usize> {}
-reg_impl!(RO, OversamplingControlRegister, uro::UART_OSR);
+reg_impl!(RW, OversamplingControlRegister, uro::UART_OSR);
 
 impl<const PORT_PTR: usize> OversamplingControlRegister<PORT_PTR> {
     bit_impl! {0..=2, RW u8,
-    /// Get LPUART Over Sampling Rate
+    /// # Get LPUART Over Sampling Rate
     get_lpuart_oversampling_rate,
-    /// Set LPUART Over Sampling Rate
+    /// # Set LPUART Over Sampling Rate
     set_lpuart_oversampling_rate}
 }
 
