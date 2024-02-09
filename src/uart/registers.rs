@@ -179,6 +179,31 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     activate_receive_fifo_flush}
 }
 
+/// # UART Wakeup Enable
+/// The UART Wakeup Enable Register. See Page 185-186, Table 12-18.
+pub struct WakeupEnableRegister<const PORT_PTR: usize> {}
+reg_impl!(RW, WakeupEnableRegister, uro::UART_WKEN);
+
+impl<const PORT_PTR: usize> WakeupEnableRegister<PORT_PTR> {
+    bit_impl! {2, RW,
+    /// # Set Receive FIFO Threshold Wake-up Event Enable
+    set_receive_fifo_threshold_wakeup_event_enable,
+    /// # Get Receive FIFO Threshold Wake-up Event Enable
+    is_receive_fifo_threshold_wakeup_event_enable}
+
+    bit_impl! {1, RW,
+    /// # Receive FIFO Full Wake-up Event Enable
+    set_receive_fifo_full_wakeup_event_enable,
+    /// # Get Receive FIFO Full Wake-up Event Enable
+    get_receive_fifo_full_wakeup_event_enable}
+
+    bit_impl! {0, RW,
+    /// # Receive FIFO Not Empty Wake-up Event Enable
+    set_receive_fifo_not_empty_wakeup_event_enable,
+    /// # Get Receive FIFO Not Empty Wake-up Event Enable
+    get_receive_fifo_not_empty_wakeup_event_enable}
+}
+
 /// # UART Wakeup Flag Register
 /// The UART Wakeup Flag register. See Page 186, Table 12-19.
 pub struct WakeupFlagRegister<const PORT_PTR: usize> {}
