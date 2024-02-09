@@ -174,3 +174,4 @@ rx_thd_val
 !=
 C_RX_FIFO_DEPTH
 CTS
+LPUART

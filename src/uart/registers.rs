@@ -179,6 +179,54 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     activate_receive_fifo_flush}
 }
 
+/// # UART Interrupt Flag Register
+/// The UART Interrupt Flag Register. See Page 183, Table 12-11.
+pub struct InterrptFlagRegister<const PORT_PTR: usize> {}
+reg_impl!(
+    RW1C,
+    InterrptFlagRegister,
+    uro::UART_INTERRUPT_FL,
+    0b_00000000000000000000000000000000
+);
+
+impl<const PORT_PTR: usize> InterrptFlagRegister<PORT_PTR> {
+    bit_impl! {6, RW1C,
+    /// # Get Transmit FIFO Half-Empty Interrupt Flag
+    get_transmit_fifo_half_empty_interrupt_flag,
+    /// # Set Transmit FIFO Half-Empty Interrupt Flag
+    set_transmit_fifo_half_empty_interrupt_flag}
+
+    bit_impl! {4, RW1C,
+    /// # Get Receive FIFO Threshold Interrupt Flag
+    get_receive_fifo_threshold_interrupt_flag,
+    /// # Set Receive FIFO Threshold Interrupt Flag
+    set_receive_fifo_threshold_interrupt_flag}
+
+    bit_impl! {3, RW1C,
+    /// # Get Receive FIFO Overrun Interrupt Flag
+    get_receive_fifo_overrun_interrupt_flag,
+    /// # Set Receive FIFO Overrun Interrupt Flag
+    set_receive_fifo_overrun_interrupt_flag}
+
+    bit_impl! {2, RW1C,
+    /// # Get Signal Change Interrupt Flag
+    get_signal_change_interrupt_flag,
+    /// # Set Signal Change Interrupt Flag
+    set_signal_change_interrupt_flag}
+
+    bit_impl! {1, RW1C,
+    /// # Get Receive Parity Error Interrupt Flag
+    get_receive_parity_error_interrupt_flag,
+    /// # Set Receive Parity Error Interrupt Flag
+    set_receive_parity_error_interrupt_flag}
+
+    bit_impl! {0, RW1C,
+    /// # Get Receive Frame Error Interrupt Flag
+    get_receive_frame_error_interrupt_flag,
+    /// # Set Receive Frame Error Interrupt Flag
+    set_receive_frame_error_interrupt_flag}
+}
+
 /// # UART Clock Divisor Register
 /// The UART Clock Divisor Register. See Page 183-184, Table 12-12
 pub struct ClockDivisorRegister<const PORT_PTR: usize> {}
