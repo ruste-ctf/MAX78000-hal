@@ -184,13 +184,13 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     activiate_transmit_fifo_flush}
 
     bit_impl! {7, RW,
-    /// # Set CTS Sampling Disable
-    /// Choose to enable or disable CTS (Clear To Send)
+    /// # Set `CTS` Sampling Disable
+    /// Choose to enable or disable `CTS` (Clear To Send)
     /// - 0: Enabled
     /// - 1: Disabled
     set_cts_sampling_disable,
-    /// # Check CTS Sampling Disable
-    /// Check the current state of CTS disable
+    /// # Check `CTS` Sampling Disable
+    /// Check the current state of CT disable
     /// - 0: Enabled
     /// - 1: Disabled
     check_cts_sampling_disable}
@@ -206,4 +206,17 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     set_parity_odd_even,
     /// # Check Parity Odd Even Select
     check_parity_odd_even}
+
+    bit_impl! {4, RW,
+    /// # Set Transmit Parity Generation Enable
+    set_transmit_parity_generation_enable,
+    /// # Check Transmit Parity Generation Enable
+    check_transmit_parity_genration_enable}
+
+    bit_impl! {0..=3, RW u16,
+
+    /// # Set Receive FIFO Threshold
+    set_recieve_fifo_threshold,
+    /// # Check Receive FIFO Threshold
+    check_recieve_fifo_threshold}
 }
