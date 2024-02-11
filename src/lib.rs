@@ -5,6 +5,11 @@ pub mod i2c;
 pub mod memory_map;
 pub mod registers;
 
+extern "C" {
+    #[link_name = "SystemCoreClock"]
+    pub(crate) static SYSTEM_CORE_CLOCK: u32;
+}
+
 /// # Const Assert
 /// Assert in a const context, useful for making sure that
 /// provided constants fall in expected range.
