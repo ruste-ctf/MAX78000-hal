@@ -122,3 +122,31 @@ impl<const PORT_PTR: usize> InterruptFlagRegister<PORT_PTR> {
     /// # Activate Calculation Done Event Interrupt
     activate_calculation_done_event_interrupt}
 }
+
+/// # AES Interrupt Enable Register
+/// The AES Interrupt Enable Register. See Page 362, Table 24-7.
+pub struct InterruptEnableRegister<const PORT_PTR: usize> {}
+reg_impl!(
+    RW1C, // FIXME
+    InterruptEnableRegister,
+    rro::AES_INTEN,
+    0b_00000000000000000000000000000000
+);
+
+impl<const PORT_PTR: usize> InterruptEnableRegister<PORT_PTR> {
+    bit_impl! {3, RESET,
+    /// # Activate Data Output FIFO Overrun Event Interrupt Enable
+    activate_date_output_fifo_overrun_event_interrupt_enable}
+
+    bit_impl! {2, RESET,
+    /// # Activate Key Zero Event Interrupt Enable
+    activate_key_zero_event_interrupt_enable}
+
+    bit_impl! {1, RESET,
+    /// # Activate Key Change Event Interrupt Enable
+    activate_key_change_event_interrupt_enable}
+
+    bit_impl! {0, RESET,
+    /// # Activate Calculation Done Event Interrupt Enable
+    activate_calculation_done_event_interrupt_enable}
+}
