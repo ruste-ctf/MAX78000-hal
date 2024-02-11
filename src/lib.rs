@@ -5,6 +5,7 @@ pub mod i2c;
 pub mod memory_map;
 pub mod registers;
 pub mod timer;
+pub mod trng;
 
 /// # Const Assert
 /// Assert in a const context, useful for making sure that
