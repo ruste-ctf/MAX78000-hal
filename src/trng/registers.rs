@@ -39,3 +39,25 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     /// # Get Random Number Interrupt Enable
     get_random_number_interrupt_enable}
 }
+
+/// # TRNG Status Register
+/// The TRNG Status Register. See Page 363-364, Table 25-3.
+pub struct StatusRegister<const PORT_PTR: usize> {}
+reg_impl!(RO, StatusRegister, rro::TRNG_STATUS);
+
+impl<const PORT_PTR: usize> StatusRegister<PORT_PTR> {
+    bit_impl! {0, RO,
+    /// # Get Random Number Ready
+    get_random_number_ready}
+}
+
+/// # TRNG Data Register
+/// The TRNG Data Register. See Page 363-364, Table 25-3.
+pub struct DataRegister<const PORT_PTR: usize> {}
+reg_impl!(RO, DataRegister, rro::TRNG_DATA);
+
+impl<const PORT_PTR: usize> DataRegister<PORT_PTR> {
+    bit_impl! {0..=31, RO u32,
+    /// # Get TRNG Data
+    get_trng_data}
+}
