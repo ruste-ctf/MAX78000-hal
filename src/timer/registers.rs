@@ -24,3 +24,42 @@ mod rro {
     /// # Timer Wake-up Status Register
     pub const TMR_WKFL: usize = 0x001C;
 }
+
+/// # Timer Count Register
+/// The Timer Count Register. See Page 315, Table 19-9.
+pub struct CountRegister<const PORT_PTR: usize> {}
+reg_impl!(RW, CountRegister, rro::TMR_CNT);
+
+impl<const PORT_PTR: usize> CountRegister<PORT_PTR> {
+    bit_impl! {0..=31, RW u32,
+    /// # Set Timer Count
+    set_timer_count,
+    /// # Get Timer Count
+    get_timer_count}
+}
+
+/// # Timer Compare Register
+/// The Timer Compare Register. See Page 315, Table 19-10.
+pub struct CompareRegister<const PORT_PTR: usize> {}
+reg_impl!(RW, CompareRegister, rro::TMR_CMP);
+
+impl<const PORT_PTR: usize> CompareRegister<PORT_PTR> {
+    bit_impl! {0..=31, RW u32,
+    /// # Set Timer Compare Value
+    set_timer_compare_value,
+    /// # Get Timer Compare Value
+    get_timer_compare_value}
+}
+
+/// # Timer PWM Register
+/// The Timer PWM Register. See Page 315, Table 19-11.
+pub struct PWMRegister<const PORT_PTR: usize> {}
+reg_impl!(RW, PWMRegister, rro::TMR_PWM);
+
+impl<const PORT_PTR: usize> PWMRegister<PORT_PTR> {
+    bit_impl! {0..=31, RW u32,
+    /// # Set PWM
+    set_pwm,
+    /// # Get PWM
+    get_pwm}
+}
