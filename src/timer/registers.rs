@@ -63,3 +63,47 @@ impl<const PORT_PTR: usize> PWMRegister<PORT_PTR> {
     /// # Get PWM
     get_pwm}
 }
+
+/// # Timer Interrupt Register
+/// The Timer Interrupt Register. See Page 315-316, Table 19-12.
+pub struct InterruptRegister<const PORT_PTR: usize> {}
+reg_impl!(
+    RW1C,
+    InterruptRegister,
+    rro::TMR_INTFL,
+    0b00000000000000000000000000000000
+);
+
+impl<const PORT_PTR: usize> InterruptRegister<PORT_PTR> {
+    bit_impl! {24, RW,
+    /// # Set TimerB Write Protect in Dual Timer Mode
+    set_timerb_write_protect_in_dual_timer_mode,
+    /// # Get TimerB Write Protect in Dual Timer Mode
+    get_timerb_write_protect_in_dual_timer_mode}
+
+    bit_impl! {25, RO,
+    /// # Get TimerB Write Done
+    get_timerb_write_done}
+
+    bit_impl! {16, RW1C,
+    /// # Set TimerB Interrupt Event
+    set_timerb_interrupt_event,
+    /// # Get TimerB Interrupt Event
+    get_timerb_interrupt_event}
+
+    bit_impl! {9, RW,
+    /// # Get TimerB Dual Timer Mode Write Protect
+    get_timerb_dual_timer_mode_write_protect,
+    /// # Set TimerB Dual Timer Mode Write Protect
+    set_timerb_dual_timer_mode_write_protect}
+
+    bit_impl! {8, RO,
+    /// # Get TimerA Write Done
+    get_timera_write_done}
+
+    bit_impl! {0, RW1C,
+    /// # Set TimerA Interrupt Event
+    set_timera_interrupt_event,
+    /// # Get TimerA Interrupt Event
+    get_timera_interrupt_event}
+}
