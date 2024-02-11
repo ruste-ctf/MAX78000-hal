@@ -107,3 +107,96 @@ impl<const PORT_PTR: usize> InterruptRegister<PORT_PTR> {
     /// # Get TimerA Interrupt Event
     get_timera_interrupt_event}
 }
+
+/// # Timer Control 0 Register
+/// The Timer Control 0 Register. See Page 316-319, Table 19-13.
+pub struct TimerControl0Register<const PORT_PTR: usize> {}
+reg_impl!(RW, TimerControl0Register, rro::TMR_CTRL0);
+
+impl<const PORT_PTR: usize> TimerControl0Register<PORT_PTR> {
+    bit_impl! {31, RW,
+    /// # Set TimerB Enable
+    set_timerb_enable,
+    /// # Get TimerB Enable
+    get_timerb_enable}
+
+    bit_impl! {30, RW,
+    /// # Set TimerB Clock Enable
+    set_timerb_clock_enable,
+    /// # Get TimerB Clock Enable
+    get_timerb_clock_enable}
+
+    bit_impl! {29, RESET, // FIXME
+    /// # Activate TimerB Reset
+    activate_timeb_reset}
+
+    bit_impl! {20..=23, RW u8,
+    /// # Set TimerB Prescaler Select
+    set_timerb_prescaler_select,
+    /// # Get TimerB Prescaler Select
+    get_timerb_prescaler_select}
+
+    bit_impl! {16..=19, RW u8,
+    /// # Set TimerB Mode Select
+    set_timerb_mode_select,
+    /// # Get TimerB Mode Select
+    get_timerb_mode_select}
+
+    bit_impl! {15, RW,
+    /// # Set TimerA Enable
+    set_timera_enable,
+    /// # Get TimerA Enable
+    get_timera_enable}
+
+    bit_impl! {14, RW,
+    /// # Set TimerA Clock Enable
+    set_timera_clock_enable,
+    /// # Get TimerA Clock Enable
+    get_timera_clock_enable}
+
+    bit_impl! {13, RESET, // FIXME
+    /// # Activate TimerA Reset
+    activate_timea_reset}
+
+    bit_impl! {12, RW,
+    /// # Set TimerA PWM Output 𝝓𝑨′ Disable
+    set_timera_pwm_output_phi_alpha_prime_disable,
+    /// # Get TimerA PWM Output 𝝓𝑨′ Disable
+    get_timera_pwm_output_phi_alpha_prime_disable}
+
+    bit_impl! {11, RW,
+    /// # Set TimerA PWM Output 𝝓𝑨′ Polarity Bit
+    set_timera_pwm_output_phi_alpha_prime_polarity_bit,
+    /// # Get TimerA PWM Output 𝝓𝑨′ Polarity Bit
+    get_timera_pwm_output_phi_alpha_prime_polarity_bit}
+
+    bit_impl! {10, RW,
+    /// # Set TimerA PWM Output 𝝓𝑨 Polarity Bit
+    set_timera_pwm_output_phi_alpha_polarity_bit,
+    /// # Get TimerA PWM Output 𝝓𝑨 Polarity Bit
+    get_timera_pwm_output_phi_alpha_polarity_bit}
+
+    bit_impl! {9, RW,
+    /// # Set TimerA/TimerB PWM Synchronization Mode
+    set_timera_timerb_pwm_synchronization_mode,
+    /// # Get TimerA/TimerB PWM Synchronization Mode
+    get_timera_timerb_pwm_synchronization_mode}
+
+    bit_impl! {8, RW,
+    /// # Set TimerA Polarity
+    set_timera_polarity,
+    /// # Get TimerA Polarity
+    get_timera_polarity}
+
+    bit_impl! {4..=7, RW u8,
+    /// # Set TimerA Prescaler Select
+    set_timera_prescaler_select,
+    /// # Get TimerA Prescaler Select
+    get_timera_prescaler_select}
+
+    bit_impl! {0..=3, RW u8,
+    /// # Set TimerA Mode Select
+    set_timera_mode_select,
+    /// # Get TimerA Mode Select
+    get_timera_mode_select}
+}
