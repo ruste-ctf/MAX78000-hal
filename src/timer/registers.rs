@@ -200,3 +200,34 @@ impl<const PORT_PTR: usize> TimerControl0Register<PORT_PTR> {
     /// # Get TimerA Mode Select
     get_timera_mode_select}
 }
+
+/// # Timer Non-Overlapping Compare Register
+/// The Timer Non-Overlapping Compare Register. See Page 319, Table 19-14.
+pub struct NonOverlappingCompareRegister<const PORT_PTR: usize> {}
+reg_impl!(RW, NonOverlappingCompareRegister, rro::TMR_NOLCMP);
+
+impl<const PORT_PTR: usize> NonOverlappingCompareRegister<PORT_PTR> {
+    bit_impl! {24..=31, RW u8,
+    /// # Set TimerA Non-Overlapping High Compare 1
+    set_timera_non_overlapping_high_compare_1,
+    /// # Get TimerA Non-Overlapping High Compare 1
+    get_timera_non_overlapping_high_compare_1}
+
+    bit_impl! {16..=23, RW u8,
+    /// # Set TimerA Non-Overlapping Low Compare 1
+    set_timera_non_overlapping_low_compare_1,
+    /// # Get TimerA Non-Overlapping Low Compare 1
+    get_timera_non_overlapping_low_compare_1}
+
+    bit_impl! {8..=15, RW u8,
+    /// # Set TimerA Non-Overlapping High Compare 0
+    set_timera_non_overlapping_high_compare_0,
+    /// # Get TimerA Non-Overlapping High Compare 0
+    get_timera_non_overlapping_high_compare_0}
+
+    bit_impl! {0..=7, RW u8,
+    /// # Set TimerA Non-Overlapping Low Compare 0
+    set_timera_non_overlapping_low_compare_0,
+    /// # Get TimerA Non-Overlapping Low Compare 0
+    get_timera_non_overlapping_low_compare_0}
+}
