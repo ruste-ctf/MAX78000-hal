@@ -231,3 +231,130 @@ impl<const PORT_PTR: usize> NonOverlappingCompareRegister<PORT_PTR> {
     /// # Get TimerA Non-Overlapping Low Compare 0
     get_timera_non_overlapping_low_compare_0}
 }
+
+/// # Timer Control 1 Register
+/// The Timer Control 1 Register. See Page 319-321, Table 19-15.
+pub struct Control1Register<const PORT_PTR: usize> {}
+reg_impl!(RW, Control1Register, rro::TMR_CTRL1);
+
+impl<const PORT_PTR: usize> Control1Register<PORT_PTR> {
+    bit_impl! {31, RW,
+    /// # Set 32-bit Cascade Timer Enable
+    set_32bit_cascade_timer_enable,
+    /// # Get 32-bit Cascade Timer Enable
+    get_32bit_cascade_timer_enable}
+
+    bit_impl! {28, RW,
+    /// # Set TimerB Wake-Up Function
+    set_timerb_wakeup_function,
+    /// # Get TimerB Wake-Up Function
+    get_timerb_wakeup_function}
+
+    bit_impl! {27, RW,
+    /// # Set TimerB Software Event Capture
+    set_timerb_software_event_capture,
+    /// # Get TimerB Software Event Capture
+    get_timerb_software_event_capture}
+
+    bit_impl! {25..=26, RW u8,
+    /// # Set TimerB Event Capture Selection
+    set_timerb_event_capture_selection,
+    /// # Get TimerB Event Capture Selection
+    get_timerb_event_capture_selection}
+
+    bit_impl! {24, RW,
+    /// # Set TimerB Interrupt Enable
+    set_timerb_interrupt_enable,
+    /// # Get TimerB Interrupt Enable
+    get_timerb_interrupt_enable}
+
+    bit_impl! {23, RW,
+    /// # Set TimerB Negative Edge Trigger for Event
+    set_timerb_negative_edge_trigger_for_event,
+    /// # Get TimerB Negative Edge Trigger for Event
+    get_timerb_negative_edge_trigger_for_event}
+
+    bit_impl! {20..=22, RW u8,
+    /// # Set TimerB Event Selection
+    set_timerb_event_selection,
+    /// # Get TimerB Event Selection
+    get_timerb_event_selection}
+
+    bit_impl! {19, RO,
+    /// # Get TimerB Clock Ready Status
+    get_timerb_clock_ready_status}
+
+    bit_impl! {18, RO,
+    /// # Get TimerB Clock Enable Status
+    get_timerb_clock_enable_status}
+
+    bit_impl! {16..=17, RW u8,
+    /// # Set TimerB Clock Source
+    set_timerb_clock_source,
+    /// # Get TimerB Clock Source
+    get_timerb_clock_source}
+
+    bit_impl! {14, RW,
+    /// # Set Output B Enable
+    set_output_b_enable,
+    /// # Get Output B Enable
+    get_output_b_enable}
+
+    bit_impl! {13, RW,
+    /// # Set Output Enable
+    set_output_enable,
+    /// # Get Output Enable
+    get_output_enable}
+
+    bit_impl! {12, RW,
+    /// # Set TimerA Wake-Up Function
+    set_timera_wakeup_function,
+    /// # Get TimerA Wake-Up Function
+    get_timera_wakeup_function}
+
+    bit_impl! {11, RW,
+    /// # Set TimerA Software Event Capture
+    set_timera_software_event_capture,
+    /// # Get TimerA Software Event Capture
+    get_timera_software_event_capture}
+
+    bit_impl! {9..=10, RW u8,
+    /// # Set TimerA Event Capture Selection
+    set_timera_event_capture_selection,
+    /// # Get TimerA Event Capture Selection
+    get_timera_event_capture_selection}
+
+    bit_impl! {8, RW,
+    /// # Set TimerA Interrupt Enable
+    set_timera_interrupt_enable,
+    /// # Get TimerA Interrupt Enable
+    get_timera_interrupt_enable}
+
+    bit_impl! {7, RW,
+    /// # Set TimerA Negative Edge Trigger for Event
+    set_timera_negative_edge_trigger_for_event,
+    /// # Get TimerA Negative Edge Trigger for Event
+    get_timera_negative_edge_trigger_for_event}
+
+    bit_impl! {4..=6, RW u8,
+    /// # Set TimerA Event Selection
+    set_timera_event_selection,
+    /// # Get TimerA Event Selection
+    get_timera_event_selection}
+
+    bit_impl! {3, RO,
+    /// # Get TimerA Clock Ready
+    get_timera_clock_ready}
+
+    bit_impl! {2, RW,
+    /// # Set TimerA Clock Enable
+    set_timera_clock_enable,
+    /// # Get TimerA Clock Enable
+    get_timera_clock_enable}
+
+    bit_impl! {0..=1, RW u8,
+    /// # Set TimerA Clock Source
+    set_timera_clock_source,
+    /// # Get TimerA Clock Source
+    get_timera_clock_source}
+}
