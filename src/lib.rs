@@ -4,6 +4,7 @@ pub mod error;
 pub mod i2c;
 pub mod memory_map;
 pub mod registers;
+pub mod timer;
 pub mod trng;
 
 /// # Const Assert
