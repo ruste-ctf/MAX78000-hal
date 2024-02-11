@@ -20,7 +20,7 @@ mod rro {
 }
 
 /// # AES Control Register
-/// The AES control register. See Page 360-361, Table 24-4.
+/// The AES Control Register. See Page 360-361, Table 24-4.
 pub struct ControlRegister<const PORT_PTR: usize> {}
 reg_impl!(RW, ControlRegister, rro::AES_CTRL);
 
