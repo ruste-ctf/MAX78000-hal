@@ -94,3 +94,31 @@ impl<const PORT_PTR: usize> StatusRegister<PORT_PTR> {
     /// # Get AES Busy
     get_aes_busy}
 }
+
+/// # AES Interrupt Flag Register
+/// The AES Interrupt Flag register. See Page 361-362, Table 24-6.
+pub struct InterruptFlagRegister<const PORT_PTR: usize> {}
+reg_impl!(
+    RW1C, // FIXME
+    InterruptFlagRegister,
+    rro::AES_INTFL,
+    0b_00000000000000000000000000000000
+);
+
+impl<const PORT_PTR: usize> InterruptFlagRegister<PORT_PTR> {
+    bit_impl! {3, RESET, // FIXME
+    /// # Activate Data Output FIFO Overrun Event Interrupt
+    activate_data_output_fifo_overrun_event_interrupt}
+
+    bit_impl! {2, RESET, // FIXME
+    /// # Activate Key Zero Event Interrupt
+    activate_key_zero_event_interrupt}
+
+    bit_impl! {1, RESET, // FIXME
+    /// # Activate Key Change Event Interrupt
+    activate_key_change_event_interrupt}
+
+    bit_impl! {0, RESET, // FIXME
+    /// # Activate Calculation Done Event Interrupt
+    activate_calculation_done_event_interrupt}
+}
