@@ -71,7 +71,7 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
 /// # AES Status Register
 /// The AES Status register. See Page 361, Table 24-5.
 pub struct StatusRegister<const PORT_PTR: usize> {}
-reg_impl!(RW, StatusRegister, rro::AES_STATUS);
+reg_impl!(RO, StatusRegister, rro::AES_STATUS);
 
 impl<const PORT_PTR: usize> StatusRegister<PORT_PTR> {
     bit_impl! {4, RO,
