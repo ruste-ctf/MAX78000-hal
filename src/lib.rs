@@ -1,4 +1,5 @@
 #![no_std]
+pub mod aes;
 pub mod bits;
 pub mod error;
 pub mod i2c;
