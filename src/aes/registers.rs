@@ -67,3 +67,30 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     /// # Get AES Enable
     get_aes_enable}
 }
+
+/// # AES Status Register
+/// The AES Status register. See Page 361, Table 24-5.
+pub struct StatusRegister<const PORT_PTR: usize> {}
+reg_impl!(RW, StatusRegister, rro::AES_STATUS);
+
+impl<const PORT_PTR: usize> StatusRegister<PORT_PTR> {
+    bit_impl! {4, RO,
+    /// # Get Output FIFO Full
+    get_output_fifo_full}
+
+    bit_impl! {3, RO,
+    /// # Get Output FIFO Empty
+    get_output_fifo_empty}
+
+    bit_impl! {2, RO,
+    /// # Get Input FIFO Full
+    get_input_fifo_full}
+
+    bit_impl! {1, RO,
+    /// # Get Input FIFO Empty
+    get_input_fifo_empty}
+
+    bit_impl! {0, RO,
+    /// # Get AES Busy
+    get_aes_busy}
+}
