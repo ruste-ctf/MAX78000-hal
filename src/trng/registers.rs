@@ -52,7 +52,7 @@ impl<const PORT_PTR: usize> StatusRegister<PORT_PTR> {
 }
 
 /// # TRNG Data Register
-/// The TRNG Data Register. See Page 363-364, Table 25-3.
+/// The TRNG Data Register. See Page 364, Table 25-4.
 pub struct DataRegister<const PORT_PTR: usize> {}
 reg_impl!(RO, DataRegister, rro::TRNG_DATA);
 
