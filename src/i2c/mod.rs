@@ -160,7 +160,7 @@ const MAX_I2C_SLAVE_ADDRESS_10_BIT: usize = 0b1111111111;
 const MAX_I2C_NORMAL_CLOCK_HZ: usize = 100000;
 const MAX_I2C_FAST_CLOCK_HZ: usize = 400000;
 const MAX_I2C_FASTPLUS_CLOCK_TIME: usize = 1000000;
-const MAX_I2C_HIGHSPEED_LOW_CLOCK_TIME: usize = 3400000;
+const MAX_I2C_HIGHSPEED_CLOCK_TIME: usize = 3400000;
 
 /// # We need this for I2C, but uh I have not gotten to it yet :)
 fn microcontroller_delay(_us: usize) {
