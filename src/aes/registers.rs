@@ -150,3 +150,16 @@ impl<const PORT_PTR: usize> InterruptEnableRegister<PORT_PTR> {
     /// # Activate Calculation Done Event Interrupt Enable
     activate_calculation_done_event_interrupt_enable}
 }
+
+/// # AES FIFO Register
+/// The AES FIFO Register. See Page 362, Table 24-8.
+pub struct FIFORegister<const PORT_PTR: usize> {}
+reg_impl!(RW, FIFORegister, rro::AES_CTRL);
+
+impl<const PORT_PTR: usize> FIFORegister<PORT_PTR> {
+    bit_impl! {0..=31, RW u32,
+    /// # Set AES FIFO
+    set_aes_fifo,
+    /// # Get AES FIFO
+    get_aes_fifo}
+}
