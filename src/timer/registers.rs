@@ -358,3 +358,27 @@ impl<const PORT_PTR: usize> Control1Register<PORT_PTR> {
     /// # Get TimerA Clock Source
     get_timera_clock_source}
 }
+
+/// # Timer Wake-Up Status Register
+/// The Timer Wake-Up Status Register. See Page 321-322, Table 19-16.
+pub struct WakeupStatusRegister<const PORT_PTR: usize> {}
+reg_impl!(
+    RW1C,
+    WakeupStatusRegister,
+    rro::TMR_WKFL,
+    0b00000000000000000000000000000000
+);
+
+impl<const PORT_PTR: usize> WakeupStatusRegister<PORT_PTR> {
+    bit_impl! {16, RW1C,
+    /// # Set TimerB Wake-Up Event
+    set_timerb_wakeup_event,
+    /// # Get TimerB Wake-Up Event
+    get_timerb_wakeup_event}
+
+    bit_impl! {0, RW1C,
+    /// # Set TimerA Wake-Up Event
+    set_timera_wakeup_event,
+    /// # Get TimerA Wake-Up Event
+    get_timera_wakeup_event}
+}
