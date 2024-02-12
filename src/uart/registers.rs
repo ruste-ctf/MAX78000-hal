@@ -314,10 +314,16 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
 
     bit_impl! {1, RO,
     /// # Receive Busy
+    /// Checks if the inbound data line is already busy
+    /// - 0: Not busy
+    /// - 1: Busy
     is_receive_busy}
 
     bit_impl! {0, RO,
     /// # Transmit Busy
+    /// Checks if the outbound data line is already busy
+    /// - 0: Not busy
+    /// - 1: Busy
     is_transmit_busy}
 }
 
