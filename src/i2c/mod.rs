@@ -175,7 +175,7 @@ fn microcontroller_delay(_us: usize) {
 #[allow(unused)]
 impl I2C<I2CPort0> {
     fn init(enable_master: bool, slave_address: usize) -> Result<Self> {
-        registers!(mmio::I2C_PORT_0);
+        registers!(mmio::I2C_PORT_1);
 
         // Attempt to take control of the bus
         Self::bus_recover(16)?;
@@ -205,7 +205,7 @@ impl I2C<I2CPort0> {
     }
 
     fn set_hardware_slave_address(address: usize) -> Result<()> {
-        registers!(mmio::I2C_PORT_0);
+        registers!(mmio::I2C_PORT_1);
 
         if address > MAX_I2C_SLAVE_ADDRESS_10_BIT {
             return Err(ErrorKind::BadParam);
@@ -230,7 +230,7 @@ impl I2C<I2CPort0> {
         rx: Option<&mut [u8]>,
         tx: Option<&[u8]>,
     ) -> Result<()> {
-        registers!(mmio::I2C_PORT_0);
+        registers!(mmio::I2C_PORT_1);
         let reading = rx.is_some();
         let writing = tx.is_some();
 
@@ -327,7 +327,7 @@ impl I2C<I2CPort0> {
     }
 
     fn set_freq(hz: usize) -> Result<usize> {
-        registers!(mmio::I2C_PORT_0);
+        registers!(mmio::I2C_PORT_1);
 
         if hz > MAX_I2C_HIGHSPEED_CLOCK_TIME {
             return Err(ErrorKind::BadParam);
@@ -358,7 +358,7 @@ impl I2C<I2CPort0> {
     }
 
     fn get_freq() -> usize {
-        registers!(mmio::I2C_PORT_0);
+        registers!(mmio::I2C_PORT_1);
 
         if ControlRegister::is_high_speed_mode_enabled() {
             todo!("Highspeed I2C Mode is currently not supported");
@@ -379,7 +379,7 @@ impl I2C<I2CPort0> {
     where
         Bytes: Iterator<Item = u8>,
     {
-        registers!(mmio::I2C_PORT_0);
+        registers!(mmio::I2C_PORT_1);
 
         let current_fifo_level = FIFOLengthRegister::get_transmit_fifo_len() as usize;
         let max_fifo_level = FIFOLengthRegister::MAX_FIFO_TRANSMIT_LEN;
@@ -402,7 +402,7 @@ impl I2C<I2CPort0> {
     }
 
     fn read_fifo(rx: &mut [u8]) -> usize {
-        registers!(mmio::I2C_PORT_0);
+        registers!(mmio::I2C_PORT_1);
 
         let current_fifo_level = FIFOLengthRegister::get_receive_fifo_len() as usize;
         let max_fifo_level = FIFOLengthRegister::MAX_FIFO_RECEIVE_LEN;
@@ -417,7 +417,7 @@ impl I2C<I2CPort0> {
     }
 
     fn send_address_with_rw(address: usize, is_writting: bool) {
-        registers!(mmio::I2C_PORT_0);
+        registers!(mmio::I2C_PORT_1);
         let writting_value = if is_writting { 0 } else { 1 };
         // TODO: We should check the state of the FIFO before adding data to it!
         //       What if the FIFO is full, we do not want to loose data here.
@@ -427,7 +427,7 @@ impl I2C<I2CPort0> {
     }
 
     fn send_bus_event(event: I2CBusControlEvent) -> Result<()> {
-        registers!(mmio::I2C_PORT_0);
+        registers!(mmio::I2C_PORT_1);
         match event {
             I2CBusControlEvent::Start => unsafe {
                 MasterControl::activate_start_master_mode_transfer();
@@ -444,7 +444,7 @@ impl I2C<I2CPort0> {
     }
 
     pub fn clear_rx_fifo() {
-        registers!(mmio::I2C_PORT_0);
+        registers!(mmio::I2C_PORT_1);
         unsafe {
             ReceiveControl0::activate_flush_receive_fifo();
         }
@@ -453,7 +453,7 @@ impl I2C<I2CPort0> {
     }
 
     pub fn clear_tx_fifo() {
-        registers!(mmio::I2C_PORT_0);
+        registers!(mmio::I2C_PORT_1);
         unsafe {
             TransmitControl0::activate_transmit_fifo_flush();
         }
@@ -462,7 +462,7 @@ impl I2C<I2CPort0> {
     }
 
     pub fn set_rx_fifo_threshold(threshold: usize) {
-        registers!(mmio::I2C_PORT_0);
+        registers!(mmio::I2C_PORT_1);
         debug_assert!(
             threshold <= 8,
             "Cannot set the bytes threshold {threshold} over the max register threshold of 8!"
@@ -474,7 +474,7 @@ impl I2C<I2CPort0> {
     }
 
     pub fn set_tx_fifo_threshold(threshold: usize) {
-        registers!(mmio::I2C_PORT_0);
+        registers!(mmio::I2C_PORT_1);
         debug_assert!(
             threshold <= 7,
             "Cannot set the bytes threshold {threshold} over the max register threshold of 8!"
@@ -486,7 +486,7 @@ impl I2C<I2CPort0> {
     }
 
     pub fn enable_master(flag: bool) -> Result<()> {
-        registers!(mmio::I2C_PORT_0);
+        registers!(mmio::I2C_PORT_1);
 
         if flag {
             // Another Master is currently controlling the bus,
@@ -508,7 +508,7 @@ impl I2C<I2CPort0> {
     }
 
     pub fn bus_recover(retry_count: usize) -> Result<()> {
-        registers!(mmio::I2C_PORT_0);
+        registers!(mmio::I2C_PORT_1);
 
         // Save the state so we can restore it
         let state_prior = ControlRegister::read();
