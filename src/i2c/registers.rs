@@ -2,7 +2,6 @@ use crate::bits::BitManipulation;
 use crate::const_assert;
 use crate::memory_map::mmio;
 use crate::{bit_impl, reg_impl};
-use core::ptr;
 
 /// # Relative Register Offsets
 /// These are the offsets for the I2C registers that the

@@ -167,14 +167,19 @@ const MAX_I2C_HIGHSPEED_CLOCK_TIME: usize = 3400000;
 
 const MAX_I2C_FIFO_TRANSACTION: usize = 256;
 
+#[cfg(not(test))]
 extern "C" {
     fn MXC_Delay(us: u32);
 }
 
 /// # We need this for I2C, but uh I have not gotten to it yet :)
+#[cfg(not(test))]
 fn microcontroller_delay(us: usize) {
     unsafe { MXC_Delay(us as u32) }
 }
+
+#[cfg(test)]
+fn microcontroller_delay(_us: usize) {}
 
 #[allow(unused)]
 impl I2C<I2CPort0> {

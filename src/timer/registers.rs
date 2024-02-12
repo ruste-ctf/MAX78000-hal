@@ -1,8 +1,6 @@
-use crate::bits::BitManipulation;
 use crate::const_assert;
 use crate::memory_map::mmio;
 use crate::{bit_impl, reg_impl};
-use core::ptr;
 
 /// # Timer Register Offsets
 /// See Max 78000 User Guide Page 314, Table 19-8.
