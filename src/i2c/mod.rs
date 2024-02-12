@@ -224,7 +224,7 @@ impl I2C<I2CPort0> {
         Ok(())
     }
 
-    fn master_transaction(
+    pub fn master_transaction(
         &self,
         address: usize,
         rx: Option<&mut [u8]>,
