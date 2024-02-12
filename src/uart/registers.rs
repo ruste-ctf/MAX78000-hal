@@ -279,6 +279,9 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
 
     bit_impl! {8..=11, RO u8,
     /// # Receive FIFO Level
+    /// Checks # of bytes in inbound FIFO buffer
+    /// - 0-8: Current # of bytes in buffer
+    /// - 9-15: Reserved
     get_receive_fifo_level}
 
     bit_impl! {7, RO,
