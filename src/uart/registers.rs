@@ -256,7 +256,7 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
 
     bit_impl! {0, RO,
     /// # Transmit Busy
-    is_transmit_buys}
+    is_transmit_busy}
 }
 
 /// # UART Interrupt Enable Register
