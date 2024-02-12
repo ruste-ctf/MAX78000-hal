@@ -623,4 +623,102 @@ mod test {
         assert_eq!(MyTestRegister::get_test_5_bits_register(), 0);
         assert_eq!(unsafe { TEST_PORT_DATA & (0b11111 << 16) } >> 16, 0);
     }
+
+    static mut TEST_PORT_RW1C_DATA: u32 = 0;
+
+    struct MyTestRW1C {}
+    impl MyTestRW1C {
+        pub fn get_ptr() -> *mut u32 {
+            unsafe { &mut TEST_PORT_RW1C_DATA as *mut u32 }
+        }
+
+        reg_impl!(@gen READ);
+        reg_impl!(@gen READ_MASK, 0b1010);
+        reg_impl!(@gen WRITE);
+
+        bit_impl! {0, RW1C,
+        clear_test_bit_0,
+        is_test_bit_0}
+
+        bit_impl! {1, RW,
+        set_test_bit_1,
+        is_test_bit_1}
+
+        bit_impl! {2, RW1C,
+        clear_test_bit_2,
+        is_test_bit_2}
+
+        bit_impl! {3, RW,
+        set_test_bit_3,
+        is_test_bit_3}
+    }
+
+    #[test]
+    fn test_mask_bits() {
+        unsafe { TEST_PORT_RW1C_DATA = 0 };
+        assert_eq!(unsafe { TEST_PORT_RW1C_DATA }, 0);
+        assert!(!MyTestRW1C::is_test_bit_0());
+        assert!(!MyTestRW1C::is_test_bit_1());
+        assert!(!MyTestRW1C::is_test_bit_2());
+        assert!(!MyTestRW1C::is_test_bit_3());
+
+        unsafe { TEST_PORT_RW1C_DATA |= 1 << 0 };
+        assert!(MyTestRW1C::is_test_bit_0());
+        assert!(!MyTestRW1C::is_test_bit_1());
+        assert!(!MyTestRW1C::is_test_bit_2());
+        assert!(!MyTestRW1C::is_test_bit_3());
+
+        unsafe { TEST_PORT_RW1C_DATA |= 1 << 1 };
+        assert!(MyTestRW1C::is_test_bit_0());
+        assert!(MyTestRW1C::is_test_bit_1());
+        assert!(!MyTestRW1C::is_test_bit_2());
+        assert!(!MyTestRW1C::is_test_bit_3());
+
+        unsafe { TEST_PORT_RW1C_DATA |= 1 << 2 };
+        assert!(MyTestRW1C::is_test_bit_0());
+        assert!(MyTestRW1C::is_test_bit_1());
+        assert!(MyTestRW1C::is_test_bit_2());
+        assert!(!MyTestRW1C::is_test_bit_3());
+
+        unsafe { TEST_PORT_RW1C_DATA |= 1 << 3 };
+        assert!(MyTestRW1C::is_test_bit_0());
+        assert!(MyTestRW1C::is_test_bit_1());
+        assert!(MyTestRW1C::is_test_bit_2());
+        assert!(MyTestRW1C::is_test_bit_3());
+
+        unsafe { TEST_PORT_RW1C_DATA = 1 };
+        assert_eq!(unsafe { TEST_PORT_RW1C_DATA }, 1);
+        assert!(MyTestRW1C::is_test_bit_0());
+
+        unsafe { MyTestRW1C::set_test_bit_1(true) };
+        assert_eq!(unsafe { TEST_PORT_RW1C_DATA }, 2);
+        assert!(!MyTestRW1C::is_test_bit_0());
+
+        unsafe { TEST_PORT_RW1C_DATA = 1 | (1 << 2) };
+        assert_eq!(unsafe { TEST_PORT_RW1C_DATA }, 1 | (1 << 2));
+        assert!(MyTestRW1C::is_test_bit_0());
+        assert!(MyTestRW1C::is_test_bit_2());
+
+        unsafe { MyTestRW1C::set_test_bit_1(true) };
+        assert_eq!(unsafe { TEST_PORT_RW1C_DATA }, 2);
+        assert!(!MyTestRW1C::is_test_bit_0());
+        assert!(!MyTestRW1C::is_test_bit_2());
+
+        unsafe { TEST_PORT_RW1C_DATA = 0 };
+        assert_eq!(unsafe { TEST_PORT_RW1C_DATA }, 0);
+        unsafe { MyTestRW1C::clear_test_bit_0() };
+        assert!(MyTestRW1C::is_test_bit_0());
+
+        unsafe { TEST_PORT_RW1C_DATA = 0 };
+        assert_eq!(unsafe { TEST_PORT_RW1C_DATA }, 0);
+        unsafe { MyTestRW1C::clear_test_bit_2() };
+        assert!(MyTestRW1C::is_test_bit_2());
+
+        unsafe { TEST_PORT_RW1C_DATA = 0 };
+        assert_eq!(unsafe { TEST_PORT_RW1C_DATA }, 0);
+        unsafe { MyTestRW1C::set_test_bit_3(true) };
+        unsafe { MyTestRW1C::clear_test_bit_0() };
+        assert!(MyTestRW1C::is_test_bit_3());
+        assert!(MyTestRW1C::is_test_bit_0());
+    }
 }
