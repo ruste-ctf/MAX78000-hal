@@ -226,12 +226,41 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     /// - 1: Use parity (placed after data frame)
     set_transmit_parity_generation_enable,
     /// # Check Transmit Parity Generation Enable
+    /// Check if parity is being generated for outward transmissions
+    /// - 0: Parity diabled
+    /// - 1: Parity enabled
     check_transmit_parity_genration_enable}
 
     bit_impl! {0..=3, RW u8,
     /// # Set Receive FIFO Threshold
+    /// Set byte size of FIFO before CPU interrupt is sent
+    /// ```
+    /// Note: Setting threshold too low at high speeds can slow CPU
+    /// and cause loss of data
+    /// ```
+    /// - 0: Reserved
+    /// - 1: 1 byte
+    /// - 2: 2 bytes
+    /// - 3: 3 bytes
+    /// - 4: 4 bytes
+    /// - 5: 5 bytes
+    /// - 6: 6 bytes
+    /// - 7: 7 bytes
+    /// - 8: 8 bytes
+    /// - 9-15: Reserved
     set_recieve_fifo_threshold,
     /// # Check Receive FIFO Threshold
+    /// Check size of threshold before CPU interrupt is sent
+    /// - 0: Reserved
+    /// - 1: 1 byte
+    /// - 2: 2 bytes
+    /// - 3: 3 bytes
+    /// - 4: 4 bytes
+    /// - 5: 5 bytes
+    /// - 6: 6 bytes
+    /// - 7: 7 bytes
+    /// - 8: 8 bytes
+    /// - 9-15: Reserved
     check_recieve_fifo_threshold}
 }
 
