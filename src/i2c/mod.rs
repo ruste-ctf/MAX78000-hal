@@ -167,12 +167,13 @@ const MAX_I2C_HIGHSPEED_CLOCK_TIME: usize = 3400000;
 
 const MAX_I2C_FIFO_TRANSACTION: usize = 256;
 
+extern "C" {
+    fn MXC_Delay(us: u32);
+}
+
 /// # We need this for I2C, but uh I have not gotten to it yet :)
-fn microcontroller_delay(_us: usize) {
-    registers!(mmio::I2C_PORT_0);
-    for _ in 0..(core_peripheral_clock()) {
-        unsafe { SlaveAddress::set_slave_mode_address(0x10) };
-    }
+fn microcontroller_delay(us: usize) {
+    unsafe { MXC_Delay(us as u32) }
 }
 
 #[allow(unused)]
@@ -520,11 +521,6 @@ impl I2C<I2CPort0> {
         unsafe {
             ControlRegister::set_software_i2c_mode(true);
             ControlRegister::set_i2c_peripheral_enable(true);
-        }
-
-        // Both the SCL and SDA pins should be high
-        if !ControlRegister::get_scl_pin() || !ControlRegister::get_sda_pin() {
-            return Err(ErrorKind::ComError);
         }
 
         let release_scl_and_sda = || unsafe {
