@@ -209,8 +209,14 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
 
     bit_impl! {5, RW,
     /// # Parity Odd Even Select
+    /// Set parity to even or odd
+    /// - 0: Even parity
+    /// - 1: Odd parity
     set_parity_odd_even,
     /// # Check Parity Odd Even Select
+    /// Check if even or odd parity is being used
+    /// - 0: Even parity
+    /// - 1: Odd parity
     check_parity_odd_even}
 
     bit_impl! {4, RW,
