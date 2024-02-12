@@ -197,8 +197,14 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
 
     bit_impl! {6, RW,
     /// # Set Parity Value
+    /// Set parity calculation to use 1s or 0s in data frame
+    /// - 0: Use 1s
+    /// - 1: Use 0s
     set_parity_value,
     /// # Check Parity Value
+    /// Check which value is being used for parity
+    /// - 0: Use 1s
+    /// - 1: Use 0s
     check_parity_value}
 
     bit_impl! {5, RW,
