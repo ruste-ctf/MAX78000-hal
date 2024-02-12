@@ -181,7 +181,7 @@ macro_rules! bit_impl {
         ///
         #[inline]
         pub fn $get() -> bool {
-            use crate::bits::BitManipulation;
+            use $crate::bits::BitManipulation;
             Self::read().get_bit($bit)
         }
     };
