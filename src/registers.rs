@@ -254,7 +254,7 @@ macro_rules! bit_impl {
         /// the internal provided function `Self::write(value)`.
         #[inline]
         pub unsafe fn $set() {
-            use crate::bits::BitManipulation;
+            use $crate::bits::BitManipulation;
             let mut value = Self::read_masked();
             value.set_bit($bit, true);
             Self::write(value);
