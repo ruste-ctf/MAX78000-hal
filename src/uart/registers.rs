@@ -293,17 +293,23 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
 
     bit_impl! {6, RO,
     /// # Transmit FIFO Empty
-    /// Checks if the inbound data buffer has filled up
-    /// - 0: Not full
-    /// - 1: Full
+    /// Checks if the outbound data buffer is empty
+    /// - 0: Not empty
+    /// - 1: Empty
     is_transmit_fifo_empty}
 
     bit_impl! {5, RO,
     /// # Receive FIFO Full
+    /// Checks if the inbound data buffer has filled up
+    /// - 0: Not full
+    /// - 1: Full
     is_receive_fifo_full}
 
     bit_impl! {4, RO,
     /// # Receive FIFO Empty
+    /// Checks if the inbound data buffer is empty
+    /// - 0: Not empty
+    /// - 1: Empty
     is_receive_fifo_empty}
 
     bit_impl! {1, RO,
