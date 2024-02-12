@@ -1,14 +1,12 @@
 [package]
-name = "max78000-hal"
+name = "hal-macros"
 version = "0.1.0"
 edition = "2021"
 
-[workspace]
-members = ["hal-macros"]
+[lib]
+proc-macro = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-hal-macros = {path = "hal-macros"}
-
-[package.metadata.spellcheck]
-config = "config/spellcheck.toml"
+quote = "1.0"
+syn = "2.0"
