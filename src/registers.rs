@@ -48,7 +48,7 @@ macro_rules! reg_impl {
         /// safety and volatility of this function.
         #[inline]
         pub fn read() -> u32 {
-            unsafe { ptr::read_volatile(Self::get_ptr()) }
+            unsafe { core::ptr::read_volatile(Self::get_ptr()) }
         }
     };
     (@gen READ_MASK, $read:literal) => {
@@ -94,7 +94,7 @@ macro_rules! reg_impl {
         /// safety and volatility of this function.
         #[inline]
         pub unsafe fn write(value: u32) {
-            unsafe { ptr::write_volatile(Self::get_ptr(), value) }
+            unsafe { core::ptr::write_volatile(Self::get_ptr(), value) }
         }
     };
     (@gen BLANKET, $v:expr) => {
@@ -163,6 +163,7 @@ macro_rules! bit_impl {
         ///
         #[inline]
         pub fn $get() -> $type {
+            use crate::bits::BitManipulation;
             Self::read().get_bit_range($bits) as $type
         }
     };
@@ -180,6 +181,7 @@ macro_rules! bit_impl {
         ///
         #[inline]
         pub fn $get() -> bool {
+            use crate::bits::BitManipulation;
             Self::read().get_bit($bit)
         }
     };
@@ -202,6 +204,7 @@ macro_rules! bit_impl {
         /// the internal provided function `Self::write(value)`.
         #[inline]
         pub unsafe fn $set(flag: $type) {
+            use crate::bits::BitManipulation;
             let mut value = Self::read_masked();
             value.set_bit_range($bits, flag);
             Self::write(value);
@@ -226,6 +229,7 @@ macro_rules! bit_impl {
         /// the internal provided function `Self::write(value)`.
         #[inline]
         pub unsafe fn $set(flag: bool) {
+            use crate::bits::BitManipulation;
             let mut value = Self::read_masked();
             value.set_bit($bit, flag);
             Self::write(value);
