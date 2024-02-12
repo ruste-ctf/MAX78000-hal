@@ -18,6 +18,15 @@ pub(crate) fn core_peripheral_clock() -> u32 {
     unsafe { SYSTEM_CORE_CLOCK / 2 }
 }
 
+use hal_macros::Test;
+use hal_macros_derive::Register;
+#[derive(Register)]
+pub struct TestExample {}
+
+fn test() {
+    assert!(TestExample::test())
+}
+
 /// # Const Assert
 /// Assert in a const context, useful for making sure that
 /// provided constants fall in expected range.
