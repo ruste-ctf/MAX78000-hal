@@ -209,18 +209,21 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
 
     bit_impl! {5, RW,
     /// # Parity Odd Even Select
-    /// Set parity to even or odd
-    /// - 0: Even parity
+    /// Set parity to ensure even or odd
+    /// - 0: Even parity (default)
     /// - 1: Odd parity
     set_parity_odd_even,
     /// # Check Parity Odd Even Select
     /// Check if even or odd parity is being used
-    /// - 0: Even parity
+    /// - 0: Even parity (default)
     /// - 1: Odd parity
     check_parity_odd_even}
 
     bit_impl! {4, RW,
     /// # Set Transmit Parity Generation Enable
+    /// Set whether to use parity for outward transmissions
+    /// - 0: Disable parity
+    /// - 1: Use parity (placed after data frame)
     set_transmit_parity_generation_enable,
     /// # Check Transmit Parity Generation Enable
     check_transmit_parity_genration_enable}
