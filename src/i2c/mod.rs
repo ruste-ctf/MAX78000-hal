@@ -169,7 +169,10 @@ const MAX_I2C_FIFO_TRANSACTION: usize = 256;
 
 /// # We need this for I2C, but uh I have not gotten to it yet :)
 fn microcontroller_delay(_us: usize) {
-    todo!("Make the timers")
+    registers!(mmio::I2C_PORT_0);
+    for _ in 0..(core_peripheral_clock()) {
+        unsafe { SlaveAddress::set_slave_mode_address(0x10) };
+    }
 }
 
 #[allow(unused)]
