@@ -1,15 +1,15 @@
 use std::ops::Bound;
 
-use proc_macro::TokenStream;
-use quote::quote;
+use proc_macro::{Span, TokenStream};
+use quote::{format_ident, quote};
 use syn::{
     parenthesized,
     parse::{Parse, ParseBuffer, ParseStream},
-    parse_macro_input,
+    parse_macro_input, parse_quote,
     punctuated::Punctuated,
     token::{Bracket, Comma, Paren},
-    Attribute, DeriveInput, Expr, ExprLit, ExprRange, Ident, Item, ItemMod, Lit, LitInt, Meta,
-    MetaNameValue, Path, Token,
+    Attribute, DeriveInput, Expr, ExprLit, ExprRange, Ident, Item, ItemMod, ItemStruct, Lit,
+    LitInt, Meta, MetaNameValue, Path, Token,
 };
 
 #[derive(Debug)]
@@ -191,8 +191,70 @@ impl Parse for MakeDevice {
 pub fn make_device(input: TokenStream) -> TokenStream {
     let thing = parse_macro_input!(input as MakeDevice);
 
-    todo!("END OF MACRO : {:#?}", thing)
+    let register_names: Vec<String> = thing
+        .bits
+        .iter()
+        .map(|bits| bits.bit_attr.register_name.clone())
+        .collect();
+    let register_paths: Vec<Path> = thing
+        .bits
+        .iter()
+        .map(|bits| bits.bit_attr.path.clone())
+        .collect();
+
+    let prv_struct = generate_private_reg_struct(&register_paths, &register_names);
+
+    let emit = quote! {
+        #prv_struct
+    };
+
+    emit.into()
 }
+
+fn generate_private_reg_struct(
+    all_register_offsets: &Vec<Path>,
+    all_register_names: &Vec<String>,
+) -> proc_macro2::TokenStream {
+    assert_eq!(all_register_offsets.len(), all_register_names.len());
+
+    let reg_names: Vec<_> = all_register_names
+        .iter()
+        .map(|value| format_ident!("{value}"))
+        .collect();
+
+    quote! {
+        #[repr(C)]
+        #[allow(unused)]
+        struct UnsafeInnerRegister {
+           #( #reg_names: u32, )*
+        }
+    }
+}
+
+// Struct Output:
+// #[repr(C)]
+// struct PrvReg {
+//    tmr_cnt: ReadWriteCell<u32>
+//    tmr_cmp: ReadWriteCell<u32>
+//    tmr_pwm: ReadWriteCell<u32>
+//    tmr_intfl: ReadWriteCell<u32>
+// }
+// pub struct Registers(inner: PrvReg);
+//
+// impl Registers {
+//    pub fn new(port: usize) -> Result<Self> {
+//       assert!(port == DINGUS1 || port == DINGUS2 ...);
+//       Self(PrvReg::new(port))
+//    }
+//
+//    #[inline(always)]
+//    pub fn tmr_cnt() -> u32 {self.0.tmr_cnt.read()}
+//    pub unsafe fn set_tmr_cnt(value: u32) {self.0.tmr_cnt.write(value)}
+//
+//    pub fn timer_compare_value(&self) -> u32 {
+//       self.tmr_cnt().get_bit_range(0..=31)
+//    }
+// }
 
 /*
     /// let mut reg = Registers::new(mmio::TIMER_0).unwrap();
@@ -256,30 +318,5 @@ pub fn make_device(input: TokenStream) -> TokenStream {
     /// }
     ///
     ///
-    ///
-    /// Struct Output:
-    /// #[repr(C)]
-    /// struct PrvReg {
-    ///    tmr_cnt: ReadWriteCell<u32>
-    ///    tmr_cmp: ReadWriteCell<u32>
-    ///    tmr_pwm: ReadWriteCell<u32>
-    ///    tmr_intfl: ReadWriteCell<u32>
-    /// }
-    /// pub struct Registers(inner: PrvReg);
-    ///
-    /// impl Registers {
-    ///    pub fn new(port: usize) -> Result<Self> {
-    ///       assert!(port == DINGUS1 || port == DINGUS2 ...);
-    ///       Self(PrvReg::new(port))
-    ///    }
-    ///
-    ///    #[inline(always)]
-    ///    pub fn tmr_cnt() -> u32 {self.0.tmr_cnt.read()}
-    ///    pub unsafe fn set_tmr_cnt(value: u32) {self.0.tmr_cnt.write(value)}
-    ///
-    ///    pub fn timer_compare_value(&self) -> u32 {
-    ///       self.tmr_cnt().get_bit_range(0..=31)
-    ///    }
-    /// }
     ///
 */
