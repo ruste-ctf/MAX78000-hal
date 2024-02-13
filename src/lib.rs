@@ -20,9 +20,9 @@ pub(crate) fn core_peripheral_clock() -> u32 {
 
 use hal_macros_derive::make_device;
 
-//#[device_ports(mmio::TIMER_0, mmio::TIMER_1, mmio::TIMER_2)]
-
 make_device! {
+    device_ports(mmio::TIMER_0, mmio::TIMER_1, mmio::TIMER_2);
+
     /// Set the count of the timer.
     #[bit(0..=31, RW, rro::TMR_CNT)]
     time_count,

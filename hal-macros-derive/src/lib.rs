@@ -3,12 +3,13 @@ use std::ops::Bound;
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
+    parenthesized,
     parse::{Parse, ParseBuffer, ParseStream},
     parse_macro_input,
     punctuated::Punctuated,
     token::{Bracket, Comma, Paren},
     Attribute, DeriveInput, Expr, ExprLit, ExprRange, Ident, Item, ItemMod, Lit, LitInt, Meta,
-    MetaNameValue, Token,
+    MetaNameValue, Path, Token,
 };
 
 #[derive(Debug)]
@@ -131,9 +132,10 @@ impl Parse for BitBlock {
                 };
 
                 doc_attr.push(string.value().trim_start().into());
-            }
-            if attr.path().is_ident("bit") {
+            } else if attr.path().is_ident("bit") {
                 bit_attr = Some(attr.parse_args()?);
+            } else {
+                return Err(input.error("Unknown attribute"));
             }
         }
 
@@ -147,12 +149,36 @@ impl Parse for BitBlock {
 
 #[derive(Debug)]
 struct MakeDevice {
+    device_ports: DevicePorts,
     bits: Vec<BitBlock>,
+}
+
+#[derive(Debug)]
+struct DevicePorts(Vec<Path>);
+
+mod device_ports {
+    syn::custom_keyword!(device_ports);
+}
+
+impl Parse for DevicePorts {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        input.parse::<device_ports::device_ports>()?;
+        let content;
+        let _: Paren = parenthesized!(content in input);
+        input.parse::<Token![;]>()?;
+        Ok(Self(
+            content
+                .parse_terminated(Path::parse, Comma)?
+                .into_iter()
+                .collect(),
+        ))
+    }
 }
 
 impl Parse for MakeDevice {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         Ok(MakeDevice {
+            device_ports: input.parse()?,
             bits: input
                 .parse_terminated(BitBlock::parse, Token![,])?
                 .into_iter()
