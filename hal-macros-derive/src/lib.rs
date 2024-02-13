@@ -7,7 +7,8 @@ use syn::{
     parse_macro_input,
     punctuated::Punctuated,
     token::{Bracket, Comma, Paren},
-    Attribute, DeriveInput, Expr, ExprRange, Ident, Item, ItemMod, Lit, LitInt, Meta, Token,
+    Attribute, DeriveInput, Expr, ExprLit, ExprRange, Ident, Item, ItemMod, Lit, LitInt, Meta,
+    MetaNameValue, Token,
 };
 
 #[derive(Debug)]
@@ -104,7 +105,7 @@ impl Parse for BitAttribute {
 
 #[derive(Debug)]
 struct BitBlock {
-    doc_attr: Vec<Attribute>,
+    doc_attr: Vec<String>,
     bit_attr: BitAttribute,
     name: Ident,
 }
@@ -112,12 +113,24 @@ struct BitBlock {
 impl Parse for BitBlock {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let attributes = input.call(Attribute::parse_outer)?;
-        let mut doc_attr: Vec<Attribute> = Vec::new();
+        let mut doc_attr: Vec<String> = Vec::new();
         let mut bit_attr: Option<BitAttribute> = None;
 
         for attr in &attributes {
             if attr.path().is_ident("doc") {
-                doc_attr.push(attr.clone());
+                let Meta::NameValue(MetaNameValue {
+                    value:
+                        Expr::Lit(ExprLit {
+                            lit: Lit::Str(string),
+                            ..
+                        }),
+                    ..
+                }) = &attr.meta
+                else {
+                    return Err(input.error("Could not parse doc comment"));
+                };
+
+                doc_attr.push(string.value().trim_start().into());
             }
             if attr.path().is_ident("bit") {
                 bit_attr = Some(attr.parse_args()?);
@@ -125,7 +138,7 @@ impl Parse for BitBlock {
         }
 
         Ok(Self {
-            doc_attr: attributes,
+            doc_attr: doc_attr,
             bit_attr: bit_attr.ok_or(input.error("Reqires a #[bit(...)]"))?,
             name: input.parse()?,
         })
@@ -134,13 +147,16 @@ impl Parse for BitBlock {
 
 #[derive(Debug)]
 struct MakeDevice {
-    bits: Punctuated<BitBlock, Token![,]>,
+    bits: Vec<BitBlock>,
 }
 
 impl Parse for MakeDevice {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         Ok(MakeDevice {
-            bits: input.parse_terminated(BitBlock::parse, Token![,])?,
+            bits: input
+                .parse_terminated(BitBlock::parse, Token![,])?
+                .into_iter()
+                .collect(),
         })
     }
 }
