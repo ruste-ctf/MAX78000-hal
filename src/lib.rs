@@ -18,13 +18,30 @@ pub(crate) fn core_peripheral_clock() -> u32 {
     unsafe { SYSTEM_CORE_CLOCK / 2 }
 }
 
-use hal_macros::Test;
-use hal_macros_derive::Register;
-#[derive(Register)]
-pub struct TestExample {}
+use hal_macros_derive::make_device;
 
-fn test() {
-    assert!(TestExample::test())
+//#[device_ports(mmio::TIMER_0, mmio::TIMER_1, mmio::TIMER_2)]
+
+make_device! {
+    /// Set the count of the timer.
+    #[bit(0..=31, RW, rro::TMR_CNT)]
+    time_count,
+
+    /// The timer compare value.
+    #[bit(0..=31, RW, rro::TMR_CMP)]
+    timer_compare_value,
+
+    /// The timer PWM register.
+    #[bit(0..=31, RW, rro::TMR_PWM)]
+    pwm,
+
+    /// The timer Interrupt register.
+    #[bit(25, RO, rro::TMR_INTFL)]
+    timerb_write_done,
+
+    //example of some RW1C
+    #[bit(13, RW1C, rro::DINGUS)]
+    done_flag,
 }
 
 /// # Const Assert
