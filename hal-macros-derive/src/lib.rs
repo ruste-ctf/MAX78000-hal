@@ -7,7 +7,7 @@ use syn::{
     parse_macro_input,
     punctuated::Punctuated,
     token::{Bracket, Comma, Paren},
-    Attribute, DeriveInput, Expr, ExprRange, Ident, Item, ItemMod, LitInt, Meta, Token,
+    Attribute, DeriveInput, Expr, ExprRange, Ident, Item, ItemMod, Lit, LitInt, Meta, Token,
 };
 
 #[derive(Debug)]
@@ -18,10 +18,12 @@ enum BitRange {
 
 impl Parse for BitRange {
     fn parse(input: ParseStream) -> syn::Result<Self> {
-        if let Ok(range) = input.parse() {
-            Ok(Self::Range(range))
-        } else if let Ok(int) = input.parse() {
-            Ok(Self::Single(int))
+        if (input.peek(LitInt) || input.peek(Token![..]))
+            && (input.peek2(Token![..]) || input.peek2(LitInt))
+        {
+            Ok(Self::Range(input.parse()?))
+        } else if input.peek(LitInt) {
+            Ok(Self::Single(input.parse()?))
         } else {
             Err(input.error("Could not parse BitRange"))
         }
@@ -39,6 +41,10 @@ enum Access {
 
 mod access {
     syn::custom_keyword!(RW);
+    syn::custom_keyword!(RO);
+    syn::custom_keyword!(WO);
+    syn::custom_keyword!(RW1C);
+    syn::custom_keyword!(RW1O);
 }
 
 impl Parse for Access {
@@ -46,8 +52,20 @@ impl Parse for Access {
         if input.peek(access::RW) {
             input.parse::<access::RW>()?;
             Ok(Access::RW)
+        } else if input.peek(access::RO) {
+            input.parse::<access::RO>()?;
+            Ok(Access::RO)
+        } else if input.peek(access::WO) {
+            input.parse::<access::WO>()?;
+            Ok(Access::WO)
+        } else if input.peek(access::RW1C) {
+            input.parse::<access::RW1C>()?;
+            Ok(Access::RW1C)
+        } else if input.peek(access::RW1O) {
+            input.parse::<access::RW1O>()?;
+            Ok(Access::RW1O)
         } else {
-            todo!("Imp more Access -> {:#?}", input.to_string())
+            Err(input.error("Not a valid access token"))
         }
     }
 }
@@ -84,8 +102,10 @@ impl Parse for BitAttribute {
     }
 }
 
+#[derive(Debug)]
 struct BitBlock {
     doc_attr: Vec<Attribute>,
+    bit_attr: BitAttribute,
     name: Ident,
 }
 
@@ -93,23 +113,26 @@ impl Parse for BitBlock {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let attributes = input.call(Attribute::parse_outer)?;
         let mut doc_attr: Vec<Attribute> = Vec::new();
+        let mut bit_attr: Option<BitAttribute> = None;
 
         for attr in &attributes {
             if attr.path().is_ident("doc") {
                 doc_attr.push(attr.clone());
             }
             if attr.path().is_ident("bit") {
-                let bit: BitAttribute = attr.parse_args()?;
-                todo!("{:#?}", bit);
+                bit_attr = Some(attr.parse_args()?);
             }
         }
+
         Ok(Self {
             doc_attr: attributes,
+            bit_attr: bit_attr.ok_or(input.error("Reqires a #[bit(...)]"))?,
             name: input.parse()?,
         })
     }
 }
 
+#[derive(Debug)]
 struct MakeDevice {
     bits: Punctuated<BitBlock, Token![,]>,
 }
@@ -126,7 +149,7 @@ impl Parse for MakeDevice {
 pub fn make_device(input: TokenStream) -> TokenStream {
     let thing = parse_macro_input!(input as MakeDevice);
 
-    todo!("END OF MACRO")
+    todo!("END OF MACRO : {:#?}", thing)
 }
 
 /*
