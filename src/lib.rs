@@ -39,9 +39,13 @@ make_device! {
     #[bit(25, RO, rro::TMR_INTFL)]
     timerb_write_done,
 
-    //example of some RW1C
+    ///example of some RW1C
     #[bit(13, RW1C, rro::DINGUS)]
     done_flag,
+
+    /// example of RW
+    #[bit(12, RW, rro::DINGUS)]
+    my_read_write_flag,
 }
 
 /// # Const Assert

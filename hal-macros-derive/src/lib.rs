@@ -450,6 +450,96 @@ fn generate_range_get(
     }
 }
 
+fn generate_single_get(name: &str, bit: &BitBlock) -> proc_macro2::TokenStream {
+    let name = format_ident!("{}", name.to_lowercase().replace(" ", "_"));
+    let self_dot = format_ident!("{}", bit.bit_attr.register_name);
+    let const_name = bit.name.to_string().to_uppercase().replace(" ", "_");
+    let self_shift = format_ident!("{}_BIT", const_name);
+    let doc_title = string_into_title(name.to_string().as_str());
+    let doc = generate_doc_strings(&bit.doc_attr);
+    quote! {
+        #doc_title
+        #doc
+        ///
+        /// # Get
+        /// Gets the value or value range from the given register.
+        ///
+        /// # Safety
+        /// It is ultimately up to the caller to ensure this function will
+        /// never cause any side effects. However, usually reading from
+        /// registers does not modify any processor state (just looks at it).
+        ///
+        /// # Volatile
+        /// This function only preforms **1** volatile *read* and immediately copies
+        /// the value and extracts the bits to return the result.
+        ///
+        #[inline(always)]
+        pub fn #name(&self) -> bool {
+            (self.#self_dot & (<Self>::#self_shift as u32)) != 0
+        }
+    }
+}
+
+fn generate_single_set(name: &str, bit: &BitBlock, only_gen_one: bool) -> proc_macro2::TokenStream {
+    let name = format_ident!("{}", name.to_lowercase().replace(" ", "_"));
+    let self_dot = format_ident!("{}", bit.bit_attr.register_name);
+    let const_name = bit.name.to_string().to_uppercase().replace(" ", "_");
+    let self_shift = format_ident!("{}_BIT", const_name);
+    let doc_title = string_into_title(name.to_string().as_str());
+    let doc = generate_doc_strings(&bit.doc_attr);
+    let reg_const_name = bit
+        .bit_attr
+        .register_name
+        .to_string()
+        .to_uppercase()
+        .replace(" ", "_");
+    let self_mask = format_ident!("{}_SET_MASK", reg_const_name);
+
+    let param = if only_gen_one {
+        quote!()
+    } else {
+        quote!(, flag: bool)
+    };
+    let flag_or_true = if only_gen_one {
+        quote!(1)
+    } else {
+        quote!(if flag { 1 } else { 0 })
+    };
+    quote! {
+        #doc_title
+        #doc
+        ///
+        /// # Set
+        /// Set the value or value range into the given register.
+        ///
+        /// # Safety
+        /// It is up to the caller to verify that this register write will not
+        /// cause any side effects. There could be an event that setting this
+        /// register could cause undefined behavior elsewhere in the program.
+        ///
+        /// This register will derefrence the given `ptr` + `offset`, so one
+        /// must verify at complile time that the given `ptr` falls within
+        /// acceptable memory ranges.
+        ///
+        /// ## Other Register State
+        /// In some examples it is true that ones register state depends on another
+        /// register's status. In these cases, it is up to the caller to properly
+        /// set this register to a valid (and ONLY valid value).
+        ///
+        /// # Volatile
+        /// This function only preforms **1** volatile *read*,
+        /// immediately modifies the flag and does **1** volatile *write* using
+        /// the internal provided function to register.
+        ///
+        #[inline(always)]
+        pub unsafe fn #name(&mut self #param) {
+            let read_value: u32 = self.#self_dot & (<Self>::#self_mask as u32);
+            let flag_value: u32 = (#flag_or_true) << (<Self>::#self_shift as u32);
+            self.#self_dot = read_value | flag_value;
+        }
+    }
+}
+
 fn generate_range_set(
     name: &str,
     bit: &BitBlock,
@@ -555,7 +645,35 @@ fn generate_bit_range(
 }
 
 fn generate_bit_single(single: usize, bit: &BitBlock) -> proc_macro2::TokenStream {
-    quote!()
+    let doc_string = generate_doc_strings(&bit.doc_attr);
+
+    let (setter_name, setter_one, getter_start, getter_name) = match bit.bit_attr.access {
+        Access::RW1C => ("clear", true, "is_", "_active"),
+        Access::RW1O => ("activate", true, "is_", "_pending"),
+        _ => ("set", false, "get_", ""),
+    };
+
+    let const_start = generate_const(
+        format!("{}_BIT", bit.name).as_str(),
+        1 << single,
+        doc_string,
+    );
+
+    let getter = generate_single_get(
+        format!("{}{}{}", getter_start, bit.name, getter_name).as_str(),
+        bit,
+    );
+    let setter = generate_single_set(
+        format!("{}_{}", setter_name, bit.name).as_str(),
+        bit,
+        setter_one,
+    );
+    quote!(
+        #const_start
+
+        #getter
+        #setter
+    )
 }
 
 fn generate_reg_struct(
