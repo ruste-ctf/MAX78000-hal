@@ -320,11 +320,11 @@ fn generate_const(
 ) -> proc_macro2::TokenStream {
     let name_const = name.to_uppercase().replace(" ", "_");
     let name_tokens = format_ident!("{}", name_const);
-    let doc_string = string_into_title(name);
-    let doc_example_let = format!("let my_const = Registers::{};", name_const);
-    let doc_example_assert = format!("assert_eq!(my_const, {});", value);
+    let doc_title = string_into_title(name);
+    let doc_example_let = format!(" let my_const = Registers::{};", name_const);
+    let doc_example_assert = format!(" assert_eq!(my_const, {});", value);
     quote!(
-        #doc_string
+        #doc_title
         #docs
         ///
         /// # Const Item
@@ -333,7 +333,7 @@ fn generate_const(
         /// type presented. If the bits for this flag are defined with a range (ie. `0..=7`)
         /// then two const items will be made with the names `<MY FLAG>_BIT_START` and
         /// `<MY FLAG>_BIT_END`. In the above example, the `<MY FLAG>_BIT_START` will
-        /// contain the value '0', and `<MY FLAG>_BIT_END` will be '7'.
+        /// contain the value 0, and `<MY FLAG>_BIT_END` will be 7.
         ///
         /// # Example
         /// ```ignore
@@ -356,12 +356,37 @@ fn min_type_for_range((start, end): (usize, usize)) -> proc_macro2::TokenStream 
     }
 }
 
-fn generate_range_get(name: String, (start, end): (usize, usize)) -> proc_macro2::TokenStream {
+fn generate_range_get(
+    name: &str,
+    bit: &BitBlock,
+    (start, end): (usize, usize),
+) -> proc_macro2::TokenStream {
     let name = format_ident!("{}", name.to_lowercase().replace(" ", "_"));
     let bit_type = min_type_for_range((start, end));
+    let self_dot = format_ident!("{}", bit.bit_attr.register_name);
+    let const_name = bit.name.to_string().to_uppercase().replace(" ", "_");
+    let self_mask = format_ident!("{}_BIT_MASK", const_name);
+    let self_shift = format_ident!("{}_BIT_START", const_name);
+    let doc_title = string_into_title(name.to_string().as_str());
+    let doc = generate_doc_strings(&bit.doc_attr);
     quote! {
-        pub fn #name() -> #bit_type {
-            0
+        #doc_title
+        #doc
+        ///
+        /// # Get
+        /// Gets the value or value range from the given register.
+        ///
+        /// # Safety
+        /// It is ultimately up to the caller to ensure this function will
+        /// never cause any side effects. However, usually reading from
+        /// registers does not modify any processor state (just looks at it).
+        ///
+        /// # Volatile
+        /// This function only preforms **1** volatile *read* and immediately copies
+        /// the value and extracts the bits to return the result.
+        ///
+        pub fn #name(&self) -> #bit_type {
+            (((self.#self_dot as usize) & <Self>::#self_mask) >> <Self>::#self_shift) as #bit_type
         }
     }
 }
@@ -380,7 +405,7 @@ fn generate_bit_range(
 
     let doc_string = generate_doc_strings(&bit.doc_attr);
 
-    let mut mask = 1;
+    let mut mask: u32 = 1;
     for _ in 0..(end - start) {
         mask <<= 1;
         mask |= 1;
@@ -393,12 +418,13 @@ fn generate_bit_range(
         doc_string.clone(),
     );
     let const_end = generate_const(&format!("{}_BIT_END", bit.name), end, doc_string.clone());
+
     let const_mask = generate_const(
         &format!("{}_BIT_MASK", bit.name),
-        (!mask) as usize,
+        mask as usize,
         doc_string.clone(),
     );
-    let getter = generate_range_get(format!("get_{}", bit.name), (start, end));
+    let getter = generate_range_get(format!("get_{}", bit.name).as_str(), bit, (start, end));
 
     quote!(
         #const_start
