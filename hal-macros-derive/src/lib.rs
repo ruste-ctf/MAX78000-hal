@@ -314,15 +314,32 @@ fn string_into_title(name: &str) -> proc_macro2::TokenStream {
 }
 
 fn generate_const(
-    name: &String,
+    name: &str,
     value: usize,
     docs: proc_macro2::TokenStream,
 ) -> proc_macro2::TokenStream {
-    let name_tokens = format_ident!("{}", name.to_uppercase().replace(" ", "_"));
-    let doc_string = string_into_title(name.as_str());
+    let name_const = name.to_uppercase().replace(" ", "_");
+    let name_tokens = format_ident!("{}", name_const);
+    let doc_string = string_into_title(name);
+    let doc_example_let = format!("let my_const = Registers::{};", name_const);
+    let doc_example_assert = format!("assert_eq!(my_const, {});", value);
     quote!(
         #doc_string
         #docs
+        ///
+        /// # Const Item
+        /// This is a const item that defines where this `bit`'s ranges are. This range
+        /// can simply be a single bit, or multiple bits depending on the bit
+        /// type presented. If the bits for this flag are defined with a range (ie. `0..=7`)
+        /// then two const items will be made with the names `<MY FLAG>_BIT_START` and
+        /// `<MY FLAG>_BIT_END`. In the above example, the `<MY FLAG>_BIT_START` will
+        /// contain the value '0', and `<MY FLAG>_BIT_END` will be '7'.
+        ///
+        /// # Example
+        /// ```ignore
+        #[doc = #doc_example_let]
+        #[doc = #doc_example_assert]
+        /// ```
         pub const #name_tokens: usize = #value;
     )
 }
