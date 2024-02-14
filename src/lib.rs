@@ -18,7 +18,9 @@ pub(crate) fn core_peripheral_clock() -> u32 {
     unsafe { SYSTEM_CORE_CLOCK / 2 }
 }
 
+use hal_macros::RW;
 use hal_macros_derive::make_device;
+use memory_map::mmio;
 
 make_device! {
     device_ports(mmio::TIMER_0, mmio::TIMER_1, mmio::TIMER_2);
