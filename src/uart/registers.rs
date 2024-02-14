@@ -359,8 +359,14 @@ impl<const PORT_PTR: usize> InterruptEnableRegister<PORT_PTR> {
 
     bit_impl! {3, RW,
     /// # Set Receive FIFO Threshold Event Interrupt Enable
+    /// Sets whether the interrupt for filled inbound FIFO buffer is enabled
+    /// - 0: Disabled
+    /// - 1: Enabled
     set_receive_fifo_thershold_event,
     /// # Get Receive FIFO Threshold Event Interrupt Enable
+    /// Gets whether the interrupt for filled inbound FIFO buffer is enabled
+    /// - 0: Disabled
+    /// - 1: Enabled
     get_receive_fifo_thershold_event}
 
     bit_impl! {2, RW,
