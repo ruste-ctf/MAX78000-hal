@@ -279,7 +279,7 @@ fn generate_new_constructer(
 
     let fields: Vec<_> = register_fields
         .iter()
-        .map(|(ident, _)| quote!(#ident : RW::new(port)))
+        .map(|(ident, _)| quote!(#ident : RW::new(port).unwrap()))
         .collect();
 
     quote!(
@@ -762,7 +762,7 @@ fn generate_reg_struct(reg_names: &[(Ident, Path)]) -> proc_macro2::TokenStream 
         #[repr(C)]
         #[allow(unused)]
         pub struct Registers {
-           #(#properties)*
+           #(#properties,)*
         }
     }
 }

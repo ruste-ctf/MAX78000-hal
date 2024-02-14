@@ -23,6 +23,37 @@ mod rro {
     pub const TMR_WKFL: usize = 0x001C;
 }
 
+use hal_macros::{VolatileRead, VolatileWrite, RW};
+use hal_macros_derive::make_device;
+
+make_device! {
+    device_ports(mmio::TIMER_0, mmio::TIMER_1, mmio::TIMER_2);
+
+    /// Set the count of the timer.
+    #[bit(0..=31, RW, rro::TMR_CNT)]
+    time_count,
+
+    /// The timer compare value.
+    #[bit(0..=31, RW, rro::TMR_CMP)]
+    timer_compare_value,
+
+    /// The timer PWM register.
+    #[bit(0..=31, RW, rro::TMR_PWM)]
+    pwm,
+
+    /// The timer Interrupt register.
+    #[bit(25, RO, rro::TMR_INTFL)]
+    timerb_write_done,
+
+    ///example of some RW1C
+    #[bit(13, RW1C, rro::TMR_CTRL1)]
+    done_flag,
+
+    /// example of RW
+    #[bit(12, RW, rro::TMR_NOLCMP)]
+    my_read_write_flag,
+}
+
 /// # Timer Count Register
 /// The Timer Count Register. See Page 315, Table 19-9.
 pub struct CountRegister<const PORT_PTR: usize> {}
