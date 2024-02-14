@@ -241,34 +241,146 @@ pub fn make_device(input: TokenStream) -> TokenStream {
         .map(|bits| bits.bit_attr.path.clone())
         .collect();
 
-    let prv_struct = generate_reg_struct(&register_paths, &register_names);
+    let registers_struct = generate_reg_struct(&register_paths, &register_names);
+    let bit_impl: Vec<proc_macro2::TokenStream> = parsed_scope
+        .bits
+        .iter()
+        .map(|bit_item| generate_bit(bit_item))
+        .collect();
 
     let emit = quote! {
-        #prv_struct
+        #registers_struct
 
-        impl Register {
-
+        impl Registers {
+            #(#bit_impl)*
         }
     };
 
     emit.into()
 }
 
-fn generate_bit(bit: BitAttribute) -> proc_macro2::TokenStream {
-    match bit.bit {
+fn generate_bit(bit: &BitBlock) -> proc_macro2::TokenStream {
+    match bit.bit_attr.bit {
         BitRange::Range(range) => generate_bit_range(range, bit),
         BitRange::Single(single) => generate_bit_single(single, bit),
     }
 }
 
-fn generate_bit_range(
-    range: (Bound<usize>, Bound<usize>),
-    bit: BitAttribute,
-) -> proc_macro2::TokenStream {
-    quote!()
+fn get_real_range(range: (Bound<usize>, Bound<usize>)) -> (usize, usize) {
+    let start = match range.0 {
+        Bound::Unbounded => 0,
+        Bound::Included(value) => value,
+        Bound::Excluded(value) => value + 1,
+    };
+    let end = match range.1 {
+        Bound::Unbounded => 31,
+        Bound::Included(value) => value,
+        Bound::Excluded(value) => value - 1,
+    };
+
+    (start, end)
 }
 
-fn generate_bit_single(single: usize, bit: BitAttribute) -> proc_macro2::TokenStream {
+fn generate_range((start, end): (usize, usize)) -> proc_macro2::TokenStream {
+    quote!(
+        #start ..= #end
+    )
+}
+
+fn string_into_title(name: &str) -> proc_macro2::TokenStream {
+    let name = format!(
+        " # {}",
+        name.to_lowercase()
+            .replace("_", " ")
+            .chars()
+            .into_iter()
+            .fold(
+                (true, String::new()),
+                |(is_last_space, mut string), value| {
+                    string.push(if is_last_space {
+                        value.to_ascii_uppercase()
+                    } else {
+                        value
+                    });
+                    (value == ' ', string)
+                },
+            )
+            .1
+    );
+
+    quote!(
+        #[doc = #name]
+    )
+}
+
+fn generate_const(
+    name: &String,
+    value: usize,
+    docs: proc_macro2::TokenStream,
+) -> proc_macro2::TokenStream {
+    let name_tokens = format_ident!("{}", name.to_uppercase().replace(" ", "_"));
+    let doc_string = string_into_title(name.as_str());
+    quote!(
+        #doc_string
+        #docs
+        pub const #name_tokens: usize = #value;
+    )
+}
+
+fn min_type_for_range((start, end): (usize, usize)) -> proc_macro2::TokenStream {
+    let diff = end - start;
+
+    match diff {
+        ..=7 => quote!(u8),
+        ..=15 => quote!(u16),
+        ..=31 => quote!(u32),
+        ..=63 => quote!(u64),
+        _ => todo!("Out of range for bit range"),
+    }
+}
+
+fn generate_range_get(name: String, (start, end): (usize, usize)) -> proc_macro2::TokenStream {
+    let name = format_ident!("{}", name.to_lowercase().replace(" ", "_"));
+    let bit_type = min_type_for_range((start, end));
+    quote! {
+        pub fn #name() -> #bit_type {
+            0
+        }
+    }
+}
+
+fn generate_doc_strings(strings: &Vec<String>) -> proc_macro2::TokenStream {
+    quote!(
+        #(#[doc = #strings])*
+    )
+}
+
+fn generate_bit_range(
+    range: (Bound<usize>, Bound<usize>),
+    bit: &BitBlock,
+) -> proc_macro2::TokenStream {
+    let (start, end) = get_real_range(range);
+
+    let doc_string = generate_doc_strings(&bit.doc_attr);
+
+    let const_start = generate_const(
+        &format!("{}_BIT_START", bit.name),
+        start,
+        doc_string.clone(),
+    );
+    let const_end = generate_const(&format!("{}_BIT_END", bit.name), end, doc_string.clone());
+    let getter = generate_range_get(format!("get_{}", bit.name), (start, end));
+
+    quote!(
+        #const_start
+        #const_end
+
+        #getter
+
+    )
+}
+
+fn generate_bit_single(single: usize, bit: &BitBlock) -> proc_macro2::TokenStream {
     quote!()
 }
 
@@ -286,7 +398,7 @@ fn generate_reg_struct(
     quote! {
         #[repr(C)]
         #[allow(unused)]
-        pub struct Register {
+        pub struct Registers {
            #( #reg_names: u32, )*
         }
     }
