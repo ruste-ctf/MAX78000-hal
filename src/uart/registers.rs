@@ -335,24 +335,24 @@ reg_impl!(RW, InterruptEnableRegister, uro::UART_CTRL);
 impl<const PORT_PTR: usize> InterruptEnableRegister<PORT_PTR> {
     bit_impl! {6, RW,
     /// # Set Transmit FIFO Half-Empty Event Interrupt Enable
-    /// Sets whether the interrupt for when the outbound FIFO buffer is half-full is enabled
+    /// Sets whether the interrupt for half-full outbound FIFO buffer is enabled
     /// - 0: Disabled
     /// - 1: Enabled
     set_transmit_fifo_half_empty_event,
     /// # Get Transmit FIFO Half-Empty Event Interrupt Enable
-    /// Gets whether the interrupt for when the outbound FIFO buffer is half-full is enabled
+    /// Gets whether the interrupt for half-full outbound FIFO buffer is enabled
     /// - 0: Disabled
     /// - 1: Enabled
     get_transmit_fifo_half_empty_event}
 
     bit_impl! {4, RW,
     /// # Set Receive FIFO Half-Empty Event Interrupt Enable
-    /// Sets whether the interrupt for when the inbound FIFO buffer is half-full is enabled
+    /// Sets whether the interrupt for half-full inbound FIFO buffer is enabled
     /// - 0: Disabled
     /// - 1: Enabled
     set_receive_fifo_half_empty_even,
     /// # Get Receive FIFO Half-Empty Event Interrupt Enable
-    /// Gets whether the interrupt for when the inbound FIFO buffer is half-full is enabled
+    /// Gets whether the interrupt for half-full inbound FIFO buffer is enabled
     /// - 0: Disabled
     /// - 1: Enabled
     get_receive_fifo_half_empty_even}
