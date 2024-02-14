@@ -9,13 +9,13 @@ use syn::{
     punctuated::Punctuated,
     token::{Bracket, Comma, Paren},
     Attribute, DeriveInput, Expr, ExprLit, ExprRange, Ident, Item, ItemMod, ItemStruct, Lit,
-    LitInt, Meta, MetaNameValue, Path, Token,
+    LitInt, Meta, MetaNameValue, Path, RangeLimits, Token,
 };
 
 #[derive(Debug)]
 enum BitRange {
-    Range(ExprRange),
-    Single(LitInt),
+    Range((Bound<usize>, Bound<usize>)),
+    Single(usize),
 }
 
 impl Parse for BitRange {
@@ -23,9 +23,47 @@ impl Parse for BitRange {
         if (input.peek(LitInt) || input.peek(Token![..]))
             && (input.peek2(Token![..]) || input.peek2(LitInt))
         {
-            Ok(Self::Range(input.parse()?))
+            let range: ExprRange = input.parse()?;
+            let first = range
+                .start
+                .map(|expr| match expr.as_ref() {
+                    Expr::Lit(ExprLit { attrs: _, lit }) => match lit {
+                        Lit::Int(int) => Ok(Bound::Included(int.base10_parse()?)),
+                        _ => Err(input.error("Require literal int in range")),
+                    },
+                    _ => Err(input.error("Require literal int in range")),
+                })
+                .unwrap_or(Ok(Bound::Unbounded))?;
+
+            let second_is_included = match range.limits {
+                RangeLimits::HalfOpen(_) => false,
+                RangeLimits::Closed(_) => true,
+            };
+
+            let second = range
+                .end
+                .map(|expr| match expr.as_ref() {
+                    Expr::Lit(ExprLit { attrs: _, lit }) => match lit {
+                        Lit::Int(int) => {
+                            let value = int.base10_parse()?;
+
+                            if second_is_included {
+                                Ok(Bound::Included(value))
+                            } else {
+                                Ok(Bound::Excluded(value))
+                            }
+                        }
+                        _ => Err(input.error("Require literal int in range")),
+                    },
+                    _ => Err(input.error("Require literal int in range")),
+                })
+                .unwrap_or(Ok(Bound::Unbounded))?;
+
+            Ok(Self::Range((first, second)))
         } else if input.peek(LitInt) {
-            Ok(Self::Single(input.parse()?))
+            let value: LitInt = input.parse()?;
+
+            Ok(Self::Single(value.base10_parse()?))
         } else {
             Err(input.error("Could not parse BitRange"))
         }
@@ -140,7 +178,7 @@ impl Parse for BitBlock {
         }
 
         Ok(Self {
-            doc_attr: doc_attr,
+            doc_attr,
             bit_attr: bit_attr.ok_or(input.error("Reqires a #[bit(...)]"))?,
             name: input.parse()?,
         })
@@ -189,29 +227,52 @@ impl Parse for MakeDevice {
 
 #[proc_macro]
 pub fn make_device(input: TokenStream) -> TokenStream {
-    let thing = parse_macro_input!(input as MakeDevice);
+    let parsed_scope = parse_macro_input!(input as MakeDevice);
 
-    let register_names: Vec<String> = thing
+    let register_names: Vec<String> = parsed_scope
         .bits
         .iter()
         .map(|bits| bits.bit_attr.register_name.clone())
         .collect();
-    let register_paths: Vec<Path> = thing
+
+    let register_paths: Vec<Path> = parsed_scope
         .bits
         .iter()
         .map(|bits| bits.bit_attr.path.clone())
         .collect();
 
-    let prv_struct = generate_private_reg_struct(&register_paths, &register_names);
+    let prv_struct = generate_reg_struct(&register_paths, &register_names);
 
     let emit = quote! {
         #prv_struct
+
+        impl Register {
+
+        }
     };
 
     emit.into()
 }
 
-fn generate_private_reg_struct(
+fn generate_bit(bit: BitAttribute) -> proc_macro2::TokenStream {
+    match bit.bit {
+        BitRange::Range(range) => generate_bit_range(range, bit),
+        BitRange::Single(single) => generate_bit_single(single, bit),
+    }
+}
+
+fn generate_bit_range(
+    range: (Bound<usize>, Bound<usize>),
+    bit: BitAttribute,
+) -> proc_macro2::TokenStream {
+    quote!()
+}
+
+fn generate_bit_single(single: usize, bit: BitAttribute) -> proc_macro2::TokenStream {
+    quote!()
+}
+
+fn generate_reg_struct(
     all_register_offsets: &Vec<Path>,
     all_register_names: &Vec<String>,
 ) -> proc_macro2::TokenStream {
@@ -225,7 +286,7 @@ fn generate_private_reg_struct(
     quote! {
         #[repr(C)]
         #[allow(unused)]
-        struct UnsafeInnerRegister {
+        pub struct Register {
            #( #reg_names: u32, )*
         }
     }
