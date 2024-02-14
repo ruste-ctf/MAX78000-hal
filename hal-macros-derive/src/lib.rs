@@ -1,15 +1,14 @@
 use std::{collections::HashMap, ops::Bound};
 
-use proc_macro::{Span, TokenStream};
+use proc_macro::TokenStream;
 use quote::{format_ident, quote};
 use syn::{
     parenthesized,
-    parse::{Parse, ParseBuffer, ParseStream},
-    parse_macro_input, parse_quote,
-    punctuated::Punctuated,
-    token::{Bracket, Comma, Paren},
-    Attribute, DeriveInput, Expr, ExprLit, ExprRange, Ident, Item, ItemMod, ItemStruct, Lit,
-    LitInt, Meta, MetaNameValue, Path, RangeLimits, Token,
+    parse::{Parse, ParseStream},
+    parse_macro_input,
+    token::{Comma, Paren},
+    Attribute, Expr, ExprLit, ExprRange, Ident, Lit, LitInt, Meta, MetaNameValue, Path,
+    RangeLimits, Token,
 };
 
 #[derive(Debug)]
@@ -517,8 +516,8 @@ fn generate_single_set(name: &str, bit: &BitBlock, only_gen_one: bool) -> proc_m
         /// cause any side effects. There could be an event that setting this
         /// register could cause undefined behavior elsewhere in the program.
         ///
-        /// This register will derefrence the given `ptr` + `offset`, so one
-        /// must verify at complile time that the given `ptr` falls within
+        /// This register will deference the given `ptr` + `offset`, so one
+        /// must verify at compile time that the given `ptr` falls within
         /// acceptable memory ranges.
         ///
         /// ## Other Register State
@@ -567,8 +566,8 @@ fn generate_range_set(
         /// cause any side effects. There could be an event that setting this
         /// register could cause undefined behavior elsewhere in the program.
         ///
-        /// This register will derefrence the given `ptr` + `offset`, so one
-        /// must verify at complile time that the given `ptr` falls within
+        /// This register will deference the given `ptr` + `offset`, so one
+        /// must verify at compile time that the given `ptr` falls within
         /// acceptable memory ranges.
         ///
         /// ## Other Register State
@@ -695,93 +694,3 @@ fn generate_reg_struct(
         }
     }
 }
-
-// Struct Output:
-// #[repr(C)]
-// struct PrvReg {
-//    tmr_cnt: ReadWriteCell<u32>
-//    tmr_cmp: ReadWriteCell<u32>
-//    tmr_pwm: ReadWriteCell<u32>
-//    tmr_intfl: ReadWriteCell<u32>
-// }
-// pub struct Registers(inner: PrvReg);
-//
-// impl Registers {
-//    pub fn new(port: usize) -> Result<Self> {
-//       assert!(port == DINGUS1 || port == DINGUS2 ...);
-//       Self(PrvReg::new(port))
-//    }
-//
-//    #[inline(always)]
-//    pub fn tmr_cnt() -> u32 {self.0.tmr_cnt.read()}
-//    pub unsafe fn set_tmr_cnt(value: u32) {self.0.tmr_cnt.write(value)}
-//
-//    pub fn timer_compare_value(&self) -> u32 {
-//       self.tmr_cnt().get_bit_range(0..=31)
-//    }
-// }
-
-/*
-    /// let mut reg = Registers::new(mmio::TIMER_0).unwrap();
-    ///
-    /// reg.set_time_count(32)
-    ///
-    ///
-    /// struct Timer {
-    ///     reg: registers::Register
-    /// }
-    ///
-    /// impl Timer {
-    ///     fn test(&self) {
-    ///        self.reg.set_time_count(10)
-    ///     }
-    /// }
-    make_device! {
-        #[device_ports(mmio::TIMER_0, mmio::TIMER_1, mmio::TIMER_2)]
-
-        /// Set the count of the timer.
-        #[bit(0..=31, RW, rro::TMR_CNT)]
-        time_count
-
-        ///
-        /// get_time_count -> u32
-        /// set_time_count(u32)
-        /// TIME_COUNT_START_BIT: usize = 0
-        /// TIME_COUNT_END_BIT: usize = 31
-
-        /// The timer compare value.
-        #[bit(0..=31, RW, rro::TMR_CMP)]
-        timer_compare_value
-
-        /// The timer PWM register.
-        #[bit(0..=31, RW, rro::TMR_PWM)]
-        pwm
-
-        /// The timer Interrupt register.
-        #[bit(25, RO, rro::TMR_INTFL)]
-        timerb_write_done
-
-        //example of some RW1C
-        #[bit(13, RW1C, rro::DINGUS)]
-        done_flag
-
-        /// Maybe Nice to have
-        #[bit(24, RW, rro::TMR_DINGUS)]
-        #[restrict(write > 0 && write <= 8)] // This could be something later
-        timerb_write_fifo
-
-        /// ...
-    }
-
-    /// Debug Output:
-    /// Registers {
-    ///    time_count: 0xFF
-    ///    timer_compare_value: 0xAA
-    ///    pwm: 0x00
-    ///    timerb_write_done: false
-    ///    done_flag: NotActive
-    /// }
-    ///
-    ///
-    ///
-*/
