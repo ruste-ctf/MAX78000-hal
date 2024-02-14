@@ -1,4 +1,5 @@
 use crate::error::{ErrorKind, Result};
+use crate::i2c::registers::ControlRegister;
 use crate::memory_map::mmio;
 use core::marker::PhantomData;
 pub mod registers;
@@ -86,6 +87,40 @@ impl UART<UART0> {
         }
 
         while ControlRegister::is_transmit_fifo_full() {}
+        
+    }
+
+    fn set_character_length(length: u8) -> Result<()> {
+        registers!(mmio::UART_0);
+
+        // If the value is not in the allowed range, Err
+        if length < 0 || length > 3 {
+            return Err(ErrorKind::BadParam);
+        }
+        
+
+        unsafe {
+            ControlRegister::set_character_length(length);
+        }
+        // TODO Check if this will every return
+        while ControlRegister::check_character_length() != length {}
+        Ok(())
+    }
+
+    fn set_baud_clocks_source(source: u8) -> Result<()> {
+        registers!(mmio::UART_0);        
+        
+        // If the value is not in the allowed range, Err
+        if source < 0 || source > 3 {
+            return Err(ErrorKind::BadParam);
+        }
+
+        unsafe {
+            ControlRegister::set_baud_clock_source(source);
+        }
+        // TODO Check if this will every return
+        while ControlRegister::check_baud_clock_source() != source {}
+        Ok(())
         
     }
 }
