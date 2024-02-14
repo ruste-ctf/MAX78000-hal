@@ -1,4 +1,7 @@
-use std::{collections::HashMap, ops::Bound};
+use std::{
+    collections::{HashMap, HashSet},
+    ops::Bound,
+};
 
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
@@ -684,6 +687,8 @@ fn generate_reg_struct(
     let reg_names: Vec<_> = all_register_names
         .iter()
         .map(|value| format_ident!("{value}"))
+        .collect::<HashSet<_>>()
+        .into_iter()
         .collect();
 
     quote! {
