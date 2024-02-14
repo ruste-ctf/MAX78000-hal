@@ -380,17 +380,30 @@ fn generate_bit_range(
 
     let doc_string = generate_doc_strings(&bit.doc_attr);
 
+    let mut mask = 1;
+    for _ in 0..(end - start) {
+        mask <<= 1;
+        mask |= 1;
+    }
+    mask <<= start;
+
     let const_start = generate_const(
         &format!("{}_BIT_START", bit.name),
         start,
         doc_string.clone(),
     );
     let const_end = generate_const(&format!("{}_BIT_END", bit.name), end, doc_string.clone());
+    let const_mask = generate_const(
+        &format!("{}_BIT_MASK", bit.name),
+        (!mask) as usize,
+        doc_string.clone(),
+    );
     let getter = generate_range_get(format!("get_{}", bit.name), (start, end));
 
     quote!(
         #const_start
         #const_end
+        #const_mask
 
         #getter
 
