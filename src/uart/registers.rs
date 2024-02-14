@@ -414,11 +414,12 @@ impl<const PORT_PTR: usize> DataRegister<PORT_PTR> {
     /// # Get Receive FIFO Byte Parity
     get_receive_fifo_byte_parity}
 
-    bit_impl! {0..=7, RW u8,
-    /// # Get Transmit/Receive FIFO Data
-    get_transmit_receive_fifo_data,
-    /// # Set Transmit/Receive FIFO Data
-    set_transmit_receive_fifo_data}
+    bit_impl! {0..=7, RO u8,
+    /// # Get Receive FIFO Data
+    get_receive_fifo_data}
+    bit_impl! {0..=7, WO u8,
+    /// # Set Transmit FIFO Data
+    set_transmit_fifo_data}
 }
 
 /// # UART DMA Register

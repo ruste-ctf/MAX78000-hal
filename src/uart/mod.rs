@@ -159,4 +159,26 @@ impl UART<UART0> {
         registers!(mmio::UART_0);
         TransmitFIFORegister::get_transmit_fifo_data()
     }
+
+    pub fn get_transmit_fifo_level() -> u8 {
+        registers!(mmio::UART_0);
+        StatusRegister::get_transmit_fifo_level()
+    }
+
+    pub fn get_receive_fifo_level() -> u8 {
+        registers!(mmio::UART_0);
+        StatusRegister::get_receive_fifo_level()
+    }
+
+    pub fn read_receive_fifo() -> u8 {
+        registers!(mmio::UART_0);
+        DataRegister::get_receive_fifo_data()
+    }
+
+    pub fn write_transmit_fifo(data: u8) {
+        registers!(mmio::UART_0);
+        unsafe {
+            DataRegister::set_transmit_fifo_data(data);
+        }
+    }
 }
