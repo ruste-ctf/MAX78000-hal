@@ -1,4 +1,4 @@
-use std::ops::Bound;
+use std::{collections::HashMap, ops::Bound};
 
 use proc_macro::{Span, TokenStream};
 use quote::{format_ident, quote};
@@ -248,15 +248,72 @@ pub fn make_device(input: TokenStream) -> TokenStream {
         .map(|bit_item| generate_bit(bit_item))
         .collect();
 
+    let set_masks = generate_set_masks(&parsed_scope.bits);
+
     let emit = quote! {
         #registers_struct
 
         impl Registers {
+            #set_masks
+
             #(#bit_impl)*
         }
     };
 
     emit.into()
+}
+
+fn generate_set_masks(bit: &Vec<BitBlock>) -> proc_macro2::TokenStream {
+    let mut bit_map: HashMap<String, u32> = HashMap::new();
+
+    for b in bit.iter() {
+        let key = b.bit_attr.register_name.to_string();
+        match b.bit_attr.access {
+            Access::RW1C | Access::RW1O => {
+                let bit_or_mask = {
+                    match b.bit_attr.bit {
+                        BitRange::Range(range) => {
+                            let (start, end) = get_real_range(range);
+
+                            let mut mask: u32 = 1;
+                            for _ in 0..(end - start) {
+                                mask <<= 1;
+                                mask |= 1;
+                            }
+
+                            mask << start
+                        }
+                        BitRange::Single(single) => 1 << (single as u32),
+                    }
+                };
+
+                if let Some(bit) = bit_map.get_mut(&key) {
+                    *bit |= bit_or_mask;
+                } else {
+                    bit_map.insert(key, bit_or_mask);
+                }
+            }
+            _ => {
+                if !bit_map.contains_key(&key) {
+                    bit_map.insert(key, 0);
+                }
+            }
+        }
+    }
+
+    let set_mask_collection: Vec<proc_macro2::TokenStream> = bit_map
+        .into_iter()
+        .map(|(key, value)| {
+            let const_name = format!("{key}_SET_MASK");
+            generate_const(const_name.as_str(), !value as usize, quote!(#[doc(hidden)]))
+        })
+        .collect();
+
+    let generating = quote!(
+        #( #set_mask_collection )*
+    );
+
+    generating
 }
 
 fn generate_bit(bit: &BitBlock) -> proc_macro2::TokenStream {
@@ -348,6 +405,7 @@ fn min_type_for_range((start, end): (usize, usize)) -> proc_macro2::TokenStream 
     let diff = end - start;
 
     match diff {
+        1 => quote!(bool),
         ..=7 => quote!(u8),
         ..=15 => quote!(u16),
         ..=31 => quote!(u32),
@@ -385,8 +443,67 @@ fn generate_range_get(
         /// This function only preforms **1** volatile *read* and immediately copies
         /// the value and extracts the bits to return the result.
         ///
+        #[inline(always)]
         pub fn #name(&self) -> #bit_type {
             (((self.#self_dot as usize) & <Self>::#self_mask) >> <Self>::#self_shift) as #bit_type
+        }
+    }
+}
+
+fn generate_range_set(
+    name: &str,
+    bit: &BitBlock,
+    (start, end): (usize, usize),
+) -> proc_macro2::TokenStream {
+    let name = format_ident!("{}", name.to_lowercase().replace(" ", "_"));
+    let bit_type = min_type_for_range((start, end));
+    let self_dot = format_ident!("{}", bit.bit_attr.register_name);
+    let const_name = bit.name.to_string().to_uppercase().replace(" ", "_");
+    let self_mask = format_ident!("{}_BIT_MASK", const_name);
+    let self_shift = format_ident!("{}_BIT_START", const_name);
+    let const_reg_name = bit.bit_attr.register_name.to_uppercase().replace(" ", "_");
+    let self_set_mask = format_ident!("{}_SET_MASK", const_reg_name);
+    let doc_title = string_into_title(name.to_string().as_str());
+    let doc = generate_doc_strings(&bit.doc_attr);
+    quote! {
+        #doc_title
+        #doc
+        ///
+        /// # Set
+        /// Set the value or value range into the given register.
+        ///
+        /// # Safety
+        /// It is up to the caller to verify that this register write will not
+        /// cause any side effects. There could be an event that setting this
+        /// register could cause undefined behavior elsewhere in the program.
+        ///
+        /// This register will derefrence the given `ptr` + `offset`, so one
+        /// must verify at complile time that the given `ptr` falls within
+        /// acceptable memory ranges.
+        ///
+        /// ## Other Register State
+        /// In some examples it is true that ones register state depends on another
+        /// register's status. In these cases, it is up to the caller to properly
+        /// set this register to a valid (and ONLY valid value).
+        ///
+        /// # Volatile
+        /// This function only preforms **1** volatile *read*,
+        /// immediately modifies the flag and does **1** volatile *write* using
+        /// the internal provided function to register.
+        ///
+        /// # Panic
+        /// This function will panic if provided flag value falls outside
+        /// the given range of bits provided. **Assertions are only enabled during
+        /// `debug` and will be disabled during release!** Please ensure provided
+        /// input will only fall within valid acceptable range when setting this
+        /// register.
+        ///
+        #[inline(always)]
+        pub unsafe fn #name(&mut self, flag: #bit_type) {
+            debug_assert_eq!((flag as usize) >> (<Self>::#self_shift + 1), 0, "Provided flag {flag} is too large for provided setter range {}..={}!", #start, #end);
+            let flag_shift: u32 = (flag as u32) << (<Self>::#self_shift as u32);
+            let read_value: u32 = self.#self_dot & (<Self>::#self_mask as u32) & (<Self>::#self_set_mask as u32);
+            self.#self_dot = read_value | flag_shift;
         }
     }
 }
@@ -425,6 +542,7 @@ fn generate_bit_range(
         doc_string.clone(),
     );
     let getter = generate_range_get(format!("get_{}", bit.name).as_str(), bit, (start, end));
+    let setter = generate_range_set(format!("set_{}", bit.name).as_str(), bit, (start, end));
 
     quote!(
         #const_start
@@ -432,7 +550,7 @@ fn generate_bit_range(
         #const_mask
 
         #getter
-
+        #setter
     )
 }
 
