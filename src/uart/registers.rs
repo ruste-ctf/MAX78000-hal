@@ -314,14 +314,14 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
 
     bit_impl! {1, RO,
     /// # Receive Busy
-    /// Checks if the inbound data line is already busy
+    /// Checks if the inbound data line is busy
     /// - 0: Not busy
     /// - 1: Busy
     is_receive_busy}
 
     bit_impl! {0, RO,
     /// # Transmit Busy
-    /// Checks if the outbound data line is already busy
+    /// Checks if the outbound data line is busy
     /// - 0: Not busy
     /// - 1: Busy
     is_transmit_busy}
@@ -335,14 +335,26 @@ reg_impl!(RW, InterruptEnableRegister, uro::UART_CTRL);
 impl<const PORT_PTR: usize> InterruptEnableRegister<PORT_PTR> {
     bit_impl! {6, RW,
     /// # Set Transmit FIFO Half-Empty Event Interrupt Enable
+    /// Sets whether the interrupt for when the outbound FIFO buffer is half-full is enabled
+    /// - 0: Disabled
+    /// - 1: Enabled
     set_transmit_fifo_half_empty_event,
     /// # Get Transmit FIFO Half-Empty Event Interrupt Enable
+    /// Gets whether the interrupt for when the outbound FIFO buffer is half-full is enabled
+    /// - 0: Disabled
+    /// - 1: Enabled
     get_transmit_fifo_half_empty_event}
 
     bit_impl! {4, RW,
     /// # Set Receive FIFO Half-Empty Event Interrupt Enable
+    /// Sets whether the interrupt for when the inbound FIFO buffer is half-full is enabled
+    /// - 0: Disabled
+    /// - 1: Enabled
     set_receive_fifo_half_empty_even,
     /// # Get Receive FIFO Half-Empty Event Interrupt Enable
+    /// Gets whether the interrupt for when the inbound FIFO buffer is half-full is enabled
+    /// - 0: Disabled
+    /// - 1: Enabled
     get_receive_fifo_half_empty_even}
 
     bit_impl! {3, RW,
