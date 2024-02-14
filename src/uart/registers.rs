@@ -225,7 +225,7 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
 pub struct StatusRegister<const PORT_PTR: usize> {}
 reg_impl!(RO, StatusRegister, uro::UART_STATUS);
 
-impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
+impl<const PORT_PTR: usize> StatusRegister<PORT_PTR> {
     bit_impl! {12..=15, RO u8,
     /// # Transmit FIFO Level
     get_transmit_fifo_level}
@@ -256,7 +256,7 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
 
     bit_impl! {0, RO,
     /// # Transmit Busy
-    is_transmit_buys}
+    is_transmit_busy}
 }
 
 /// # UART Interrupt Enable Register
