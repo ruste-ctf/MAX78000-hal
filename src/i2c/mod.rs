@@ -26,72 +26,6 @@ pub struct I2C<Port: private::I2CPortCompatable = NoPort> {
     ph: PhantomData<Port>,
 }
 
-/// # Registers
-/// This is a "420 what you smoking?" kinda issue with Rust.
-///
-/// Waiting for this unstable feature to become stable to avoid
-/// doing this trash. (See issues 8995, 16240, 108491).
-///
-/// # What we cannot do
-/// ```no_compile
-/// struct MyStruct {}
-///
-/// impl MyStruct {
-///    // error[E0658]: inherent associated types are unstable
-///    type MyInnerType = usize;
-/// }
-/// ```
-/// We are also unable to put them into a struct, macro, or anything else.
-/// They **MUST** be done in each and every function. This macro just copy
-/// and pastes each and every type into each function to avoid this problem.
-///
-/// # What does this macro _(\*cough\* trash)_ do?
-/// It will paste each of the registers into the function. This allows one
-/// to not have to write `registers::ControlRegister<{ mmio::I2C_PORT_0}>` each
-/// time they would like to use the register types.
-macro_rules! registers {
-    ($port:expr) => {
-        #[allow(unused)]
-        type ControlRegister = registers::ControlRegister<{ $port }>;
-        #[allow(unused)]
-        type DMAControl = registers::DMAControl<{ $port }>;
-        #[allow(unused)]
-        type DataRegister = registers::DataRegister<{ $port }>;
-        #[allow(unused)]
-        type FIFOLengthRegister = registers::FIFOLengthRegister<{ $port }>;
-        #[allow(unused)]
-        type HighSCLControl = registers::HighSCLControl<{ $port }>;
-        #[allow(unused)]
-        type HighSpeedClockControl = registers::HighSpeedClockControl<{ $port }>;
-        #[allow(unused)]
-        type InterruptEnable0 = registers::InterruptEnable0<{ $port }>;
-        #[allow(unused)]
-        type InterruptEnable1 = registers::InterruptEnable1<{ $port }>;
-        #[allow(unused)]
-        type InterruptFlag0 = registers::InterruptFlag0<{ $port }>;
-        #[allow(unused)]
-        type InterruptFlag1 = registers::InterruptFlag1<{ $port }>;
-        #[allow(unused)]
-        type LowSCLControl = registers::LowSCLControl<{ $port }>;
-        #[allow(unused)]
-        type MasterControl = registers::MasterControl<{ $port }>;
-        #[allow(unused)]
-        type ReceiveControl0 = registers::ReceiveControl0<{ $port }>;
-        #[allow(unused)]
-        type ReceiveControl1 = registers::ReceiveControl1<{ $port }>;
-        #[allow(unused)]
-        type SlaveAddress = registers::SlaveAddress<{ $port }>;
-        #[allow(unused)]
-        type StatusRegister = registers::StatusRegister<{ $port }>;
-        #[allow(unused)]
-        type TimeoutControl = registers::TimeoutControl<{ $port }>;
-        #[allow(unused)]
-        type TransmitControl0 = registers::TransmitControl0<{ $port }>;
-        #[allow(unused)]
-        type TransmitControl1 = registers::TransmitControl1<{ $port }>;
-    };
-}
-
 /// # I2C Bus Control Event
 /// Send a event marker to the I2C bus.
 ///
@@ -232,7 +166,7 @@ impl I2C<I2CPort0> {
 
         Ok(())
     }
-  
+
     pub fn master_transaction(
         &self,
         address: usize,
@@ -253,7 +187,7 @@ impl I2C<I2CPort0> {
         if !self.master_enabled {
             return Err(ErrorKind::BadState);
         }
-      
+
         registers!(mmio::I2C_PORT_1);
         let reading = rx.is_some();
         let writing = tx.is_some();
