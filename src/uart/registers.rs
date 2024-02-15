@@ -454,10 +454,15 @@ impl<const PORT_PTR: usize> InterrptFlagRegister<PORT_PTR> {
     set_receive_fifo_overrun_interrupt_flag}
 
     bit_impl! {2, RW1C,
-    /// # Get Signal Change Interrupt Flag
-    /// The status flag for the
+    /// # Get CTS Signal Change Interrupt Flag
+    /// The status flag for changes in CTS Signal
+    /// - 0: Disabled
+    /// - 1: Enabled
     get_cts_signal_change_interrupt_flag,
-    /// # Set Signal Change Interrupt Flag
+    /// # Set CTS Signal Change Interrupt Flag
+    /// The status flag for changes in CTS Signal
+    /// - 0: Disabled
+    /// - 1: Enabled
     set_cts_signal_change_interrupt_flag}
 
     bit_impl! {1, RW1C,
