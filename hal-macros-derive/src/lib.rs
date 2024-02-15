@@ -241,11 +241,8 @@ pub fn make_device(input: TokenStream) -> TokenStream {
 
     let register_fields = generate_reg_fields(&register_names);
     let registers_struct = generate_reg_struct(&register_fields);
-    let bit_impl: Vec<proc_macro2::TokenStream> = parsed_scope
-        .bits
-        .iter()
-        .map(generate_bit)
-        .collect();
+    let bit_impl: Vec<proc_macro2::TokenStream> =
+        parsed_scope.bits.iter().map(generate_bit).collect();
 
     let set_masks = generate_set_masks(&parsed_scope.bits);
     let new_fn = generate_new_constructer(&register_fields, parsed_scope.device_ports);
@@ -272,7 +269,10 @@ fn generate_new_constructer(
     let device_ports_string: String = device_ports_vec
         .iter()
         .map(|path_token| format!(", {}", quote!(#path_token).to_string().replace(' ', "")))
-        .collect::<String>()
+        .fold(String::new(), |mut acc, value| {
+            acc.push_str(value.as_str());
+            acc
+        })
         .chars()
         .skip(2)
         .collect();
@@ -296,7 +296,7 @@ fn generate_new_constructer(
     )
 }
 
-fn generate_set_masks(bit: &Vec<BitBlock>) -> proc_macro2::TokenStream {
+fn generate_set_masks(bit: &[BitBlock]) -> proc_macro2::TokenStream {
     let mut bit_map: HashMap<String, u32> = HashMap::new();
 
     for b in bit.iter() {
@@ -429,10 +429,10 @@ fn min_type_for_range((start, end): (usize, usize)) -> proc_macro2::TokenStream 
     let diff = end - start;
 
     match diff {
-        ..=7 => quote!(u8),
-        ..=15 => quote!(u16),
-        ..=31 => quote!(u32),
-        ..=63 => quote!(u64),
+        0..=7 => quote!(u8),
+        8..=15 => quote!(u16),
+        16..=31 => quote!(u32),
+        32..=63 => quote!(u64),
         _ => todo!("Out of range for bit range"),
     }
 }
