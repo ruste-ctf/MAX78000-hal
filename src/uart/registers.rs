@@ -409,12 +409,7 @@ impl<const PORT_PTR: usize> InterruptEnableRegister<PORT_PTR> {
 /// # UART Interrupt Flag Register
 /// The UART Interrupt Flag Register. See Page 183, Table 12-11.
 pub struct InterrptFlagRegister<const PORT_PTR: usize> {}
-reg_impl!(
-    RW1C,
-    InterrptFlagRegister,
-    uro::UART_INTERRUPT_FL,
-    0b_00000000000000000000000000000000
-);
+reg_impl!(RW1C, InterrptFlagRegister, uro::UART_INTERRUPT_FL);
 
 impl<const PORT_PTR: usize> InterrptFlagRegister<PORT_PTR> {
     bit_impl! {6, RW1C,
@@ -467,12 +462,18 @@ impl<const PORT_PTR: usize> InterrptFlagRegister<PORT_PTR> {
 
     bit_impl! {1, RW1C,
     /// # Get Receive Parity Error Interrupt Flag
+    /// The status flag for errors in the received parity bit
+    /// - 0: Disabled
+    /// - 1: Enabled
     get_receive_parity_error_interrupt_flag,
     /// # Set Receive Parity Error Interrupt Flag
     set_receive_parity_error_interrupt_flag}
 
     bit_impl! {0, RW1C,
     /// # Get Receive Frame Error Interrupt Flag
+    /// The status flag for errors in the received parity bit
+    /// - 0: Disabled
+    /// - 1: Enabled
     get_receive_frame_error_interrupt_flag,
     /// # Set Receive Frame Error Interrupt Flag
     set_receive_frame_error_interrupt_flag}
