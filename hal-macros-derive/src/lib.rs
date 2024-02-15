@@ -1,7 +1,4 @@
-use std::{
-    collections::{HashMap, HashSet},
-    ops::Bound,
-};
+use std::{collections::HashMap, ops::Bound};
 
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
@@ -29,10 +26,10 @@ impl Parse for BitRange {
             let first = range
                 .start
                 .map(|expr| match expr.as_ref() {
-                    Expr::Lit(ExprLit { attrs: _, lit }) => match lit {
-                        Lit::Int(int) => Ok(Bound::Included(int.base10_parse()?)),
-                        _ => Err(input.error("Require literal int in range")),
-                    },
+                    Expr::Lit(ExprLit {
+                        attrs: _,
+                        lit: Lit::Int(int),
+                    }) => Ok(Bound::Included(int.base10_parse()?)),
                     _ => Err(input.error("Require literal int in range")),
                 })
                 .unwrap_or(Ok(Bound::Unbounded))?;
@@ -45,18 +42,18 @@ impl Parse for BitRange {
             let second = range
                 .end
                 .map(|expr| match expr.as_ref() {
-                    Expr::Lit(ExprLit { attrs: _, lit }) => match lit {
-                        Lit::Int(int) => {
-                            let value = int.base10_parse()?;
+                    Expr::Lit(ExprLit {
+                        attrs: _,
+                        lit: Lit::Int(int),
+                    }) => {
+                        let value = int.base10_parse()?;
 
-                            if second_is_included {
-                                Ok(Bound::Included(value))
-                            } else {
-                                Ok(Bound::Excluded(value))
-                            }
+                        if second_is_included {
+                            Ok(Bound::Included(value))
+                        } else {
+                            Ok(Bound::Excluded(value))
                         }
-                        _ => Err(input.error("Require literal int in range")),
-                    },
+                    }
                     _ => Err(input.error("Require literal int in range")),
                 })
                 .unwrap_or(Ok(Bound::Unbounded))?;
@@ -171,7 +168,7 @@ impl Parse for BitBlock {
                     return Err(input.error("Could not parse doc comment"));
                 };
 
-                doc_attr.push(string.value().trim_start().into());
+                doc_attr.push(format!(" {}", string.value().trim_start()));
             } else if attr.path().is_ident("bit") {
                 bit_attr = Some(attr.parse_args()?);
             } else {
@@ -231,19 +228,19 @@ impl Parse for MakeDevice {
 pub fn make_device(input: TokenStream) -> TokenStream {
     let parsed_scope = parse_macro_input!(input as MakeDevice);
 
-    let register_names: Vec<String> = parsed_scope
+    let register_names: Vec<(String, Path)> = parsed_scope
         .bits
         .iter()
-        .map(|bits| bits.bit_attr.register_name.clone())
+        .map(|bits| {
+            (
+                bits.bit_attr.register_name.clone(),
+                bits.bit_attr.path.clone(),
+            )
+        })
         .collect();
 
-    let register_paths: Vec<Path> = parsed_scope
-        .bits
-        .iter()
-        .map(|bits| bits.bit_attr.path.clone())
-        .collect();
-
-    let registers_struct = generate_reg_struct(&register_paths, &register_names);
+    let register_fields = generate_reg_fields(&register_names);
+    let registers_struct = generate_reg_struct(&register_fields);
     let bit_impl: Vec<proc_macro2::TokenStream> = parsed_scope
         .bits
         .iter()
@@ -251,18 +248,52 @@ pub fn make_device(input: TokenStream) -> TokenStream {
         .collect();
 
     let set_masks = generate_set_masks(&parsed_scope.bits);
+    let new_fn = generate_new_constructer(&register_fields, parsed_scope.device_ports);
 
     let emit = quote! {
         #registers_struct
 
         impl Registers {
-            #set_masks
+            #new_fn
 
+            #set_masks
             #(#bit_impl)*
         }
     };
 
     emit.into()
+}
+
+fn generate_new_constructer(
+    register_fields: &[(Ident, Path)],
+    device_ports: DevicePorts,
+) -> proc_macro2::TokenStream {
+    let device_ports_vec = device_ports.0;
+    let device_ports_string: String = device_ports_vec
+        .iter()
+        .map(|path_token| format!(", {}", quote!(#path_token).to_string().replace(" ", "")))
+        .collect::<String>()
+        .chars()
+        .skip(2)
+        .collect();
+
+    let fields: Vec<_> = register_fields
+        .iter()
+        .map(|(ident, _)| quote!(#ident : RW::new(port).unwrap()))
+        .collect();
+
+    quote!(
+        pub fn new(port: usize) -> Self {
+            debug_assert!(
+                false #( || #device_ports_vec == port)*,
+                "Register port {port} must be {}", #device_ports_string
+            );
+
+            Self {
+                #(#fields,)*
+            }
+        }
+    )
 }
 
 fn generate_set_masks(bit: &Vec<BitBlock>) -> proc_macro2::TokenStream {
@@ -338,12 +369,6 @@ fn get_real_range(range: (Bound<usize>, Bound<usize>)) -> (usize, usize) {
     };
 
     (start, end)
-}
-
-fn generate_range((start, end): (usize, usize)) -> proc_macro2::TokenStream {
-    quote!(
-        #start ..= #end
-    )
 }
 
 fn string_into_title(name: &str) -> proc_macro2::TokenStream {
@@ -446,7 +471,8 @@ fn generate_range_get(
         ///
         #[inline(always)]
         pub fn #name(&self) -> #bit_type {
-            (((self.#self_dot as usize) & <Self>::#self_mask) >> <Self>::#self_shift) as #bit_type
+            use hal_macros::VolatileRead;
+            (((self.#self_dot.read() as usize) & <Self>::#self_mask) >> <Self>::#self_shift) as #bit_type
         }
     }
 }
@@ -476,7 +502,8 @@ fn generate_single_get(name: &str, bit: &BitBlock) -> proc_macro2::TokenStream {
         ///
         #[inline(always)]
         pub fn #name(&self) -> bool {
-            (self.#self_dot & (<Self>::#self_shift as u32)) != 0
+            use hal_macros::VolatileRead;
+            (self.#self_dot.read() & (<Self>::#self_shift as u32)) != 0
         }
     }
 }
@@ -534,9 +561,10 @@ fn generate_single_set(name: &str, bit: &BitBlock, only_gen_one: bool) -> proc_m
         ///
         #[inline(always)]
         pub unsafe fn #name(&mut self #param) {
-            let read_value: u32 = self.#self_dot & (<Self>::#self_mask as u32);
+            use hal_macros::{VolatileRead, VolatileWrite};
+            let read_value: u32 = self.#self_dot.read() & (<Self>::#self_mask as u32);
             let flag_value: u32 = (#flag_or_true) << (<Self>::#self_shift as u32);
-            self.#self_dot = read_value | flag_value;
+            self.#self_dot.write(read_value | flag_value);
         }
     }
 }
@@ -591,10 +619,11 @@ fn generate_range_set(
         ///
         #[inline(always)]
         pub unsafe fn #name(&mut self, flag: #bit_type) {
+            use hal_macros::{VolatileRead, VolatileWrite};
             debug_assert_eq!((flag as usize) >> (<Self>::#self_shift + 1), 0, "Provided flag {flag} is too large for provided setter range {}..={}!", #start, #end);
             let flag_shift: u32 = (flag as u32) << (<Self>::#self_shift as u32);
-            let read_value: u32 = self.#self_dot & (<Self>::#self_mask as u32) & (<Self>::#self_set_mask as u32);
-            self.#self_dot = read_value | flag_shift;
+            let read_value: u32 = self.#self_dot.read() & (<Self>::#self_mask as u32) & (<Self>::#self_set_mask as u32);
+            self.#self_dot.write(read_value | flag_shift);
         }
     }
 }
@@ -632,8 +661,23 @@ fn generate_bit_range(
         mask as usize,
         doc_string.clone(),
     );
-    let getter = generate_range_get(format!("get_{}", bit.name).as_str(), bit, (start, end));
-    let setter = generate_range_set(format!("set_{}", bit.name).as_str(), bit, (start, end));
+
+    let (write, read) = match bit.bit_attr.access {
+        Access::RO => (false, true),
+        Access::WO => (true, false),
+        _ => (true, true),
+    };
+
+    let getter = if read {
+        generate_range_get(format!("get_{}", bit.name).as_str(), bit, (start, end))
+    } else {
+        quote!()
+    };
+    let setter = if write {
+        generate_range_set(format!("set_{}", bit.name).as_str(), bit, (start, end))
+    } else {
+        quote!()
+    };
 
     quote!(
         #const_start
@@ -660,15 +704,29 @@ fn generate_bit_single(single: usize, bit: &BitBlock) -> proc_macro2::TokenStrea
         doc_string,
     );
 
-    let getter = generate_single_get(
-        format!("{}{}{}", getter_start, bit.name, getter_name).as_str(),
-        bit,
-    );
-    let setter = generate_single_set(
-        format!("{}_{}", setter_name, bit.name).as_str(),
-        bit,
-        setter_one,
-    );
+    let (write, read) = match bit.bit_attr.access {
+        Access::RO => (false, true),
+        Access::WO => (true, false),
+        _ => (true, true),
+    };
+
+    let getter = if read {
+        generate_single_get(
+            format!("{}{}{}", getter_start, bit.name, getter_name).as_str(),
+            bit,
+        )
+    } else {
+        quote!()
+    };
+    let setter = if write {
+        generate_single_set(
+            format!("{}_{}", setter_name, bit.name).as_str(),
+            bit,
+            setter_one,
+        )
+    } else {
+        quote!()
+    };
     quote!(
         #const_start
 
@@ -677,24 +735,59 @@ fn generate_bit_single(single: usize, bit: &BitBlock) -> proc_macro2::TokenStrea
     )
 }
 
-fn generate_reg_struct(
-    all_register_offsets: &Vec<Path>,
-    all_register_names: &Vec<String>,
-) -> proc_macro2::TokenStream {
-    assert_eq!(all_register_offsets.len(), all_register_names.len());
+fn generate_reg_fields(all_register_names: &[(String, Path)]) -> Vec<(Ident, Path)> {
+    let mut register_map = HashMap::new();
 
-    let reg_names: Vec<_> = all_register_names
-        .iter()
-        .map(|value| format_ident!("{value}"))
-        .collect::<HashSet<_>>()
+    for (str, path) in all_register_names.iter() {
+        if !register_map.contains_key(str) {
+            register_map.insert(str, path);
+        }
+    }
+
+    register_map
         .into_iter()
+        .map(|(str, path)| (format_ident!("{}", str), path.clone()))
+        .collect()
+}
+
+fn generate_reg_struct(reg_names: &[(Ident, Path)]) -> proc_macro2::TokenStream {
+    let properties: Vec<proc_macro2::TokenStream> = reg_names
+        .iter()
+        .map(|(ident, path)| quote!(#ident: RW<{#path}, u32>))
         .collect();
 
     quote! {
-        #[repr(C)]
+        /// # Registers
+        /// This struct was generated with the `make_device!` macro! This struct
+        /// represents some hardware device expressed with `#[bit(...)]` attributes.
+        ///
+        /// # Example Of Registers
+        /// ```rust
+        /// use hal_macros_derive::make_device;
+        /// use hal_macros::RW;
+        ///
+        /// const MY_DEVICE_PORT0: usize = 0xdeadbeef;
+        /// const MY_DEVICE_PORT1: usize = 0xbadbabe3;
+        ///
+        /// const MY_REGISTER_OFFSET: usize = 0x0000;
+        ///
+        /// make_device! {
+        ///    device_ports(MY_DEVICE_PORT0, MY_DEVICE_PORT1);
+        ///
+        ///    #[bit(0, RW, MY_REGISTER_OFFSET)]
+        ///    my_reg_field,
+        ///
+        ///    #[bit(1, RO, MY_REGISTER_OFFSET)]
+        ///    my_reg_other_read_only,
+        ///
+        ///    #[bit(2..=10, WO, MY_REGISTER_OFFSET)]
+        ///    my_reg_range_write_only,
+        /// }
+        ///
+        /// ```
         #[allow(unused)]
         pub struct Registers {
-           #( #reg_names: u32, )*
+           #(#properties,)*
         }
     }
 }

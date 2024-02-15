@@ -1,3 +1,4 @@
+use hal_macros::RW;
 use hal_macros_derive::make_device;
 
 /// # Timer Register Offsets
@@ -22,7 +23,7 @@ mod rro {
 }
 
 make_device! {
-    device_ports(mmio::Timer_0, mmio::Timer_1, mmio::Timer_2);
+    device_ports(mmio::TIMER_0, mmio::TIMER_1, mmio::TIMER_2);
 
     /// Timer Count. See Page 315, Table 19-9.
     #[bit(0..=31, RW, rro::TMR_CNT)]
