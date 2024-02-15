@@ -408,7 +408,7 @@ impl<const PORT_PTR: usize> InterruptEnableRegister<PORT_PTR> {
 }
 
 make_device! {
-    device_ports(UART_PORT_0, I2C_PORT_1,
+    device_ports(UART_PORT_0, UART_PORT_1,
     UART_PORT_2)
     /// UART Interrupt Flag Register
     /// The UART Interrupt Flag Register. See Page 183, Table 12-11.
