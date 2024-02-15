@@ -1,3 +1,4 @@
+use crate::core_peripheral_clock;
 use crate::error::{ErrorKind, Result};
 use crate::memory_map::mmio;
 use core::marker::PhantomData;
@@ -157,14 +158,33 @@ impl I2C<NoPort> {
 const MAX_I2C_SLAVE_ADDRESS_7_BIT: usize = 0b1111111;
 const MAX_I2C_SLAVE_ADDRESS_10_BIT: usize = 0b1111111111;
 
-/// # We need this for I2C, but uh I have not gotten to it yet :)
-fn microcontroller_delay(_us: usize) {
-    todo!("Make the timers")
+#[allow(unused)]
+const MAX_I2C_NORMAL_CLOCK_HZ: usize = 100000;
+#[allow(unused)]
+const MAX_I2C_FAST_CLOCK_HZ: usize = 400000;
+const MAX_I2C_FASTPLUS_CLOCK_TIME: usize = 1000000;
+const MAX_I2C_HIGHSPEED_CLOCK_TIME: usize = 3400000;
+
+const MAX_I2C_FIFO_TRANSACTION: usize = 256;
+
+#[cfg(not(test))]
+extern "C" {
+    fn MXC_Delay(us: u32);
 }
 
+/// # We need this for I2C, but uh I have not gotten to it yet :)
+#[cfg(not(test))]
+fn microcontroller_delay(us: usize) {
+    unsafe { MXC_Delay(us as u32) }
+}
+
+#[cfg(test)]
+fn microcontroller_delay(_us: usize) {}
+
+#[allow(unused)]
 impl I2C<I2CPort0> {
     fn init(enable_master: bool, slave_address: usize) -> Result<Self> {
-        registers!(mmio::I2C_PORT_0);
+        registers!(mmio::I2C_PORT_1);
 
         // Attempt to take control of the bus
         Self::bus_recover(16)?;
@@ -194,7 +214,7 @@ impl I2C<I2CPort0> {
     }
 
     fn set_hardware_slave_address(address: usize) -> Result<()> {
-        registers!(mmio::I2C_PORT_0);
+        registers!(mmio::I2C_PORT_1);
 
         if address > MAX_I2C_SLAVE_ADDRESS_10_BIT {
             return Err(ErrorKind::BadParam);
@@ -212,8 +232,8 @@ impl I2C<I2CPort0> {
 
         Ok(())
     }
-
-    fn master_transaction(
+  
+    pub fn master_transaction(
         &self,
         address: usize,
         rx: Option<&mut [u8]>,
@@ -233,7 +253,205 @@ impl I2C<I2CPort0> {
         if !self.master_enabled {
             return Err(ErrorKind::BadState);
         }
+      
+        registers!(mmio::I2C_PORT_1);
+        let reading = rx.is_some();
+        let writing = tx.is_some();
 
+        if !reading || writing {
+            Self::send_address_with_rw(address, true);
+            Self::send_bus_event(I2CBusControlEvent::Start)?;
+        }
+
+        // Not the best, but I think its fine for now
+        let mut tx_iter = tx.unwrap_or(&[0_u8; 0]).iter().copied();
+
+        loop {
+            if InterruptFlag0::is_transmit_fifo_threshold_level() {
+                if Self::write_fifo(&mut tx_iter) == 0 {
+                    break;
+                }
+
+                unsafe { InterruptFlag0::clear_transmit_fifo_threshold_level() };
+            }
+
+            if InterruptFlag0::is_error_condition() {
+                Self::send_bus_event(I2CBusControlEvent::Stop)?;
+                return Err(ErrorKind::ComError);
+            }
+        }
+
+        unsafe {
+            InterruptFlag0::clear_transfer_complete_flag();
+            InterruptFlag0::clear_receive_fifo_threshold_level();
+        }
+
+        let mut bytes_written = 0;
+        if let Some(rx) = rx {
+            let transaction_size = if rx.len() >= MAX_I2C_FIFO_TRANSACTION {
+                0
+            } else {
+                rx.len() as u8
+            };
+            unsafe { ReceiveControl1::set_receive_fifo_transaction_size(transaction_size) };
+
+            Self::send_bus_event(I2CBusControlEvent::Start);
+            while MasterControl::is_send_repeated_start_condition() {}
+
+            Self::send_address_with_rw(address, false);
+
+            while bytes_written <= rx.len() {
+                if InterruptFlag0::is_receive_fifo_threshold_level()
+                    || InterruptFlag0::is_transfer_complete()
+                {
+                    bytes_written += Self::read_fifo(&mut rx[bytes_written..]);
+                    unsafe { InterruptFlag0::clear_receive_fifo_threshold_level() };
+                }
+
+                if InterruptFlag0::is_error_condition() {
+                    Self::send_bus_event(I2CBusControlEvent::Stop)?;
+                    return Err(ErrorKind::ComError);
+                }
+
+                if InterruptFlag0::is_transfer_complete()
+                    && bytes_written <= rx.len()
+                    && FIFOLengthRegister::get_receive_fifo_len() == 0
+                {
+                    let bytes_diff = rx.len() - bytes_written;
+                    let transaction_size = if bytes_diff > MAX_I2C_FIFO_TRANSACTION {
+                        0
+                    } else {
+                        bytes_diff as u8
+                    };
+
+                    unsafe {
+                        ReceiveControl1::set_receive_fifo_transaction_size(transaction_size);
+                        Self::send_bus_event(I2CBusControlEvent::Restart)?;
+                        InterruptFlag0::clear_transfer_complete_flag();
+                        Self::send_address_with_rw(address, false);
+                    }
+                }
+            }
+        }
+
+        Self::send_bus_event(I2CBusControlEvent::Stop)?;
+        while !InterruptFlag0::is_slave_mode_stop_condition() {}
+        while !InterruptFlag0::is_transfer_complete() {}
+
+        unsafe {
+            InterruptFlag0::clear_transfer_complete_flag();
+            InterruptFlag0::clear_slave_mode_stop_condition();
+        }
+
+        if InterruptFlag0::is_error_condition() {
+            Err(ErrorKind::ComError)
+        } else {
+            Ok(())
+        }
+    }
+
+    fn set_freq(hz: usize) -> Result<usize> {
+        registers!(mmio::I2C_PORT_1);
+
+        if hz > MAX_I2C_HIGHSPEED_CLOCK_TIME {
+            return Err(ErrorKind::BadParam);
+        }
+
+        if hz <= MAX_I2C_HIGHSPEED_CLOCK_TIME && hz > MAX_I2C_FASTPLUS_CLOCK_TIME {
+            todo!("Highspeed I2C Mode is currently not supported");
+        }
+
+        let peripheral_clock = core_peripheral_clock() as usize;
+        let ticks_total = peripheral_clock / hz;
+        let high_clock_time = (ticks_total >> 1) - 1;
+        let low_clock_time = (ticks_total >> 1) - 1;
+
+        let high_clock_roundover = ticks_total % 2;
+
+        // The clock time should always be a valid value
+        if low_clock_time == 0 || high_clock_time == 0 {
+            return Err(ErrorKind::BadParam);
+        }
+
+        unsafe {
+            HighSCLControl::set_clock_high_time((high_clock_time + high_clock_roundover) as u16);
+            LowSCLControl::set_clock_low_time(low_clock_time as u16);
+        }
+
+        Ok(Self::get_freq())
+    }
+
+    fn get_freq() -> usize {
+        registers!(mmio::I2C_PORT_1);
+
+        if ControlRegister::is_high_speed_mode_enabled() {
+            todo!("Highspeed I2C Mode is currently not supported");
+        }
+
+        let cycles_low = LowSCLControl::get_clock_low_time();
+        let cycles_high = HighSCLControl::get_clock_high_time();
+
+        debug_assert_ne!(cycles_low, 0, "Cycles low should be larger then 0!");
+        debug_assert_ne!(cycles_high, 0, "Cycles High should be larger then 0!");
+
+        let cycles_total = cycles_low + cycles_high;
+
+        (core_peripheral_clock() as usize) / (cycles_total as usize)
+    }
+
+    fn write_fifo<Bytes>(tx: &mut Bytes) -> usize
+    where
+        Bytes: Iterator<Item = u8>,
+    {
+        registers!(mmio::I2C_PORT_1);
+
+        let current_fifo_level = FIFOLengthRegister::get_transmit_fifo_len() as usize;
+        let max_fifo_level = FIFOLengthRegister::MAX_FIFO_TRANSMIT_LEN;
+        let fifo_free = max_fifo_level - current_fifo_level;
+        let mut bytes_written = 0;
+
+        for i in 0..fifo_free {
+            let Some(data) = tx.next() else {
+                return bytes_written;
+            };
+
+            unsafe {
+                DataRegister::write_fifo_data(data);
+            }
+
+            bytes_written += 1;
+        }
+
+        bytes_written
+    }
+
+    fn read_fifo(rx: &mut [u8]) -> usize {
+        registers!(mmio::I2C_PORT_1);
+
+        let current_fifo_level = FIFOLengthRegister::get_receive_fifo_len() as usize;
+        let max_fifo_level = FIFOLengthRegister::MAX_FIFO_RECEIVE_LEN;
+        let fifo_free = max_fifo_level - current_fifo_level;
+        let max_receive = fifo_free.min(rx.len());
+
+        for data in rx.iter_mut().take(max_receive) {
+            *data = DataRegister::read() as u8;
+        }
+
+        max_receive
+    }
+
+    fn send_address_with_rw(address: usize, is_writting: bool) {
+        registers!(mmio::I2C_PORT_1);
+        let writting_value = if is_writting { 0 } else { 1 };
+        // TODO: We should check the state of the FIFO before adding data to it!
+        //       What if the FIFO is full, we do not want to loose data here.
+        unsafe {
+            DataRegister::write_fifo_data((address << 1 | writting_value) as u8);
+        }
+    }
+
+    fn send_bus_event(event: I2CBusControlEvent) -> Result<()> {
+        registers!(mmio::I2C_PORT_1);
         match event {
             I2CBusControlEvent::Start => unsafe {
                 MasterControl::activate_start_master_mode_transfer();
@@ -250,7 +468,7 @@ impl I2C<I2CPort0> {
     }
 
     pub fn clear_rx_fifo() {
-        registers!(mmio::I2C_PORT_0);
+        registers!(mmio::I2C_PORT_1);
         unsafe {
             ReceiveControl0::activate_flush_receive_fifo();
         }
@@ -259,7 +477,7 @@ impl I2C<I2CPort0> {
     }
 
     pub fn clear_tx_fifo() {
-        registers!(mmio::I2C_PORT_0);
+        registers!(mmio::I2C_PORT_1);
         unsafe {
             TransmitControl0::activate_transmit_fifo_flush();
         }
@@ -268,7 +486,7 @@ impl I2C<I2CPort0> {
     }
 
     pub fn set_rx_fifo_threshold(threshold: usize) {
-        registers!(mmio::I2C_PORT_0);
+        registers!(mmio::I2C_PORT_1);
         debug_assert!(
             threshold <= 8,
             "Cannot set the bytes threshold {threshold} over the max register threshold of 8!"
@@ -280,7 +498,7 @@ impl I2C<I2CPort0> {
     }
 
     pub fn set_tx_fifo_threshold(threshold: usize) {
-        registers!(mmio::I2C_PORT_0);
+        registers!(mmio::I2C_PORT_1);
         debug_assert!(
             threshold <= 7,
             "Cannot set the bytes threshold {threshold} over the max register threshold of 8!"
@@ -292,7 +510,7 @@ impl I2C<I2CPort0> {
     }
 
     pub fn enable_master(flag: bool) -> Result<()> {
-        registers!(mmio::I2C_PORT_0);
+        registers!(mmio::I2C_PORT_1);
 
         if flag {
             // Another Master is currently controlling the bus,
@@ -314,7 +532,7 @@ impl I2C<I2CPort0> {
     }
 
     pub fn bus_recover(retry_count: usize) -> Result<()> {
-        registers!(mmio::I2C_PORT_0);
+        registers!(mmio::I2C_PORT_1);
 
         // Save the state so we can restore it
         let state_prior = ControlRegister::read();
@@ -323,11 +541,6 @@ impl I2C<I2CPort0> {
         unsafe {
             ControlRegister::set_software_i2c_mode(true);
             ControlRegister::set_i2c_peripheral_enable(true);
-        }
-
-        // Both the SCL and SDA pins should be high
-        if !ControlRegister::get_scl_pin() || !ControlRegister::get_sda_pin() {
-            return Err(ErrorKind::ComError);
         }
 
         let release_scl_and_sda = || unsafe {

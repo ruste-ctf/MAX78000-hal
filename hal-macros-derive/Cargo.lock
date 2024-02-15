@@ -5,23 +5,9 @@ version = 3
 [[package]]
 name = "hal-macros"
 version = "0.1.0"
-
-[[package]]
-name = "hal-macros-derive"
-version = "0.1.0"
 dependencies = [
- "hal-macros",
- "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "max78000-hal"
-version = "0.1.0"
-dependencies = [
- "hal-macros",
- "hal-macros-derive",
 ]
 
 [[package]]

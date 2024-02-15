@@ -48,7 +48,7 @@ macro_rules! reg_impl {
         /// safety and volatility of this function.
         #[inline]
         pub fn read() -> u32 {
-            unsafe { ptr::read_volatile(Self::get_ptr()) }
+            unsafe { core::ptr::read_volatile(Self::get_ptr()) }
         }
     };
     (@gen READ_MASK, $read:literal) => {
@@ -94,7 +94,7 @@ macro_rules! reg_impl {
         /// safety and volatility of this function.
         #[inline]
         pub unsafe fn write(value: u32) {
-            unsafe { ptr::write_volatile(Self::get_ptr(), value) }
+            unsafe { core::ptr::write_volatile(Self::get_ptr(), value) }
         }
     };
     (@gen BLANKET, $v:expr) => {
@@ -163,6 +163,7 @@ macro_rules! bit_impl {
         ///
         #[inline]
         pub fn $get() -> $type {
+            use $crate::bits::BitManipulation;
             Self::read().get_bit_range($bits) as $type
         }
     };
@@ -180,6 +181,7 @@ macro_rules! bit_impl {
         ///
         #[inline]
         pub fn $get() -> bool {
+            use $crate::bits::BitManipulation;
             Self::read().get_bit($bit)
         }
     };
@@ -202,6 +204,7 @@ macro_rules! bit_impl {
         /// the internal provided function `Self::write(value)`.
         #[inline]
         pub unsafe fn $set(flag: $type) {
+            use $crate::bits::BitManipulation;
             let mut value = Self::read_masked();
             value.set_bit_range($bits, flag);
             Self::write(value);
@@ -226,6 +229,7 @@ macro_rules! bit_impl {
         /// the internal provided function `Self::write(value)`.
         #[inline]
         pub unsafe fn $set(flag: bool) {
+            use $crate::bits::BitManipulation;
             let mut value = Self::read_masked();
             value.set_bit($bit, flag);
             Self::write(value);
@@ -250,9 +254,471 @@ macro_rules! bit_impl {
         /// the internal provided function `Self::write(value)`.
         #[inline]
         pub unsafe fn $set() {
+            use $crate::bits::BitManipulation;
             let mut value = Self::read_masked();
             value.set_bit($bit, true);
             Self::write(value);
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    static mut TEST_PORT_DATA: u32 = 0;
+
+    struct MyTestRegister {}
+    impl MyTestRegister {
+        pub fn get_ptr() -> *mut u32 {
+            unsafe { &mut TEST_PORT_DATA as *mut u32 }
+        }
+
+        reg_impl!(@gen READ);
+        reg_impl!(@gen READ_MASK_READ);
+        reg_impl!(@gen WRITE);
+
+        bit_impl! {0, RW,
+        set_test_0_bit,
+        get_test_0_bit}
+
+        bit_impl! {1, RW,
+        set_test_1_bit,
+        get_test_1_bit}
+
+        bit_impl! {2, RW,
+        set_test_2_bit,
+        get_test_2_bit}
+
+        bit_impl! {3, RW,
+        set_test_3_bit,
+        get_test_3_bit}
+
+        bit_impl! {4, RW,
+        set_test_4_bit,
+        get_test_4_bit}
+
+        bit_impl! {5, RW,
+        set_test_5_bit,
+        get_test_5_bit}
+
+        bit_impl! {6, RW,
+        set_test_6_bit,
+        get_test_6_bit}
+
+        bit_impl! {7, RW,
+        set_test_7_bit,
+        get_test_7_bit}
+
+        bit_impl! {8, RW,
+        set_test_8_bit,
+        get_test_8_bit}
+
+        bit_impl! {9, RW,
+        set_test_9_bit,
+        get_test_9_bit}
+
+        bit_impl! {10, RW,
+        set_test_10_bit,
+        get_test_10_bit}
+
+        bit_impl! {11, RW,
+        set_test_11_bit,
+        get_test_11_bit}
+
+        bit_impl! {12, RW,
+        set_test_12_bit,
+        get_test_12_bit}
+
+        bit_impl! {13, RW,
+        set_test_13_bit,
+        get_test_13_bit}
+
+        bit_impl! {14, RW,
+        set_test_14_bit,
+        get_test_14_bit}
+
+        bit_impl! {15, RW,
+        set_test_15_bit,
+        get_test_15_bit}
+
+        bit_impl! {16..=20, RW u8,
+        set_test_5_bits_register,
+        get_test_5_bits_register}
+    }
+
+    #[test]
+    fn test_bit_impl_0_bit() {
+        assert!(!MyTestRegister::get_test_0_bit(), "Register should be zero");
+        unsafe { MyTestRegister::set_test_0_bit(false) };
+        assert!(!MyTestRegister::get_test_0_bit(), "Register should be zero");
+        unsafe { MyTestRegister::set_test_0_bit(true) };
+        assert!(MyTestRegister::get_test_0_bit(), "Register should be one");
+        assert_eq!(
+            unsafe { TEST_PORT_DATA } & (1 << 0),
+            1 << 0,
+            "Data should be one"
+        );
+    }
+
+    #[test]
+    fn test_bit_impl_1_bit() {
+        assert!(!MyTestRegister::get_test_1_bit(), "Register should be zero");
+        unsafe { MyTestRegister::set_test_1_bit(false) };
+        assert!(!MyTestRegister::get_test_1_bit(), "Register should be zero");
+        unsafe { MyTestRegister::set_test_1_bit(true) };
+        assert!(MyTestRegister::get_test_1_bit(), "Register should be one");
+        assert_eq!(
+            unsafe { TEST_PORT_DATA } & (1 << 1),
+            1 << 1,
+            "Data should be one"
+        );
+    }
+
+    #[test]
+    fn test_bit_impl_2_bit() {
+        assert!(!MyTestRegister::get_test_2_bit(), "Register should be zero");
+        unsafe { MyTestRegister::set_test_2_bit(false) };
+        assert!(!MyTestRegister::get_test_2_bit(), "Register should be zero");
+        unsafe { MyTestRegister::set_test_2_bit(true) };
+        assert!(MyTestRegister::get_test_2_bit(), "Register should be one");
+        assert_eq!(
+            unsafe { TEST_PORT_DATA } & (1 << 2),
+            1 << 2,
+            "Data should be one"
+        );
+    }
+
+    #[test]
+    fn test_bit_impl_3_bit() {
+        assert!(!MyTestRegister::get_test_3_bit(), "Register should be zero");
+        unsafe { MyTestRegister::set_test_3_bit(false) };
+        assert!(!MyTestRegister::get_test_3_bit(), "Register should be zero");
+        unsafe { MyTestRegister::set_test_3_bit(true) };
+        assert!(MyTestRegister::get_test_3_bit(), "Register should be one");
+        assert_eq!(
+            unsafe { TEST_PORT_DATA } & (1 << 3),
+            1 << 3,
+            "Data should be one"
+        );
+    }
+
+    #[test]
+    fn test_bit_impl_4_bit() {
+        assert!(!MyTestRegister::get_test_4_bit(), "Register should be zero");
+        unsafe { MyTestRegister::set_test_4_bit(false) };
+        assert!(!MyTestRegister::get_test_4_bit(), "Register should be zero");
+        unsafe { MyTestRegister::set_test_4_bit(true) };
+        assert!(MyTestRegister::get_test_4_bit(), "Register should be one");
+        assert_eq!(
+            unsafe { TEST_PORT_DATA } & (1 << 4),
+            1 << 4,
+            "Data should be one"
+        );
+    }
+
+    #[test]
+    fn test_bit_impl_5_bit() {
+        assert!(!MyTestRegister::get_test_5_bit(), "Register should be zero");
+        unsafe { MyTestRegister::set_test_5_bit(false) };
+        assert!(!MyTestRegister::get_test_5_bit(), "Register should be zero");
+        unsafe { MyTestRegister::set_test_5_bit(true) };
+        assert!(MyTestRegister::get_test_5_bit(), "Register should be one");
+        assert_eq!(
+            unsafe { TEST_PORT_DATA } & (1 << 5),
+            1 << 5,
+            "Data should be one"
+        );
+    }
+
+    #[test]
+    fn test_bit_impl_6_bit() {
+        assert!(!MyTestRegister::get_test_6_bit(), "Register should be zero");
+        unsafe { MyTestRegister::set_test_6_bit(false) };
+        assert!(!MyTestRegister::get_test_6_bit(), "Register should be zero");
+        unsafe { MyTestRegister::set_test_6_bit(true) };
+        assert!(MyTestRegister::get_test_6_bit(), "Register should be one");
+        assert_eq!(
+            unsafe { TEST_PORT_DATA } & (1 << 6),
+            1 << 6,
+            "Data should be one"
+        );
+    }
+
+    #[test]
+    fn test_bit_impl_7_bit() {
+        assert!(!MyTestRegister::get_test_7_bit(), "Register should be zero");
+        unsafe { MyTestRegister::set_test_7_bit(false) };
+        assert!(!MyTestRegister::get_test_7_bit(), "Register should be zero");
+        unsafe { MyTestRegister::set_test_7_bit(true) };
+        assert!(MyTestRegister::get_test_7_bit(), "Register should be one");
+        assert_eq!(
+            unsafe { TEST_PORT_DATA } & (1 << 7),
+            1 << 7,
+            "Data should be one"
+        );
+    }
+
+    #[test]
+    fn test_bit_impl_8_bit() {
+        assert!(!MyTestRegister::get_test_8_bit(), "Register should be zero");
+        unsafe { MyTestRegister::set_test_8_bit(false) };
+        assert!(!MyTestRegister::get_test_8_bit(), "Register should be zero");
+        unsafe { MyTestRegister::set_test_8_bit(true) };
+        assert!(MyTestRegister::get_test_8_bit(), "Register should be one");
+        assert_eq!(
+            unsafe { TEST_PORT_DATA } & (1 << 8),
+            1 << 8,
+            "Data should be one"
+        );
+    }
+
+    #[test]
+    fn test_bit_impl_9_bit() {
+        assert!(!MyTestRegister::get_test_9_bit(), "Register should be zero");
+        unsafe { MyTestRegister::set_test_9_bit(false) };
+        assert!(!MyTestRegister::get_test_9_bit(), "Register should be zero");
+        unsafe { MyTestRegister::set_test_9_bit(true) };
+        assert!(MyTestRegister::get_test_9_bit(), "Register should be one");
+        assert_eq!(
+            unsafe { TEST_PORT_DATA } & (1 << 9),
+            1 << 9,
+            "Data should be one"
+        );
+    }
+
+    #[test]
+    fn test_bit_impl_10_bit() {
+        assert!(
+            !MyTestRegister::get_test_10_bit(),
+            "Register should be zero"
+        );
+        unsafe { MyTestRegister::set_test_10_bit(false) };
+        assert!(
+            !MyTestRegister::get_test_10_bit(),
+            "Register should be zero"
+        );
+        unsafe { MyTestRegister::set_test_10_bit(true) };
+        assert!(MyTestRegister::get_test_10_bit(), "Register should be one");
+        assert_eq!(
+            unsafe { TEST_PORT_DATA } & (1 << 10),
+            1 << 10,
+            "Data should be one"
+        );
+    }
+
+    #[test]
+    fn test_bit_impl_11_bit() {
+        assert!(
+            !MyTestRegister::get_test_11_bit(),
+            "Register should be zero"
+        );
+        unsafe { MyTestRegister::set_test_11_bit(false) };
+        assert!(
+            !MyTestRegister::get_test_11_bit(),
+            "Register should be zero"
+        );
+        unsafe { MyTestRegister::set_test_11_bit(true) };
+        assert!(MyTestRegister::get_test_11_bit(), "Register should be one");
+        assert_eq!(
+            unsafe { TEST_PORT_DATA } & (1 << 11),
+            1 << 11,
+            "Data should be one"
+        );
+    }
+
+    #[test]
+    fn test_bit_impl_12_bit() {
+        assert!(
+            !MyTestRegister::get_test_12_bit(),
+            "Register should be zero"
+        );
+        unsafe { MyTestRegister::set_test_12_bit(false) };
+        assert!(
+            !MyTestRegister::get_test_12_bit(),
+            "Register should be zero"
+        );
+        unsafe { MyTestRegister::set_test_12_bit(true) };
+        assert!(MyTestRegister::get_test_12_bit(), "Register should be one");
+        assert_eq!(
+            unsafe { TEST_PORT_DATA } & (1 << 12),
+            1 << 12,
+            "Data should be one"
+        );
+    }
+
+    #[test]
+    fn test_bit_impl_13_bit() {
+        assert!(
+            !MyTestRegister::get_test_13_bit(),
+            "Register should be zero"
+        );
+        unsafe { MyTestRegister::set_test_13_bit(false) };
+        assert!(
+            !MyTestRegister::get_test_13_bit(),
+            "Register should be zero"
+        );
+        unsafe { MyTestRegister::set_test_13_bit(true) };
+        assert!(MyTestRegister::get_test_13_bit(), "Register should be one");
+        assert_eq!(
+            unsafe { TEST_PORT_DATA } & (1 << 13),
+            1 << 13,
+            "Data should be one"
+        );
+    }
+
+    #[test]
+    fn test_bit_impl_14_bit() {
+        assert!(
+            !MyTestRegister::get_test_14_bit(),
+            "Register should be zero"
+        );
+        unsafe { MyTestRegister::set_test_14_bit(false) };
+        assert!(
+            !MyTestRegister::get_test_14_bit(),
+            "Register should be zero"
+        );
+        unsafe { MyTestRegister::set_test_14_bit(true) };
+        assert!(MyTestRegister::get_test_14_bit(), "Register should be one");
+        assert_eq!(
+            unsafe { TEST_PORT_DATA } & (1 << 14),
+            1 << 14,
+            "Data should be one"
+        );
+    }
+
+    #[test]
+    fn test_bit_impl_15_bit() {
+        assert!(
+            !MyTestRegister::get_test_15_bit(),
+            "Register should be zero"
+        );
+        unsafe { MyTestRegister::set_test_15_bit(false) };
+        assert!(
+            !MyTestRegister::get_test_15_bit(),
+            "Register should be zero"
+        );
+        unsafe { MyTestRegister::set_test_15_bit(true) };
+        assert!(MyTestRegister::get_test_15_bit(), "Register should be one");
+        assert_eq!(
+            unsafe { TEST_PORT_DATA } & (1 << 15),
+            1 << 15,
+            "Data should be one"
+        );
+    }
+
+    #[test]
+    fn test_bit_impl_5_bit_register() {
+        assert_eq!(
+            MyTestRegister::get_test_5_bits_register(),
+            0,
+            "Register should be zero"
+        );
+
+        for i in 0..=0b11111 {
+            unsafe { MyTestRegister::set_test_5_bits_register(i) };
+            assert_eq!(MyTestRegister::get_test_5_bits_register(), i);
+            assert_eq!(unsafe { TEST_PORT_DATA & (0b11111 << 16) } >> 16, i as u32);
+        }
+
+        unsafe { MyTestRegister::set_test_5_bits_register(0) };
+        assert_eq!(MyTestRegister::get_test_5_bits_register(), 0);
+        assert_eq!(unsafe { TEST_PORT_DATA & (0b11111 << 16) } >> 16, 0);
+    }
+
+    static mut TEST_PORT_RW1C_DATA: u32 = 0;
+
+    struct MyTestRW1C {}
+    impl MyTestRW1C {
+        pub fn get_ptr() -> *mut u32 {
+            unsafe { &mut TEST_PORT_RW1C_DATA as *mut u32 }
+        }
+
+        reg_impl!(@gen READ);
+        reg_impl!(@gen READ_MASK, 0b1010);
+        reg_impl!(@gen WRITE);
+
+        bit_impl! {0, RW1C,
+        clear_test_bit_0,
+        is_test_bit_0}
+
+        bit_impl! {1, RW,
+        set_test_bit_1,
+        is_test_bit_1}
+
+        bit_impl! {2, RW1C,
+        clear_test_bit_2,
+        is_test_bit_2}
+
+        bit_impl! {3, RW,
+        set_test_bit_3,
+        is_test_bit_3}
+    }
+
+    #[test]
+    fn test_mask_bits() {
+        unsafe { TEST_PORT_RW1C_DATA = 0 };
+        assert_eq!(unsafe { TEST_PORT_RW1C_DATA }, 0);
+        assert!(!MyTestRW1C::is_test_bit_0());
+        assert!(!MyTestRW1C::is_test_bit_1());
+        assert!(!MyTestRW1C::is_test_bit_2());
+        assert!(!MyTestRW1C::is_test_bit_3());
+
+        unsafe { TEST_PORT_RW1C_DATA |= 1 << 0 };
+        assert!(MyTestRW1C::is_test_bit_0());
+        assert!(!MyTestRW1C::is_test_bit_1());
+        assert!(!MyTestRW1C::is_test_bit_2());
+        assert!(!MyTestRW1C::is_test_bit_3());
+
+        unsafe { TEST_PORT_RW1C_DATA |= 1 << 1 };
+        assert!(MyTestRW1C::is_test_bit_0());
+        assert!(MyTestRW1C::is_test_bit_1());
+        assert!(!MyTestRW1C::is_test_bit_2());
+        assert!(!MyTestRW1C::is_test_bit_3());
+
+        unsafe { TEST_PORT_RW1C_DATA |= 1 << 2 };
+        assert!(MyTestRW1C::is_test_bit_0());
+        assert!(MyTestRW1C::is_test_bit_1());
+        assert!(MyTestRW1C::is_test_bit_2());
+        assert!(!MyTestRW1C::is_test_bit_3());
+
+        unsafe { TEST_PORT_RW1C_DATA |= 1 << 3 };
+        assert!(MyTestRW1C::is_test_bit_0());
+        assert!(MyTestRW1C::is_test_bit_1());
+        assert!(MyTestRW1C::is_test_bit_2());
+        assert!(MyTestRW1C::is_test_bit_3());
+
+        unsafe { TEST_PORT_RW1C_DATA = 1 };
+        assert_eq!(unsafe { TEST_PORT_RW1C_DATA }, 1);
+        assert!(MyTestRW1C::is_test_bit_0());
+
+        unsafe { MyTestRW1C::set_test_bit_1(true) };
+        assert_eq!(unsafe { TEST_PORT_RW1C_DATA }, 2);
+        assert!(!MyTestRW1C::is_test_bit_0());
+
+        unsafe { TEST_PORT_RW1C_DATA = 1 | (1 << 2) };
+        assert_eq!(unsafe { TEST_PORT_RW1C_DATA }, 1 | (1 << 2));
+        assert!(MyTestRW1C::is_test_bit_0());
+        assert!(MyTestRW1C::is_test_bit_2());
+
+        unsafe { MyTestRW1C::set_test_bit_1(true) };
+        assert_eq!(unsafe { TEST_PORT_RW1C_DATA }, 2);
+        assert!(!MyTestRW1C::is_test_bit_0());
+        assert!(!MyTestRW1C::is_test_bit_2());
+
+        unsafe { TEST_PORT_RW1C_DATA = 0 };
+        assert_eq!(unsafe { TEST_PORT_RW1C_DATA }, 0);
+        unsafe { MyTestRW1C::clear_test_bit_0() };
+        assert!(MyTestRW1C::is_test_bit_0());
+
+        unsafe { TEST_PORT_RW1C_DATA = 0 };
+        assert_eq!(unsafe { TEST_PORT_RW1C_DATA }, 0);
+        unsafe { MyTestRW1C::clear_test_bit_2() };
+        assert!(MyTestRW1C::is_test_bit_2());
+
+        unsafe { TEST_PORT_RW1C_DATA = 0 };
+        assert_eq!(unsafe { TEST_PORT_RW1C_DATA }, 0);
+        unsafe { MyTestRW1C::set_test_bit_3(true) };
+        unsafe { MyTestRW1C::clear_test_bit_0() };
+        assert!(MyTestRW1C::is_test_bit_3());
+        assert!(MyTestRW1C::is_test_bit_0());
     }
 }
