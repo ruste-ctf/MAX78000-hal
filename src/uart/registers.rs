@@ -3,6 +3,7 @@ use crate::const_assert;
 use crate::memory_map::mmio;
 use crate::{bit_impl, reg_impl};
 use core::ptr;
+use hal_macros_derive;
 
 /// # UART Register Offsets
 /// See Max 78000 User Guide Page 180, Table 12-7.
@@ -197,157 +198,266 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
 
     bit_impl! {6, RW,
     /// # Set Parity Value
+    /// Set parity calculation to use 1s or 0s in data frame
+    /// - 0: Use 1s
+    /// - 1: Use 0s
     set_parity_value,
     /// # Check Parity Value
+    /// Check which value is being used for parity
+    /// - 0: Use 1s
+    /// - 1: Use 0s
     check_parity_value}
 
     bit_impl! {5, RW,
     /// # Parity Odd Even Select
+    /// Set parity to ensure even or odd
+    /// - 0: Even parity (default)
+    /// - 1: Odd parity
     set_parity_odd_even,
     /// # Check Parity Odd Even Select
+    /// Check if even or odd parity is being used
+    /// - 0: Even parity (default)
+    /// - 1: Odd parity
     check_parity_odd_even}
 
     bit_impl! {4, RW,
     /// # Set Transmit Parity Generation Enable
+    /// Set whether to use parity for outward transmissions
+    /// - 0: Disable parity
+    /// - 1: Use parity (placed after data frame)
     set_transmit_parity_generation_enable,
     /// # Check Transmit Parity Generation Enable
+    /// Check if parity is being generated for outward transmissions
+    /// - 0: Parity diabled
+    /// - 1: Parity enabled
     check_transmit_parity_genration_enable}
 
     bit_impl! {0..=3, RW u8,
     /// # Set Receive FIFO Threshold
+    /// Set byte size of FIFO before CPU interrupt is sent
+    /// ```
+    /// Note: Setting threshold too low at high speeds can slow CPU
+    /// and cause loss of data
+    /// ```
+    /// - 0: Reserved
+    /// - 1: 1 byte
+    /// - 2: 2 bytes
+    /// - 3: 3 bytes
+    /// - 4: 4 bytes
+    /// - 5: 5 bytes
+    /// - 6: 6 bytes
+    /// - 7: 7 bytes
+    /// - 8: 8 bytes
+    /// - 9-15: Reserved
     set_recieve_fifo_threshold,
     /// # Check Receive FIFO Threshold
+    /// Check size of threshold before CPU interrupt is sent
+    /// - 0: Reserved
+    /// - 1: 1 byte
+    /// - 2: 2 bytes
+    /// - 3: 3 bytes
+    /// - 4: 4 bytes
+    /// - 5: 5 bytes
+    /// - 6: 6 bytes
+    /// - 7: 7 bytes
+    /// - 8: 8 bytes
+    /// - 9-15: Reserved
     check_recieve_fifo_threshold}
 }
 
 /// # UART Status Register
 /// The UART Status Register. See page 182, table 12-9
 pub struct StatusRegister<const PORT_PTR: usize> {}
-reg_impl!(RO, StatusRegister, uro::UART_CTRL);
+reg_impl!(RO, StatusRegister, uro::UART_STATUS);
 
 impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     bit_impl! {12..=15, RO u8,
     /// # Transmit FIFO Level
+    /// Checks # of bytes in outbound FIFO buffer
+    /// - 0-8: Current # of bytes in buffer
+    /// - 9-15: Reserved
     get_transmit_fifo_level}
 
     bit_impl! {8..=11, RO u8,
     /// # Receive FIFO Level
+    /// Checks # of bytes in inbound FIFO buffer
+    /// - 0-8: Current # of bytes in buffer
+    /// - 9-15: Reserved
     get_receive_fifo_level}
 
     bit_impl! {7, RO,
     /// # Transmit FIFO Full
+    /// Checks if the outbound data buffer has filled up
+    /// - 0: Not full
+    /// - 1: Full
     is_transmit_fifo_full}
 
     bit_impl! {6, RO,
     /// # Transmit FIFO Empty
+    /// Checks if the outbound data buffer is empty
+    /// - 0: Not empty
+    /// - 1: Empty
     is_transmit_fifo_empty}
 
     bit_impl! {5, RO,
     /// # Receive FIFO Full
+    /// Checks if the inbound data buffer has filled up
+    /// - 0: Not full
+    /// - 1: Full
     is_receive_fifo_full}
 
     bit_impl! {4, RO,
     /// # Receive FIFO Empty
+    /// Checks if the inbound data buffer is empty
+    /// - 0: Not empty
+    /// - 1: Empty
     is_receive_fifo_empty}
 
     bit_impl! {1, RO,
     /// # Receive Busy
+    /// Checks if the inbound data line is busy
+    /// - 0: Not busy
+    /// - 1: Busy
     is_receive_busy}
 
     bit_impl! {0, RO,
     /// # Transmit Busy
-    is_transmit_buys}
+    /// Checks if the outbound data line is busy
+    /// - 0: Not busy
+    /// - 1: Busy
+    is_transmit_busy}
 }
 
 /// # UART Interrupt Enable Register
 /// The UART Interrupt Enable Register. See page 182, table 12-10
 pub struct InterruptEnableRegister<const PORT_PTR: usize> {}
-reg_impl!(RW, InterruptEnableRegister, uro::UART_CTRL);
+reg_impl!(RW, InterruptEnableRegister, uro::UART_INT_EN);
 
 impl<const PORT_PTR: usize> InterruptEnableRegister<PORT_PTR> {
     bit_impl! {6, RW,
     /// # Set Transmit FIFO Half-Empty Event Interrupt Enable
+    /// Sets whether the interrupt for half-full outbound FIFO buffer is enabled
+    /// - 0: Disabled
+    /// - 1: Enabled
     set_transmit_fifo_half_empty_event,
     /// # Get Transmit FIFO Half-Empty Event Interrupt Enable
+    /// Gets whether the interrupt for half-full outbound FIFO buffer is enabled
+    /// - 0: Disabled
+    /// - 1: Enabled
     get_transmit_fifo_half_empty_event}
 
     bit_impl! {4, RW,
     /// # Set Receive FIFO Half-Empty Event Interrupt Enable
+    /// Sets whether the interrupt for half-full inbound FIFO buffer is enabled
+    /// - 0: Disabled
+    /// - 1: Enabled
     set_receive_fifo_half_empty_even,
     /// # Get Receive FIFO Half-Empty Event Interrupt Enable
+    /// Gets whether the interrupt for half-full inbound FIFO buffer is enabled
+    /// - 0: Disabled
+    /// - 1: Enabled
     get_receive_fifo_half_empty_even}
 
     bit_impl! {3, RW,
     /// # Set Receive FIFO Threshold Event Interrupt Enable
+    /// Sets whether the interrupt for filled inbound FIFO buffer is enabled
+    /// - 0: Disabled
+    /// - 1: Enabled
     set_receive_fifo_thershold_event,
     /// # Get Receive FIFO Threshold Event Interrupt Enable
+    /// Gets whether the interrupt for filled inbound FIFO buffer is enabled
+    /// - 0: Disabled
+    /// - 1: Enabled
     get_receive_fifo_thershold_event}
 
     bit_impl! {2, RW,
     /// # Set `CTS` Signal Change Event Interrupt Enable
+    /// Sets if the interrupt for a change in CTS Signal is enabled
+    /// - 0: Disabled
+    /// - 1: Enabled
     set_cts_signal_change_event,
     /// # Get `CTS` Signal Change Event Interrupt Enable
+    /// Gets if the interrupt for a change in CTS Signal is enabled
+    /// - 0: Disabled
+    /// - 1: Enabled
     get_cts_signal_change_event}
 
     bit_impl! {1, RW,
     /// # Set Receive Parity Event Interrupt Enable
+    /// Set if parity errors on received data is enabled
+    /// - 0: Disabled
+    /// - 1: Enabled
     set_receive_parity_event,
     /// # Get Receive Parity Event Interrupt Enable
+    /// Get if parity errors on received data is enabled
+    /// - 0: Disabled
+    /// - 1: Enabled
     get_receive_parity_event}
 
     bit_impl! {0, RW,
     /// # Set Receive Frame Error Event Interrupt Enable
+    /// Set if stop bit not being recognized generates an interrupt
+    /// - 0: Disabled
+    /// - 1: Enabled
     set_receive_frame_error_event,
     /// # Get Receive Frame Error Event Interrupt Enable
+    /// Get if stop bit not being recognized generates an interrupt
+    /// - 0: Disabled
+    /// - 1: Enabled
     get_receive_frame_error_event}
 }
 
-/// # UART Interrupt Flag Register
-/// The UART Interrupt Flag Register. See Page 183, Table 12-11.
-pub struct InterrptFlagRegister<const PORT_PTR: usize> {}
-reg_impl!(
-    RW1C,
-    InterrptFlagRegister,
-    uro::UART_INTERRUPT_FL,
-    0b_00000000000000000000000000000000
-);
-
-impl<const PORT_PTR: usize> InterrptFlagRegister<PORT_PTR> {
-    bit_impl! {6, RW1C,
+make_device! {
+    device_ports(UART_PORT_0, UART_PORT_1,
+    UART_PORT_2)
+    /// UART Interrupt Flag Register
+    /// The UART Interrupt Flag Register. See Page 183, Table 12-11.
     /// # Get Transmit FIFO Half-Empty Interrupt Flag
+    /// Get the status of the transmit FIFO half-empty flag
+    /// - 0: Disabled
+    /// - 1: Enabled
+    #[bit(6, RW1C, uro::UART_INTERRUPT_FL)]
     get_transmit_fifo_half_empty_interrupt_flag,
-    /// # Set Transmit FIFO Half-Empty Interrupt Flag
-    set_transmit_fifo_half_empty_interrupt_flag}
 
-    bit_impl! {4, RW1C,
+
     /// # Get Receive FIFO Threshold Interrupt Flag
+    /// Get the status flag for the FIFO-filled flag
+    /// - 0: Disabled
+    /// - 1: Enabled
+    #[bit(4, RW1C, uro::UART_INTERRUPT_FL)]
     get_receive_fifo_threshold_interrupt_flag,
-    /// # Set Receive FIFO Threshold Interrupt Flag
-    set_receive_fifo_threshold_interrupt_flag}
 
-    bit_impl! {3, RW1C,
+
     /// # Get Receive FIFO Overrun Interrupt Flag
+    /// Get the status flag for the inbound FIFO buffer overrun flag
+    /// - 0: Disabled
+    /// - 1: Enabled
+    #[bit(3, RW1C, uro::UART_INTERRUPT_FL)]
     get_receive_fifo_overrun_interrupt_flag,
-    /// # Set Receive FIFO Overrun Interrupt Flag
-    set_receive_fifo_overrun_interrupt_flag}
 
-    bit_impl! {2, RW1C,
-    /// # Get Signal Change Interrupt Flag
-    get_signal_change_interrupt_flag,
-    /// # Set Signal Change Interrupt Flag
-    set_signal_change_interrupt_flag}
 
-    bit_impl! {1, RW1C,
+    /// # Get CTS Signal Change Interrupt Flag
+    /// The status flag for changes in CTS Signal
+    /// - 0: Disabled
+    /// - 1: Enabled
+    #[bit(2, RW1C, uro::UART_INTERRUPT_FL)]
+    get_cts_signal_change_interrupt_flag,
+
+
     /// # Get Receive Parity Error Interrupt Flag
+    /// The status flag for errors in the received parity bit
+    /// - 0: Disabled
+    /// - 1: Enabled
+    #[bit(1, RW1C, uro::UART_INTERRUPT_FL)]
     get_receive_parity_error_interrupt_flag,
-    /// # Set Receive Parity Error Interrupt Flag
-    set_receive_parity_error_interrupt_flag}
 
-    bit_impl! {0, RW1C,
+
     /// # Get Receive Frame Error Interrupt Flag
+    /// The status flag for errors in the received parity bit
+    /// - 0: Disabled
+    /// - 1: Enabled
+    #[bit(0, RW1C, uro::UART_INTERRUPT_FL)]
     get_receive_frame_error_interrupt_flag,
-    /// # Set Receive Frame Error Interrupt Flag
-    set_receive_frame_error_interrupt_flag}
 }
 
 /// # UART Clock Divisor Register
