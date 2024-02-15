@@ -192,67 +192,71 @@ make_device! {
     recieve_fifo_threshold,
 }
 
-/// # UART Status Register
-/// The UART Status Register. See page 182, table 12-9
-pub struct StatusRegister<const PORT_PTR: usize> {}
-reg_impl!(RO, StatusRegister, uro::UART_STATUS);
-
-impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
-    bit_impl! {12..=15, RO u8,
+make_device! {
+    /// # UART Status Register
+    /// The UART Status Register. See page 182, table 12-9
     /// # Transmit FIFO Level
     /// Checks # of bytes in outbound FIFO buffer
     /// - 0-8: Current # of bytes in buffer
     /// - 9-15: Reserved
-    get_transmit_fifo_level}
+    #[bit(12..=15, RO u8, uro::UART_STATUS)]
+    get_transmit_fifo_level,
 
-    bit_impl! {8..=11, RO u8,
+
     /// # Receive FIFO Level
     /// Checks # of bytes in inbound FIFO buffer
     /// - 0-8: Current # of bytes in buffer
     /// - 9-15: Reserved
-    get_receive_fifo_level}
+    #[bit(8..=11, RO u8, uro::UART_STATUS)]
+    get_receive_fifo_level,
 
-    bit_impl! {7, RO,
+
     /// # Transmit FIFO Full
     /// Checks if the outbound data buffer has filled up
     /// - 0: Not full
     /// - 1: Full
-    is_transmit_fifo_full}
+    #[bit(7, RO, uro::UART_STATUS)]
+    is_transmit_fifo_full,
 
-    bit_impl! {6, RO,
+
     /// # Transmit FIFO Empty
     /// Checks if the outbound data buffer is empty
     /// - 0: Not empty
     /// - 1: Empty
-    is_transmit_fifo_empty}
+    #[bit(6, RO, uro::UART_STATUS)]
+    is_transmit_fifo_empty,
 
-    bit_impl! {5, RO,
+
     /// # Receive FIFO Full
     /// Checks if the inbound data buffer has filled up
     /// - 0: Not full
     /// - 1: Full
-    is_receive_fifo_full}
+    #[bit(5, RO, uro::UART_STATUS)]
+    is_receive_fifo_full,
 
-    bit_impl! {4, RO,
+
     /// # Receive FIFO Empty
     /// Checks if the inbound data buffer is empty
     /// - 0: Not empty
     /// - 1: Empty
-    is_receive_fifo_empty}
+    #[bit(4, RO, uro::UART_STATUS)]
+    is_receive_fifo_empty,
 
-    bit_impl! {1, RO,
+
     /// # Receive Busy
     /// Checks if the inbound data line is busy
     /// - 0: Not busy
     /// - 1: Busy
-    is_receive_busy}
+    #[bit(1, RO, uro::UART_STATUS)]
+    is_receive_busy,
 
-    bit_impl! {0, RO,
+
     /// # Transmit Busy
     /// Checks if the outbound data line is busy
     /// - 0: Not busy
     /// - 1: Busy
-    is_transmit_busy}
+    #[bit(0, RO, uro::UART_STATUS)]
+    is_transmit_busy,
 }
 
 /// # UART Interrupt Enable Register
