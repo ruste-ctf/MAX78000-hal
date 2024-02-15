@@ -61,23 +61,24 @@ impl UART<NoPort> {
 impl UART<UART0> {
     fn init() -> Self {
         registers!(mmio::UART_0);
+        let uart = Self { ph: PhantomData };
+
         // Clear the FIFOs
-        Self::clear_rx_fifo();
-        Self::clear_tx_fifo();
+        uart.clear_rx_fifo();
+        uart.clear_tx_fifo();
 
         // Set the character length to 8
-        Self::set_character_length(3).unwrap();
+        uart.set_character_length(3).unwrap();
 
         // Set the number of stop bits to 1
-        Self::set_number_stop_bits(false);
+        uart.set_number_stop_bits(false);
 
         // Dissable parity
-        Self::parity_enable(false);
-
-        Self { ph: PhantomData }
+        uart.parity_enable(false);
+        uart
     }
 
-    pub fn clear_rx_fifo() {
+    pub fn clear_rx_fifo(&self) {
         registers!(mmio::UART_0);
 
         unsafe {
@@ -85,7 +86,7 @@ impl UART<UART0> {
         }
     }
 
-    pub fn clear_tx_fifo() {
+    pub fn clear_tx_fifo(&self) {
         registers!(mmio::UART_0);
 
         unsafe {
@@ -93,7 +94,7 @@ impl UART<UART0> {
         }
     }
 
-    pub fn set_character_length(length: u8) -> Result<()> {
+    pub fn set_character_length(&self, length: u8) -> Result<()> {
         registers!(mmio::UART_0);
 
         // If the value is not in the allowed range, Err
@@ -109,7 +110,7 @@ impl UART<UART0> {
         Ok(())
     }
 
-    pub fn set_baud_clock_source(source: u8) -> Result<()> {
+    pub fn set_baud_clock_source(&self, source: u8) -> Result<()> {
         registers!(mmio::UART_0);
 
         // If the value is not in the allowed range, Err
@@ -125,12 +126,12 @@ impl UART<UART0> {
         Ok(())
     }
 
-    pub fn set_baud_clock(enable: bool) {
+    pub fn set_baud_clock(&self, enable: bool) {
         registers!(mmio::UART_0);
         unsafe { ControlRegister::set_baud_clock_enable(enable) }
     }
 
-    pub fn set_number_stop_bits(number: bool) {
+    pub fn set_number_stop_bits(&self, number: bool) {
         registers!(mmio::UART_0);
         unsafe {
             // A "number" of true means use 1 stop bit
@@ -138,51 +139,51 @@ impl UART<UART0> {
         }
     }
 
-    pub fn parity_enable(enabled: bool) {
+    pub fn parity_enable(&self, enabled: bool) {
         registers!(mmio::UART_0);
         unsafe {
             ControlRegister::set_transmit_parity_generation_enable(enabled);
         }
     }
 
-    pub fn receive_busy() -> bool {
+    pub fn receive_busy(&self) -> bool {
         registers!(mmio::UART_0);
         StatusRegister::is_receive_busy()
     }
 
-    pub fn transmit_busy() -> bool {
+    pub fn transmit_busy(&self) -> bool {
         registers!(mmio::UART_0);
         StatusRegister::is_transmit_busy()
     }
 
-    pub fn peek_transmit_fifo() -> u8 {
+    pub fn peek_transmit_fifo(&self) -> u8 {
         registers!(mmio::UART_0);
         TransmitFIFORegister::get_transmit_fifo_data()
     }
 
-    pub fn get_transmit_fifo_level() -> u8 {
+    pub fn get_transmit_fifo_level(&self) -> u8 {
         registers!(mmio::UART_0);
         StatusRegister::get_transmit_fifo_level()
     }
 
-    pub fn get_receive_fifo_level() -> u8 {
+    pub fn get_receive_fifo_level(&self) -> u8 {
         registers!(mmio::UART_0);
         StatusRegister::get_receive_fifo_level()
     }
 
-    pub fn read_receive_fifo() -> u8 {
+    pub fn read_receive_fifo(&self) -> u8 {
         registers!(mmio::UART_0);
         DataRegister::get_receive_fifo_data()
     }
 
-    pub fn write_transmit_fifo(data: u8) {
+    pub fn write_transmit_fifo(&self, data: u8) {
         registers!(mmio::UART_0);
         unsafe {
             DataRegister::set_transmit_fifo_data(data);
         }
     }
 
-    pub fn set_clock_divisor(divisor: u32) {
+    pub fn set_clock_divisor(&self, divisor: u32) {
         registers!(mmio::UART_0);
         unsafe {
             // FIXME the functions need to be renamed
