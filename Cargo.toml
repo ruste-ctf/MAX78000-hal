@@ -3,9 +3,13 @@ name = "max78000-hal"
 version = "0.1.0"
 edition = "2021"
 
+[workspace]
+members = ["hal-macros", "hal-macros-derive"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+hal-macros = {path = "hal-macros"}
+hal-macros-derive = {path = "hal-macros-derive"}
 
 [package.metadata.spellcheck]
 config = "config/spellcheck.toml"
