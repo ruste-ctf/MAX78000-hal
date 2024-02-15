@@ -1,9 +1,4 @@
-use crate::bits::BitManipulation;
-use crate::const_assert;
-use crate::memory_map::mmio;
-use crate::{bit_impl, reg_impl};
-use core::ptr;
-use hal_macros_derive;
+use hal_macros_derive::make_device;
 
 /// # UART Register Offsets
 /// See Max 78000 User Guide Page 180, Table 12-7.
@@ -34,207 +29,151 @@ mod uro {
     pub const UART_WKFL: usize = 0x0038;
 }
 
-/// # UART Control Register
-/// The UART control register. See Page 180, Table 12-8.
-pub struct ControlRegister<const PORT_PTR: usize> {}
-reg_impl!(RW, ControlRegister, uro::UART_CTRL);
-
-impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
-    bit_impl! {22, RW,
+make_device! {
+    /// # UART Control Register
+    /// The UART control register. See Page 180, Table 12-8.
     /// # Receive Dual Edge Sampling
     /// This feature can **only** be used with `LPUART`
     /// Can choose to sample only on the rising edge, or both the rising and falling edges.
     /// - 0: Only rising edge
     /// - 1: Both edges
-    set_rx_dual_edge_sampling,
-    /// # Is Receive Dual Edge Sampling Enabled
-    /// Check if receive dual edge sampling is currently enabled.
-    /// - 0: Only rising edge enabled
-    /// - 1: Both edges enabled
-    is_rx_dual_edge_sampling_enabled}
+    #[bit(22, RW, uro::UART_CTRL)]
+    rx_dual_edge_sampling,
 
-    bit_impl! {21, RW,
+
     /// # Fractional Division Mode
     /// This feature can **only** be used with `LPUART`
     /// Can choose to enable fractional baud rate divisor
     /// - 0: Integer baud rate
     /// - 1: 0.5 division resolution
-    set_fractional_divison_mode,
-    /// # Is Fractional Division Mode Enabled
-    /// Check if fractional division mode is currently enabled
-    /// - 0: Integer baud rate enabled
-    /// - 1: 0.5 division resolution enabled
-    is_fractional_division_mode_enabled}
+    #[bit(21, RW, uro::UART_CTRL)]
+    fractional_divison_mode,
 
-    bit_impl! {20, RW,
+
     /// # Clock Auto Gating Mode
     /// Choose to use no auto gating, or to pause UART clock during idle states
     /// *NOTE:* Software should set this to 1
     /// - 0: No gating
     /// - 1: Clock paused during idle states
-    set_clock_auto_gating,
-    /// # Is Clock Auto Gating Enabled
-    /// Check if auto gating is currently enabled
-    /// - 0: Gating is not enabled
-    /// - 1: Clock is paused during idle states
-    is_clock_auto_gating_enabled}
+    #[bit(20, RW, uro::UART_CTRL)]
+    clock_auto_gating,
 
-    bit_impl! {19, RO,
-    /// # Is Baud Clock Ready
-    /// Check if the baud clock is ready
+
+    /// Baud Clock Ready
+    /// Check if baud clock is ready
     /// - 0: Baud clock is not ready
     /// - 1: Baud clock is ready
-    is_baud_clock_ready}
+    #[bit(19, RO, uro::UART_CTRL)]
+    is_baud_clock_ready,
 
-    bit_impl! {18, RW,
+
     /// # Bit Frame Error Detection Enable
-    /// Choose to enable or disable frame error detection
+    /// Enable or disable frame error detection
     /// This feature can **only** be used with `LPUART`
     /// - 0: Error detection disabled
     /// - 1: Error detection enabled
-    set_bit_frame_error_detection,
-    /// # Is Bit Frame Error Detection Enabled
-    /// Check if bit frame error detection is current enabled
-    /// - 0: Error detection is disabled
-    /// - 1: Error detection is enabled
-    is_bit_frame_error_detection_enabled}
+    #[bit(18, RW, uro::UART_CTRL)]
+    bit_frame_error_detection,
 
-    bit_impl! {16..=17, RW u8,
+
     /// # Baud Clock Source
     /// Select the source for the baud generator (See Table 12-1)
     /// - 0: Clock 0
     /// - 1: Clock 1
     /// - 2: Clock 2
     /// - 3: Clock 3
-    set_baud_clock_source,
-    /// # Check Baud Clock Source
-    /// Check the current source of the baud generator
-    /// - 0: Clock 0
-    /// - 1: Clock 1
-    /// - 2: Clock 2
-    /// - 3: Clock 3
-    check_baud_clock_source}
+    #[bit(16..=17, RW u8, uro::UART_CTRL)]
+    baud_clock_source,
 
-    bit_impl! {15, RW,
+
     /// # Baud Clock Enable
     /// Choose if the baud clock is enabled or not
     /// - 0: Disabled
     /// - 1: Enabled
-    set_baud_clock_enable,
-    /// # Is Baud Clock Enabled
-    /// Check if the baud clock is enabled
-    /// - 0: Disabled
-    /// - 1: Enabled
-    is_baud_clock_enable}
+    #[bit(15, RW, uro::UART_CTRL)]
+    baud_clock_enable,
 
-    bit_impl! {14, WO, // <- FIXME What should this be? Datasheet says RO, but that does not seem right
+
     /// # Hardware Flow Control RTS `Deassert` Condition.
     /// Describes the conditions when RTS is deasserted
     /// - 0: When FIFO level = C_RX_FIFO_DEPTH, RTS is deasserted
     /// - 1: When FIFO level `>=` UART_CTRL.rx_thd_val, RTS is deasserted
-    set_hardware_flow_rts_deassert_condition}
+    #[bit(14, WO, uro::UART_CTRL)]
+    hardware_flow_rts_deassert_condition,
 
-    bit_impl! {13, RW,
+
     /// # Hardware Flow Control
     /// Choose if hardware flow control is enabled, or disabled
     /// - 0: Disabled
     /// - 1: Enabled
-    set_hardware_flow_control,
-    /// # Check Hardware Flow Control
-    /// Checks if hardware flow control is enabled
-    /// - 0: Disabled
-    /// - 1: Enabled
-    check_hardware_flow_control}
+    #[bit(13, RW, uro::UART_CTRL)]
+    hardware_flow_control,
 
-    bit_impl! {12, RW,
+
     /// # Number of stop bits
-    /// Set the number of stop bits
+    /// The number of stop bits
     /// - 0: 1 stop bit
     /// - 1: 1.5 stop bit for 5 bit mode, 2 bit mode otherwise
-    set_number_of_stop_bits,
-    /// # Check Number Of Stop Bits
-    /// Check the current number of stop bits
-    /// - 0: 1 stop bit
-    /// - 1: 1.5 stop bit for 5 bit mode, 2 bit mode otherwise
-    check_number_of_stop_bits}
+    #[bit(12, RW, uro::UART_CTRL)]
+    number_of_stop_bits,
 
-    bit_impl! {10..=11, RW u8,
-    /// # Set Character Length
-    /// Set the number of bits in a character in an UART frame.
+
+    /// # Character Length
+    /// The number of bits in a character in an UART frame.
     /// - 0: 5 bits
     /// - 1: 6 bits
     /// - 2: 7 bits
     /// - 3: 8 bits
-    set_character_length,
-    /// # Check Character Length
-    /// Checks the current number of bits in a character in a UART frame
-    /// - 0: 5 bits
-    /// - 1: 6 bits
-    /// - 2: 7 bits
-    /// - 3: 8 bits
-    check_character_length}
+    #[bit(10..=11, RW u8, uro::UART_CTRL)]
+    character_length,
 
-    bit_impl! {9, RESET, // FIXME This needs to be renamed / changed
+
     /// # Activate Receive FIFO Flush
     /// Write a 1 to flush the receive FIFO
-    activate_receive_fifo_flush}
+    #[bit(9, RESET, uro::UART_CTRL)]
+    activate_receive_fifo_flush,
 
-    bit_impl! {8, RESET, // FIXME This need to be renamed / changed
+
     /// # Activate Transmit FIFO Flush
     /// Write a 1 to flush the transmit FIFO
-    activiate_transmit_fifo_flush}
+    #[bit(8, RESET, uro::UART_CTRL)]
+    activiate_transmit_fifo_flush,
 
-    bit_impl! {7, RW,
-    /// # Set `CTS` Sampling Disable
+
+    /// # `CTS` Sampling Disable
     /// Choose to enable or disable `CTS` (Clear To Send)
     /// - 0: Enabled
     /// - 1: Disabled
-    set_cts_sampling_disable,
-    /// # Check `CTS` Sampling Disable
-    /// Check the current state of CT disable
-    /// - 0: Enabled
-    /// - 1: Disabled
-    check_cts_sampling_disable}
+    #[bit(7, RW, uro::UART_CTRL)]
+    cts_sampling_disable,
 
-    bit_impl! {6, RW,
-    /// # Set Parity Value
-    /// Set parity calculation to use 1s or 0s in data frame
+
+    /// # Parity Value
+    /// The parity calculation uses 1s or 0s in data frame
     /// - 0: Use 1s
     /// - 1: Use 0s
-    set_parity_value,
-    /// # Check Parity Value
-    /// Check which value is being used for parity
-    /// - 0: Use 1s
-    /// - 1: Use 0s
-    check_parity_value}
+    #[bit(6, RW, uro::UART_CTRL)]
+    parity_value,
 
-    bit_impl! {5, RW,
+
     /// # Parity Odd Even Select
-    /// Set parity to ensure even or odd
+    /// parity to ensure even or odd
     /// - 0: Even parity (default)
     /// - 1: Odd parity
-    set_parity_odd_even,
-    /// # Check Parity Odd Even Select
-    /// Check if even or odd parity is being used
-    /// - 0: Even parity (default)
-    /// - 1: Odd parity
-    check_parity_odd_even}
+    #[bit(5, RW, uro::UART_CTRL)]
+    parity_odd_even,
 
-    bit_impl! {4, RW,
-    /// # Set Transmit Parity Generation Enable
-    /// Set whether to use parity for outward transmissions
+
+    /// # Transmit Parity Generation Enable
+    /// Use parity for outward transmissions
     /// - 0: Disable parity
     /// - 1: Use parity (placed after data frame)
-    set_transmit_parity_generation_enable,
-    /// # Check Transmit Parity Generation Enable
-    /// Check if parity is being generated for outward transmissions
-    /// - 0: Parity diabled
-    /// - 1: Parity enabled
-    check_transmit_parity_genration_enable}
+    #[bit(4, RW, uro::UART_CTRL)]
+    transmit_parity_generation_enable,
 
-    bit_impl! {0..=3, RW u8,
-    /// # Set Receive FIFO Threshold
-    /// Set byte size of FIFO before CPU interrupt is sent
+
+    /// # Receive FIFO Threshold
+    /// The byte size of FIFO before CPU interrupt is sent
     /// ```
     /// Note: Setting threshold too low at high speeds can slow CPU
     /// and cause loss of data
@@ -249,20 +188,8 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     /// - 7: 7 bytes
     /// - 8: 8 bytes
     /// - 9-15: Reserved
-    set_recieve_fifo_threshold,
-    /// # Check Receive FIFO Threshold
-    /// Check size of threshold before CPU interrupt is sent
-    /// - 0: Reserved
-    /// - 1: 1 byte
-    /// - 2: 2 bytes
-    /// - 3: 3 bytes
-    /// - 4: 4 bytes
-    /// - 5: 5 bytes
-    /// - 6: 6 bytes
-    /// - 7: 7 bytes
-    /// - 8: 8 bytes
-    /// - 9-15: Reserved
-    check_recieve_fifo_threshold}
+    #[bit(0..=3, RW u8, uro::UART_CTRL)]
+    recieve_fifo_threshold,
 }
 
 /// # UART Status Register
@@ -408,8 +335,8 @@ impl<const PORT_PTR: usize> InterruptEnableRegister<PORT_PTR> {
 }
 
 make_device! {
-    device_ports(UART_PORT_0, UART_PORT_1,
-    UART_PORT_2)
+    device_ports(mmio::UART_0, mmio::UART_1,
+    mmio::UART_2)
     /// UART Interrupt Flag Register
     /// The UART Interrupt Flag Register. See Page 183, Table 12-11.
     /// # Get Transmit FIFO Half-Empty Interrupt Flag
