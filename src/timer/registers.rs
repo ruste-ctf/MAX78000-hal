@@ -23,7 +23,7 @@ mod rro {
     pub const TMR_WKFL: usize = 0x001C;
 }
 
-use hal_macros::{VolatileRead, VolatileWrite, RW};
+use hal_macros::RW;
 use hal_macros_derive::make_device;
 
 make_device! {

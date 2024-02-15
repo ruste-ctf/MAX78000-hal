@@ -371,12 +371,6 @@ fn get_real_range(range: (Bound<usize>, Bound<usize>)) -> (usize, usize) {
     (start, end)
 }
 
-fn generate_range((start, end): (usize, usize)) -> proc_macro2::TokenStream {
-    quote!(
-        #start ..= #end
-    )
-}
-
 fn string_into_title(name: &str) -> proc_macro2::TokenStream {
     let name = format!(
         " # {}",
@@ -477,6 +471,7 @@ fn generate_range_get(
         ///
         #[inline(always)]
         pub fn #name(&self) -> #bit_type {
+            use hal_macros::VolatileRead;
             (((self.#self_dot.read() as usize) & <Self>::#self_mask) >> <Self>::#self_shift) as #bit_type
         }
     }
@@ -507,6 +502,7 @@ fn generate_single_get(name: &str, bit: &BitBlock) -> proc_macro2::TokenStream {
         ///
         #[inline(always)]
         pub fn #name(&self) -> bool {
+            use hal_macros::VolatileRead;
             (self.#self_dot.read() & (<Self>::#self_shift as u32)) != 0
         }
     }
@@ -565,6 +561,7 @@ fn generate_single_set(name: &str, bit: &BitBlock, only_gen_one: bool) -> proc_m
         ///
         #[inline(always)]
         pub unsafe fn #name(&mut self #param) {
+            use hal_macros::{VolatileRead, VolatileWrite};
             let read_value: u32 = self.#self_dot.read() & (<Self>::#self_mask as u32);
             let flag_value: u32 = (#flag_or_true) << (<Self>::#self_shift as u32);
             self.#self_dot.write(read_value | flag_value);
@@ -622,6 +619,7 @@ fn generate_range_set(
         ///
         #[inline(always)]
         pub unsafe fn #name(&mut self, flag: #bit_type) {
+            use hal_macros::{VolatileRead, VolatileWrite};
             debug_assert_eq!((flag as usize) >> (<Self>::#self_shift + 1), 0, "Provided flag {flag} is too large for provided setter range {}..={}!", #start, #end);
             let flag_shift: u32 = (flag as u32) << (<Self>::#self_shift as u32);
             let read_value: u32 = self.#self_dot.read() & (<Self>::#self_mask as u32) & (<Self>::#self_set_mask as u32);
@@ -759,7 +757,34 @@ fn generate_reg_struct(reg_names: &[(Ident, Path)]) -> proc_macro2::TokenStream 
         .collect();
 
     quote! {
-        #[repr(C)]
+        /// # Registers
+        /// This struct was generated with the `make_device!` macro! This struct
+        /// represents some hardware device expressed with `#[bit(...)]` attributes.
+        ///
+        /// # Example Of Registers
+        /// ```rust
+        /// use hal_macros_derive::make_device;
+        /// use hal_macros::RW;
+        ///
+        /// const MY_DEVICE_PORT0: usize = 0xdeadbeef;
+        /// const MY_DEVICE_PORT1: usize = 0xbadbabe3;
+        ///
+        /// const MY_REGISTER_OFFSET: usize = 0x0000;
+        ///
+        /// make_device! {
+        ///    device_ports(MY_DEVICE_PORT0, MY_DEVICE_PORT1);
+        ///
+        ///    #[bit(0, RW, MY_REGISTER_OFFSET)]
+        ///    my_reg_field,
+        ///
+        ///    #[bit(1, RO, MY_REGISTER_OFFSET)]
+        ///    my_reg_other_read_only,
+        ///
+        ///    #[bit(2..=10, WO, MY_REGISTER_OFFSET)]
+        ///    my_reg_range_write_only,
+        /// }
+        ///
+        /// ```
         #[allow(unused)]
         pub struct Registers {
            #(#properties,)*
