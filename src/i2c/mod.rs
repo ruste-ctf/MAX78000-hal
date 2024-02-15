@@ -95,7 +95,7 @@ macro_rules! registers {
 /// # I2C Bus Control Event
 /// Send a event marker to the I2C bus.
 ///
-/// Event markers are messages (really just state changes) that signify
+/// Event markers are messages (really just state changes) that significant
 /// a device that some operation is occurring. For example, you can send
 /// either `START`, `RESTART` (kinda), or `STOP` over the I2C bus.
 ///
@@ -232,13 +232,28 @@ impl I2C<I2CPort0> {
 
         Ok(())
     }
-
+  
     pub fn master_transaction(
         &self,
         address: usize,
         rx: Option<&mut [u8]>,
         tx: Option<&[u8]>,
     ) -> Result<()> {
+        let reading = rx.is_some();
+        let writing = tx.is_some();
+
+        if !reading || writing {}
+        todo!()
+    }
+
+    fn send_address_with_rw(&self, address: usize, is_writting: bool) {}
+
+    pub fn send_bus_event(&self, event: I2CBusControlEvent) -> Result<()> {
+        registers!(mmio::I2C_PORT_0);
+        if !self.master_enabled {
+            return Err(ErrorKind::BadState);
+        }
+      
         registers!(mmio::I2C_PORT_1);
         let reading = rx.is_some();
         let writing = tx.is_some();
