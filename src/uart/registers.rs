@@ -357,6 +357,7 @@ reg_impl!(RW, ClockDivisorRegister, uro::UART_CLKDIV);
 
 impl<const PORT_PTR: usize> ClockDivisorRegister<PORT_PTR> {
     bit_impl! {0..=19, RW u32,
+    /// FIXME These are not named correctly, set returns a value and vis versa
     /// # Get Baud Rate Divisor
     get_baud_rate_divisor,
     /// # Set Baud Rate Divisor

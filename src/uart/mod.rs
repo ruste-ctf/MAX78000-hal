@@ -1,6 +1,6 @@
 use crate::error::{ErrorKind, Result};
 use crate::memory_map::mmio;
-use crate::uart::registers::{ControlRegister, StatusRegister};
+use crate::uart::registers::{ClockDivisorRegister, ControlRegister, StatusRegister};
 use core::marker::PhantomData;
 pub mod registers;
 
@@ -59,7 +59,7 @@ impl UART<NoPort> {
 }
 
 impl UART<UART0> {
-    pub fn init() -> Self {
+    fn init() -> Self {
         registers!(mmio::UART_0);
         // Clear the FIFOs
         Self::clear_rx_fifo();
@@ -179,6 +179,14 @@ impl UART<UART0> {
         registers!(mmio::UART_0);
         unsafe {
             DataRegister::set_transmit_fifo_data(data);
+        }
+    }
+
+    pub fn set_clock_divisor(divisor: u32) {
+        registers!(mmio::UART_0);
+        unsafe {
+            // FIXME the functions need to be renamed
+            ClockDivisorRegister::get_baud_rate_divisor(divisor);
         }
     }
 }
