@@ -3,6 +3,7 @@ use crate::const_assert;
 use crate::memory_map::mmio;
 use crate::{bit_impl, reg_impl};
 use core::ptr;
+use hal_macros_derive;
 
 /// # UART Register Offsets
 /// See Max 78000 User Guide Page 180, Table 12-7.
@@ -406,77 +407,57 @@ impl<const PORT_PTR: usize> InterruptEnableRegister<PORT_PTR> {
     get_receive_frame_error_event}
 }
 
-/// # UART Interrupt Flag Register
-/// The UART Interrupt Flag Register. See Page 183, Table 12-11.
-pub struct InterrptFlagRegister<const PORT_PTR: usize> {}
-reg_impl!(RW1C, InterrptFlagRegister, uro::UART_INTERRUPT_FL);
-
-impl<const PORT_PTR: usize> InterrptFlagRegister<PORT_PTR> {
-    bit_impl! {6, RW1C,
+make_device! {
+    device_ports(UART_PORT_0, I2C_PORT_1,
+    UART_PORT_2)
+    /// UART Interrupt Flag Register
+    /// The UART Interrupt Flag Register. See Page 183, Table 12-11.
     /// # Get Transmit FIFO Half-Empty Interrupt Flag
     /// Get the status of the transmit FIFO half-empty flag
     /// - 0: Disabled
     /// - 1: Enabled
+    #[bit(6, RW1C, uro::UART_INTERRUPT_FL)]
     get_transmit_fifo_half_empty_interrupt_flag,
-    /// # Set Transmit FIFO Half-Empty Interrupt Flag
-    /// Set the status of the transmit FIFO half-empty flag
-    /// - 0: Disabled
-    /// - 1: Enabled
-    set_transmit_fifo_half_empty_interrupt_flag}
 
-    bit_impl! {4, RW1C,
+
     /// # Get Receive FIFO Threshold Interrupt Flag
     /// Get the status flag for the FIFO-filled flag
     /// - 0: Disabled
     /// - 1: Enabled
+    #[bit(4, RW1C, uro::UART_INTERRUPT_FL)]
     get_receive_fifo_threshold_interrupt_flag,
-    /// # Set Receive FIFO Threshold Interrupt Flag
-    /// Set the status flag for the FIFO-filled flag
-    /// - 0: Disabled
-    /// - 1: Enabled
-    set_receive_fifo_threshold_interrupt_flag}
 
-    bit_impl! {3, RW1C,
+
     /// # Get Receive FIFO Overrun Interrupt Flag
     /// Get the status flag for the inbound FIFO buffer overrun flag
     /// - 0: Disabled
     /// - 1: Enabled
+    #[bit(3, RW1C, uro::UART_INTERRUPT_FL)]
     get_receive_fifo_overrun_interrupt_flag,
-    /// # Set Receive FIFO Overrun Interrupt Flag
-    /// Set the status flag for the FIFO buffer overrun flag
-    /// - 0: Disabled
-    /// - 1: Enabled
-    set_receive_fifo_overrun_interrupt_flag}
 
-    bit_impl! {2, RW1C,
+
     /// # Get CTS Signal Change Interrupt Flag
     /// The status flag for changes in CTS Signal
     /// - 0: Disabled
     /// - 1: Enabled
+    #[bit(2, RW1C, uro::UART_INTERRUPT_FL)]
     get_cts_signal_change_interrupt_flag,
-    /// # Set CTS Signal Change Interrupt Flag
-    /// The status flag for changes in CTS Signal
-    /// - 0: Disabled
-    /// - 1: Enabled
-    set_cts_signal_change_interrupt_flag}
 
-    bit_impl! {1, RW1C,
+
     /// # Get Receive Parity Error Interrupt Flag
     /// The status flag for errors in the received parity bit
     /// - 0: Disabled
     /// - 1: Enabled
+    #[bit(1, RW1C, uro::UART_INTERRUPT_FL)]
     get_receive_parity_error_interrupt_flag,
-    /// # Set Receive Parity Error Interrupt Flag
-    set_receive_parity_error_interrupt_flag}
 
-    bit_impl! {0, RW1C,
+
     /// # Get Receive Frame Error Interrupt Flag
     /// The status flag for errors in the received parity bit
     /// - 0: Disabled
     /// - 1: Enabled
+    #[bit(0, RW1C, uro::UART_INTERRUPT_FL)]
     get_receive_frame_error_interrupt_flag,
-    /// # Set Receive Frame Error Interrupt Flag
-    set_receive_frame_error_interrupt_flag}
 }
 
 /// # UART Clock Divisor Register
