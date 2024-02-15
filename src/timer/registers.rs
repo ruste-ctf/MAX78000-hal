@@ -1,3 +1,4 @@
+use crate::memory_map::mmio;
 use hal_macros::RW;
 use hal_macros_derive::make_device;
 
