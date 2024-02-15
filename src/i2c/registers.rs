@@ -2,7 +2,6 @@ use crate::bits::BitManipulation;
 use crate::const_assert;
 use crate::memory_map::mmio;
 use crate::{bit_impl, reg_impl};
-use core::ptr;
 
 /// # Relative Register Offsets
 /// These are the offsets for the I2C registers that the
@@ -506,7 +505,16 @@ impl<const PORT_PTR: usize> InterruptFlag0<PORT_PTR> {
     /// - 1: STOP condition occurred
     is_slave_mode_stop_condition}
 
-    bit_impl! {5, RO,
+    bit_impl! {5, RW1C,
+    /// # Clear Transmit FIFO Threshold Level
+    /// (MAYBE ERROR IN DOCUMENTATION PAGE 228 MAX78000 USER GUIDE)
+    ///
+    /// When this flag is set, the transmit FIFO has less then or equal to the number of threshold bytes set. This
+    /// flag is automatically cleared when the transmit FIFO contains (MORE/LESS) bytes then the threshold level.
+    ///
+    /// - 0: Transmit FIFO contains more bytes than the transmit threshold level.
+    /// - 1: Transmit FIFO contains less bytes than the transmit threshold level.
+    clear_transmit_fifo_threshold_level,
     /// # Is Transmit FIFO Threshold Level
     /// (MAYBE ERROR IN DOCUMENTATION PAGE 228 MAX78000 USER GUIDE)
     ///
@@ -517,7 +525,16 @@ impl<const PORT_PTR: usize> InterruptFlag0<PORT_PTR> {
     /// - 1: Transmit FIFO contains less bytes than the transmit threshold level.
     is_transmit_fifo_threshold_level}
 
-    bit_impl! {4, RO,
+    bit_impl! {4, RW1C,
+    /// # Clear Receive FIFO Threshold Level
+    /// (MAYBE ERROR IN DOCUMENTATION PAGE 228 MAX78000 USER GUIDE)
+    ///
+    /// When this flag is set, the receive FIFO has less then or equal to the number of threshold bytes set. This
+    /// flag is automatically cleared when the receive FIFO contains (MORE/LESS) bytes then the threshold level.
+    ///
+    /// - 0: Receive FIFO contains more bytes than the transmit threshold level.
+    /// - 1: Receive FIFO contains less bytes than the transmit threshold level.
+    clear_receive_fifo_threshold_level,
     /// # Is Receive FIFO Threshold Level
     /// (MAYBE ERROR IN DOCUMENTATION PAGE 228 MAX78000 USER GUIDE)
     ///
@@ -526,7 +543,7 @@ impl<const PORT_PTR: usize> InterruptFlag0<PORT_PTR> {
     ///
     /// - 0: Receive FIFO contains more bytes than the transmit threshold level.
     /// - 1: Receive FIFO contains less bytes than the transmit threshold level.
-    is_receive_fifo_threshold_leve}
+    is_receive_fifo_threshold_level}
 
     bit_impl! {3, RW1C,
     /// # Clear Slave mode Incoming Address Match Status
@@ -589,6 +606,17 @@ impl<const PORT_PTR: usize> InterruptFlag0<PORT_PTR> {
     /// - 0: Transfer is not complete
     /// - 1: Transfer is complete
     is_transfer_complete}
+}
+
+impl<const PORT_PTR: usize> InterruptFlag0<PORT_PTR> {
+    /// # Is Error Condition
+    /// Checks if any of the error conditions as been reached.
+    pub fn is_error_condition() -> bool {
+        let value = Self::read();
+
+        // Bits 8 though 14 all contain error flags
+        value.get_bit_range(8..=14) != 0
+    }
 }
 
 /// # I2C Interrupt Enable 0 Register
@@ -984,6 +1012,15 @@ impl<const PORT_PTR: usize> FIFOLengthRegister<PORT_PTR> {
     get_receive_fifo_len}
 }
 
+impl<const PORT_PTR: usize> FIFOLengthRegister<PORT_PTR> {
+    /// # Max FIFO Receive Length
+    /// The maximum amount of bytes the Receive FIFO can store.
+    pub const MAX_FIFO_RECEIVE_LEN: usize = 8;
+    /// # Max FIFO Transmit Length
+    /// The maximum amount of bytes the Transmit FIFO can store.
+    pub const MAX_FIFO_TRANSMIT_LEN: usize = 8;
+}
+
 /// # I2C Receive Control 0 Register
 /// The Receive control register is used to set the receive FIFO threshold level, and set flush receive FIFO, page 231-232 (MAX78000 User Guide)
 pub struct ReceiveControl0<const PORT_PTR: usize> {}
@@ -993,7 +1030,7 @@ impl<const PORT_PTR: usize> ReceiveControl0<PORT_PTR> {
     bit_impl! {8..=11, RW u8,
     /// # Set Receive FIFO Threshold Level
     /// This is the number of bytes to trigger a receive FIFO threshold event. If the bytes in the FIFO are greater than or equal to
-    /// this value, the hardware will generate an interrupt (if enabled) and set [`InterruptFlag0::is_receive_fifo_threshold_level_interrupt_enabled`] to
+    /// this value, the hardware will generate an interrupt (if enabled) and set `InterruptFlag0::is_receive_fifo_threshold_level_interrupt_enabled` to
     /// true.
     /// 
     /// - 0: 0 bytes or more causes an event
@@ -1003,7 +1040,7 @@ impl<const PORT_PTR: usize> ReceiveControl0<PORT_PTR> {
     set_receive_fifo_threshold_level,
     /// # Is Receive FIFO Threshold Level
     /// This is the number of bytes to trigger a receive FIFO threshold event. If the bytes in the FIFO are greater than or equal to
-    /// this value, the hardware will generate an interrupt (if enabled) and set [`InterruptFlag0::is_receive_fifo_threshold_level_interrupt_enabled`] to
+    /// this value, the hardware will generate an interrupt (if enabled) and set `InterruptFlag0::is_receive_fifo_threshold_level_interrupt_enabled` to
     /// true.
     /// 
     /// - 0: 0 bytes or more causes an event

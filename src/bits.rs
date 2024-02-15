@@ -247,4 +247,13 @@ mod test {
         assert_eq!(*0b01010101_u8.set_bit_range(0..=7, 0), 0b00000000_u8);
         assert_eq!(*0b00000000_u8.set_bit_range(0..=7, 0xFF), 0b11111111_u8);
     }
+
+    #[test]
+    fn test_set_bit_same_as_shift_ore() {
+        assert_eq!(*0b00000u8.set_bit(0, true), 1 << 0);
+        assert_eq!(*0b00000u8.set_bit(1, true), 1 << 1);
+        assert_eq!(*0b00000u8.set_bit(2, true), 1 << 2);
+        assert_eq!(*0b00000u8.set_bit(3, true), 1 << 3);
+        assert_eq!(*0b00000u8.set_bit(4, true), 1 << 4);
+    }
 }
