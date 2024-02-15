@@ -30,9 +30,8 @@ mod uro {
 }
 
 make_device! {
-    /// # UART Control Register
-    /// The UART control register. See Page 180, Table 12-8.
-    /// # Receive Dual Edge Sampling
+    device_ports(mmio::UART_0, mmio::UART_1, mmio::UART_2);
+    /// Receive Dual Edge Sampling. See Page 180, Table 12-8.
     /// This feature can **only** be used with `LPUART`
     /// Can choose to sample only on the rising edge, or both the rising and falling edges.
     /// - 0: Only rising edge
@@ -41,7 +40,7 @@ make_device! {
     rx_dual_edge_sampling,
 
 
-    /// # Fractional Division Mode
+    /// Fractional Division Mode. See Page 180, Table 12-8.
     /// This feature can **only** be used with `LPUART`
     /// Can choose to enable fractional baud rate divisor
     /// - 0: Integer baud rate
@@ -50,7 +49,7 @@ make_device! {
     fractional_divison_mode,
 
 
-    /// # Clock Auto Gating Mode
+    /// Clock Auto Gating Mode. See Page 180, Table 12-8.
     /// Choose to use no auto gating, or to pause UART clock during idle states
     /// *NOTE:* Software should set this to 1
     /// - 0: No gating
@@ -59,15 +58,15 @@ make_device! {
     clock_auto_gating,
 
 
-    /// Baud Clock Ready
+    /// Baud Clock Ready. See Page 180, Table 12-8.
     /// Check if baud clock is ready
     /// - 0: Baud clock is not ready
     /// - 1: Baud clock is ready
     #[bit(19, RO, uro::UART_CTRL)]
-    is_baud_clock_ready,
+    baud_clock_ready,
 
 
-    /// # Bit Frame Error Detection Enable
+    /// Bit Frame Error Detection Enable. See Page 180, Table 12-8.
     /// Enable or disable frame error detection
     /// This feature can **only** be used with `LPUART`
     /// - 0: Error detection disabled
@@ -76,17 +75,17 @@ make_device! {
     bit_frame_error_detection,
 
 
-    /// # Baud Clock Source
+    /// Baud Clock Source. See Page 180, Table 12-8.
     /// Select the source for the baud generator (See Table 12-1)
     /// - 0: Clock 0
     /// - 1: Clock 1
     /// - 2: Clock 2
     /// - 3: Clock 3
-    #[bit(16..=17, RW u8, uro::UART_CTRL)]
+    #[bit(16..=17, RW, uro::UART_CTRL)]
     baud_clock_source,
 
 
-    /// # Baud Clock Enable
+    /// Baud Clock Enable. See Page 180, Table 12-8.
     /// Choose if the baud clock is enabled or not
     /// - 0: Disabled
     /// - 1: Enabled
@@ -94,7 +93,7 @@ make_device! {
     baud_clock_enable,
 
 
-    /// # Hardware Flow Control RTS `Deassert` Condition.
+    /// Hardware Flow Control RTS `Deassert` Condition.
     /// Describes the conditions when RTS is deasserted
     /// - 0: When FIFO level = C_RX_FIFO_DEPTH, RTS is deasserted
     /// - 1: When FIFO level `>=` UART_CTRL.rx_thd_val, RTS is deasserted
@@ -102,7 +101,7 @@ make_device! {
     hardware_flow_rts_deassert_condition,
 
 
-    /// # Hardware Flow Control
+    /// Hardware Flow Control
     /// Choose if hardware flow control is enabled, or disabled
     /// - 0: Disabled
     /// - 1: Enabled
@@ -110,7 +109,7 @@ make_device! {
     hardware_flow_control,
 
 
-    /// # Number of stop bits
+    /// Number of stop bits
     /// The number of stop bits
     /// - 0: 1 stop bit
     /// - 1: 1.5 stop bit for 5 bit mode, 2 bit mode otherwise
@@ -118,29 +117,29 @@ make_device! {
     number_of_stop_bits,
 
 
-    /// # Character Length
+    /// Character Length
     /// The number of bits in a character in an UART frame.
     /// - 0: 5 bits
     /// - 1: 6 bits
     /// - 2: 7 bits
     /// - 3: 8 bits
-    #[bit(10..=11, RW u8, uro::UART_CTRL)]
+    #[bit(10..=11, RW, uro::UART_CTRL)]
     character_length,
 
 
-    /// # Activate Receive FIFO Flush
+    /// Activate Receive FIFO Flush
     /// Write a 1 to flush the receive FIFO
     #[bit(9, RESET, uro::UART_CTRL)]
     activate_receive_fifo_flush,
 
 
-    /// # Activate Transmit FIFO Flush
+    /// Activate Transmit FIFO Flush
     /// Write a 1 to flush the transmit FIFO
     #[bit(8, RESET, uro::UART_CTRL)]
     activiate_transmit_fifo_flush,
 
 
-    /// # `CTS` Sampling Disable
+    /// `CTS` Sampling Disable
     /// Choose to enable or disable `CTS` (Clear To Send)
     /// - 0: Enabled
     /// - 1: Disabled
@@ -148,7 +147,7 @@ make_device! {
     cts_sampling_disable,
 
 
-    /// # Parity Value
+    /// Parity Value
     /// The parity calculation uses 1s or 0s in data frame
     /// - 0: Use 1s
     /// - 1: Use 0s
@@ -156,7 +155,7 @@ make_device! {
     parity_value,
 
 
-    /// # Parity Odd Even Select
+    /// Parity Odd Even Select
     /// parity to ensure even or odd
     /// - 0: Even parity (default)
     /// - 1: Odd parity
@@ -164,7 +163,7 @@ make_device! {
     parity_odd_even,
 
 
-    /// # Transmit Parity Generation Enable
+    /// Transmit Parity Generation Enable
     /// Use parity for outward transmissions
     /// - 0: Disable parity
     /// - 1: Use parity (placed after data frame)
@@ -172,7 +171,7 @@ make_device! {
     transmit_parity_generation_enable,
 
 
-    /// # Receive FIFO Threshold
+    /// Receive FIFO Threshold
     /// The byte size of FIFO before CPU interrupt is sent
     /// ```
     /// Note: Setting threshold too low at high speeds can slow CPU
@@ -188,30 +187,27 @@ make_device! {
     /// - 7: 7 bytes
     /// - 8: 8 bytes
     /// - 9-15: Reserved
-    #[bit(0..=3, RW u8, uro::UART_CTRL)]
+    #[bit(0..=3, RW, uro::UART_CTRL)]
     recieve_fifo_threshold,
-}
 
-make_device! {
-    /// # UART Status Register
     /// The UART Status Register. See page 182, table 12-9
-    /// # Transmit FIFO Level
-    /// Checks # of bytes in outbound FIFO buffer
-    /// - 0-8: Current # of bytes in buffer
+    /// Transmit FIFO Level
+    /// Checks of bytes in outbound FIFO buffer
+    /// - 0-8: Current of bytes in buffer
     /// - 9-15: Reserved
-    #[bit(12..=15, RO u8, uro::UART_STATUS)]
+    #[bit(12..=15, RO, uro::UART_STATUS)]
     get_transmit_fifo_level,
 
 
-    /// # Receive FIFO Level
-    /// Checks # of bytes in inbound FIFO buffer
-    /// - 0-8: Current # of bytes in buffer
+    /// Receive FIFO Level
+    /// Checks of bytes in inbound FIFO buffer
+    /// - 0-8: Current of bytes in buffer
     /// - 9-15: Reserved
-    #[bit(8..=11, RO u8, uro::UART_STATUS)]
+    #[bit(8..=11, RO, uro::UART_STATUS)]
     get_receive_fifo_level,
 
 
-    /// # Transmit FIFO Full
+    /// Transmit FIFO Full
     /// Checks if the outbound data buffer has filled up
     /// - 0: Not full
     /// - 1: Full
@@ -219,7 +215,7 @@ make_device! {
     is_transmit_fifo_full,
 
 
-    /// # Transmit FIFO Empty
+    /// Transmit FIFO Empty
     /// Checks if the outbound data buffer is empty
     /// - 0: Not empty
     /// - 1: Empty
@@ -227,7 +223,7 @@ make_device! {
     is_transmit_fifo_empty,
 
 
-    /// # Receive FIFO Full
+    /// Receive FIFO Full
     /// Checks if the inbound data buffer has filled up
     /// - 0: Not full
     /// - 1: Full
@@ -235,7 +231,7 @@ make_device! {
     is_receive_fifo_full,
 
 
-    /// # Receive FIFO Empty
+    /// Receive FIFO Empty
     /// Checks if the inbound data buffer is empty
     /// - 0: Not empty
     /// - 1: Empty
@@ -243,7 +239,7 @@ make_device! {
     is_receive_fifo_empty,
 
 
-    /// # Receive Busy
+    /// Receive Busy
     /// Checks if the inbound data line is busy
     /// - 0: Not busy
     /// - 1: Busy
@@ -251,7 +247,7 @@ make_device! {
     is_receive_busy,
 
 
-    /// # Transmit Busy
+    /// Transmit Busy
     /// Checks if the outbound data line is busy
     /// - 0: Not busy
     /// - 1: Busy
@@ -339,8 +335,7 @@ impl<const PORT_PTR: usize> InterruptEnableRegister<PORT_PTR> {
 }
 
 make_device! {
-    device_ports(mmio::UART_0, mmio::UART_1,
-    mmio::UART_2)
+    device_ports(mmio::UART_0, mmio::UART_1, mmio::UART_2)
     /// UART Interrupt Flag Register
     /// The UART Interrupt Flag Register. See Page 183, Table 12-11.
     /// # Get Transmit FIFO Half-Empty Interrupt Flag
