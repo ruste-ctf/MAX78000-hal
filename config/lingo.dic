@@ -1,4 +1,4 @@
-100
+200
 Init
 RW
 0xFF
@@ -168,3 +168,17 @@ TimerB
 Prescaler
 𝝓𝑨
 𝝓𝑨′
+Deassert 
+deassert 
+RTS
+Deasserted
+deasserted
+UART_CTRL
+rx_thd_val
+=
+>=
+<=
+!=
+C_RX_FIFO_DEPTH
+CTS
+LPUART
