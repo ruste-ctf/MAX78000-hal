@@ -407,7 +407,6 @@ fn min_type_for_range((start, end): (usize, usize)) -> proc_macro2::TokenStream 
     let diff = end - start;
 
     match diff {
-        1 => quote!(bool),
         ..=7 => quote!(u8),
         ..=15 => quote!(u16),
         ..=31 => quote!(u32),

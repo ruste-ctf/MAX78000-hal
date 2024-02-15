@@ -1,6 +1,4 @@
-use crate::const_assert;
-use crate::memory_map::mmio;
-use crate::{bit_impl, reg_impl};
+use hal_macros_derive::make_device;
 
 /// # TRNG Register Offsets
 /// See Max 78000 User Guide Page 363, Table 25-1.
@@ -13,49 +11,26 @@ mod rro {
     pub const TRNG_DATA: usize = 0x0008;
 }
 
-/// # TRNG Control Register
-/// The TRNG Control Register. See Page 363, Table 25-2.
-pub struct ControlRegister<const PORT_PTR: usize> {}
-reg_impl!(RW, ControlRegister, rro::TRNG_CTRL);
+make_device! {
+    device_ports(mmio::TRNG);
 
-impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
-    bit_impl! {15, RW,
-    /// # Set Wipe Key
-    set_wipe_key,
-    /// # Get Wipe Key
-    get_wipe_key}
+    /// # Wipe Key. See Page 363, Table 25-2.
+    #[bit(15, RW, rro::TRNG_CTRL)]
+    wipe_key,
 
-    bit_impl! {3, RW,
-    /// # Set Generate Key
-    set_generate_key,
-    /// # Get Generate Key
-    get_generate_key}
+    /// # Generate Key. See Page 363, Table 25-2.
+    #[bit(3, RW, rro::TRNG_CTRL)]
+    generate_key,
 
-    bit_impl! {1, RW,
-    /// # Set Random Number Interrupt Enable
-    set_random_number_interrupt_enable,
-    /// # Get Random Number Interrupt Enable
-    get_random_number_interrupt_enable}
-}
+    /// # Random Number Interrupt Enable. See Page 363, Table 25-2.
+    #[bit(1, RW, rro::TRNG_CTRL)]
+    random_number_interrupt_enable,
 
-/// # TRNG Status Register
-/// The TRNG Status Register. See Page 363-364, Table 25-3.
-pub struct StatusRegister<const PORT_PTR: usize> {}
-reg_impl!(RO, StatusRegister, rro::TRNG_STATUS);
+    /// # Get Random Number Ready. See Page 363-364, Table 25-3.
+    #[bit(0, RO, rro::TRNG_STATUS)]
+    get_random_number_ready,
 
-impl<const PORT_PTR: usize> StatusRegister<PORT_PTR> {
-    bit_impl! {0, RO,
-    /// # Get Random Number Ready
-    get_random_number_ready}
-}
-
-/// # TRNG Data Register
-/// The TRNG Data Register. See Page 364, Table 25-4.
-pub struct DataRegister<const PORT_PTR: usize> {}
-reg_impl!(RO, DataRegister, rro::TRNG_DATA);
-
-impl<const PORT_PTR: usize> DataRegister<PORT_PTR> {
-    bit_impl! {0..=31, RO u32,
-    /// # Get TRNG Data
-    get_trng_data}
+    /// # Get TRNG Data. See Page 364, Table 25-4.
+    #[bit(0..=31, RO, rro::TRNG_DATA)]
+    get_trng_data,
 }
