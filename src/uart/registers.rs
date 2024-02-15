@@ -371,14 +371,26 @@ impl<const PORT_PTR: usize> InterruptEnableRegister<PORT_PTR> {
 
     bit_impl! {2, RW,
     /// # Set `CTS` Signal Change Event Interrupt Enable
+    /// Sets if the interrupt for a change in CTS Signal is enabled
+    /// - 0: Disabled
+    /// - 1: Enabled
     set_cts_signal_change_event,
     /// # Get `CTS` Signal Change Event Interrupt Enable
+    /// Gets if the interrupt for a change in CTS Signal is enabled
+    /// - 0: Disabled
+    /// - 1: Enabled
     get_cts_signal_change_event}
 
     bit_impl! {1, RW,
     /// # Set Receive Parity Event Interrupt Enable
+    /// Set if parity errors on received data is enabled
+    /// - 0: Disabled
+    /// - 1: Enabled
     set_receive_parity_event,
     /// # Get Receive Parity Event Interrupt Enable
+    /// Get if parity errors on received data is enabled
+    /// - 0: Disabled
+    /// - 1: Enabled
     get_receive_parity_event}
 
     bit_impl! {0, RW,
