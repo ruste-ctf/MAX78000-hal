@@ -78,6 +78,13 @@ impl UART<UART0> {
         uart
     }
 
+    pub fn print_string(&self, string: &str) {
+        for char in string.bytes() {
+            while self.transmit_busy() {}
+            self.write_transmit_fifo(char);
+        }
+    }
+
     pub fn clear_rx_fifo(&self) {
         registers!(mmio::UART_0);
 
