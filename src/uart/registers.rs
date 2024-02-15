@@ -355,186 +355,150 @@ make_device! {
     get_receive_frame_error_interrupt_flag,
 
 
-	/// The UART Clock Divisor Register. See Page 183-184, Table 12-12
-	/// # Get Baud Rate Divisor
-	/// The divisor for generating the baud tick from baud clock
-	#[bit(0..=19, RW, uro::UART_CLKDIV)]
-	get_baud_rate_divisor,
+    /// The UART Clock Divisor Register. See Page 183-184, Table 12-12
+    /// # Get Baud Rate Divisor
+    /// The divisor for generating the baud tick from baud clock
+    #[bit(0..=19, RW, uro::UART_CLKDIV)]
+    get_baud_rate_divisor,
 
-	/// The UART Oversampling Control Register. See Page 184, Table 12-13
-	/// LPUART Over Sampling Rate
-	/// How many times faster LPUART is sampling than the clock speed
-	/// FDM Enabled:
-	/// - 0: 8x
-	/// - 1: 12x
-	/// - 2: 16x
-	/// - 3: 20x
-	/// - 4: 24x
-	/// - 5: 28x
-	/// - 6: 32x
-	/// - 7: 36x
-	/// FDM Disabled:
-	/// - 0: 128x
-	/// - 1: 64x
-	/// - 2: 32x
-	/// - 3: 16x
-	/// - 4: 8x
-	/// - 5: 4x
-	/// - 6-7: Reserved
-	#[bit(0..=2, RW, uro::UART_OSR)]
-	get_lpuart_oversampling_rate,
+    /// The UART Oversampling Control Register. See Page 184, Table 12-13
+    /// LPUART Over Sampling Rate
+    /// How many times faster LPUART is sampling than the clock speed
+    /// FDM Enabled:
+    /// - 0: 8x
+    /// - 1: 12x
+    /// - 2: 16x
+    /// - 3: 20x
+    /// - 4: 24x
+    /// - 5: 28x
+    /// - 6: 32x
+    /// - 7: 36x
+    /// FDM Disabled:
+    /// - 0: 128x
+    /// - 1: 64x
+    /// - 2: 32x
+    /// - 3: 16x
+    /// - 4: 8x
+    /// - 5: 4x
+    /// - 6-7: Reserved
+    #[bit(0..=2, RW, uro::UART_OSR)]
+    get_lpuart_oversampling_rate,
 
-	/// The UART Transmit FIFO Register. See Page 184, Table 12-14.
-	/// Transmit FIFO Data
-	/// Reads the data in the outbound FIFO, no data reads as 0
-	#[bit(0..=7, RO, uro::UART_TXPEEK)]
-	get_transmit_fifo_data,
+    /// The UART Transmit FIFO Register. See Page 184, Table 12-14.
+    /// Transmit FIFO Data
+    /// Reads the data in the outbound FIFO, no data reads as 0
+    #[bit(0..=7, RO, uro::UART_TXPEEK)]
+    get_transmit_fifo_data,
 
     /// # UART Pin Control Register
-	/// The UART Pin Control Register. See Page 184-185, Table 12-15.
-	/// RTS Output State
-	/// The outbound RTS's state
-	/// - 0: Push to 0
-	/// - 1: Push to 1
-	#[bit(1, RW, uro::UART_PNR)]
-	get_rts_output_state,
+    /// The UART Pin Control Register. See Page 184-185, Table 12-15.
+    /// RTS Output State
+    /// The outbound RTS's state
+    /// - 0: Push to 0
+    /// - 1: Push to 1
+    #[bit(1, RW, uro::UART_PNR)]
+    get_rts_output_state,
 
 
-	/// CTS Pin State
-	/// The CTS pin's state
+    /// CTS Pin State
+    /// The CTS pin's state
     /// - 0: 0
     /// - 1: 1
-	#[bit(0, RO, uro::UART_PNR)]
-	get_cts_pin_state,
+    #[bit(0, RO, uro::UART_PNR)]
+    get_cts_pin_state,
 
-/// # UART Data Register
-/// The UART Data Register. See Page 185, Table 12-16.
-pub struct DataRegister<const PORT_PTR: usize> {}
-reg_impl!(RW, DataRegister, uro::UART_FIFO);
-
-impl<const PORT_PTR: usize> DataRegister<PORT_PTR> {
-    bit_impl! {8, RO,
+    /// The UART Data Register. See Page 185, Table 12-16.
     /// # Get Receive FIFO Byte Parity
     /// Shows if parity error occurred while receiving last byte
     /// - 0: No error
     /// - 1: Error occurred
-    get_receive_fifo_byte_parity}
+    #[bit(8, RO, uro::UART_FIFO)]
+    get_receive_fifo_byte_parity,
 
-    bit_impl! {0..=7, RW,
+
     /// Get/Set Transmit/Receive FIFO Data
     /// Sets outbound FIFO and Gets inbound FIFO data
+    #[bit(0..=7, RW, uro::UART_FIFO)]
     get_transmit_receive_fifo_data,
-    /// # Set Transmit/Receive FIFO Data
-    set_transmit_receive_fifo_data}
-}
 
-/// # UART DMA Register
-/// The UART DMA Register. See Page 185, Table 12-17.
-pub struct DMARegister<const PORT_PTR: usize> {}
-reg_impl!(RW, DMARegister, uro::UART_DMA);
-
-impl<const PORT_PTR: usize> DMARegister<PORT_PTR> {
-    bit_impl! {9, RW,
+    /// The UART DMA Register. See Page 185, Table 12-17.
     /// Receive DMA Channel Enable
     /// Enabling Direct Memory Access for inbound UART to allow using multiple buffers
     /// The documentation has a typo for this bit's access.
     /// It says "0" while it should say "R/W".
     /// - 0: Disabled
     /// - 1: Enabled
+    #[bit(9, RW, uro::UART_DMA)]
     set_receive_dma_channel_enable,
-    /// # Get Receive DMA Channel Enable
-    is_receive_dma_channel_enable}
 
-    bit_impl! {5..=8, RW,
+
     /// # Set Receive FIFO Level DMA Threshold
     /// How many bytes in inbound FIFO there must be to tell the DMA there is data to transfer
     /// The documentation has a typo for this bit's access.
     /// It says "0" while it should say "R/W".
     /// - Nothing listed in documentation
+    #[bit(5..=8, RW, uro::UART_DMA)]
     set_receive_fifo_level_dma_threshold,
-    /// # Get Receive FIFO Level DMA Threshold
-    get_receive_fifo_level_dma_threshold}
 
-    bit_impl! {4, RW,
+
     /// # Set Transmit DMA Channel Enable
     /// Enabling Direct Memory Access for outbound UART to allow using multiple buffers
+    #[bit(4, RW, uro::UART_DMA)]
     set_transmit_dma_channel_enable,
-    /// # Get Transmit DMA Channel Enable
-    get_transmit_dma_channel_enable}
 
-    bit_impl! {0..=3, RW,
+
     /// # Set Transmit FIFO Level DMA Threshold
     /// How many bytes in outbound FIFO there must be to tell the DMA there is spare room
     /// - Nothing listed in documentation
+    #[bit(0..=3, RW, uro::UART_DMA)]
     set_transmit_dma_level_dma_threshold,
-    /// # Get Transmit FIFO Level DMA Threshold
-    get_transmit_dma_level_dma_threshold}
-}
 
-/// # UART Wakeup Enable
-/// The UART Wakeup Enable Register. See Page 185-186, Table 12-18.
-pub struct WakeupEnableRegister<const PORT_PTR: usize> {}
-reg_impl!(RW, WakeupEnableRegister, uro::UART_WKEN);
-
-impl<const PORT_PTR: usize> WakeupEnableRegister<PORT_PTR> {
-    bit_impl! {2, RW,
+    /// The UART Wakeup Enable Register. See Page 185-186, Table 12-18.
     /// # Set Receive FIFO Threshold Wake-up Event Enable
     /// Allow a threshold of bytes in the inbound FIFO to wake up the CPU and resume normal operation
     /// - 0: Disabled
     /// - 1: Enabled
+    #[bit(2, RW, uro::UART_WKEN)]
     set_receive_fifo_threshold_wakeup_event_enable,
-    /// # Get Receive FIFO Threshold Wake-up Event Enable
-    is_receive_fifo_threshold_wakeup_event_enable}
 
-    bit_impl! {1, RW,
+
     /// # Receive FIFO Full Wake-up Event Enable
     /// Allow a full inbound FIFO to wake up the CPU and resume normal operation
     /// - 0: Disabled
     /// - 1: Enabled
+    #[bit(1, RW, uro::UART_WKEN)]
     set_receive_fifo_full_wakeup_event_enable,
-    /// # Get Receive FIFO Full Wake-up Event Enable
-    get_receive_fifo_full_wakeup_event_enable}
 
-    bit_impl! {0, RW,
+
     /// # Receive FIFO Not Empty Wake-up Event Enable
     /// Allow a non-empty inbound FIFO to wake up the CPU and resume normal operation
     /// - 0: Disabled
     /// - 1: Enabled
+    #[bit(0, RW, uro::UART_WKEN)]
     set_receive_fifo_not_empty_wakeup_event_enable,
-    /// # Get Receive FIFO Not Empty Wake-up Event Enable
-    get_receive_fifo_not_empty_wakeup_event_enable}
-}
 
-/// # UART Wakeup Flag Register
-/// The UART Wakeup Flag register. See Page 186, Table 12-19.
-pub struct WakeupFlagRegister<const PORT_PTR: usize> {}
-reg_impl!(RW, WakeupFlagRegister, uro::UART_WKFL);
 
-impl<const PORT_PTR: usize> WakeupFlagRegister<PORT_PTR> {
-    bit_impl! {2, RW,
+    /// The UART Wakeup Flag register. See Page 186, Table 12-19.
     /// # Set Receive FIFO Threshold Wake-up Event
     /// Flag to tell the CPU to wake up when the inbound FIFO has >= bytes than the threshold
     /// - 0: Disabled
     /// - 1: Enabled
+    #[bit(2, RW, uro::UART_WKFL)]
     set_receive_fifo_threshold_wakeup_event,
-    /// # Get Receive FIFO Threshold Wake-up Event
-    is_receive_fifo_threshold_wakeup_event}
 
-    bit_impl! {1, RW,
+
     /// # Receive FIFO Full Wake-up Event
     /// Flag to tell the CPU to wake up when the inbound FIFO is full
     /// - 0: Disabled
     /// - 1: Enabled
+    #[bit(1, RW, uro::UART_WKFL)]
     set_receive_fifo_full_wakeup_event,
-    /// # Get Receive FIFO Full Wake-up Event
-    get_receive_fifo_full_wakeup_event}
 
-    bit_impl! {0, RW,
+
     /// # Receive FIFO Not Empty Wake-up Event
     /// Flag to tell the CPU to wake up when the inbound FIFO is not empty
     /// - 0: Disabled
     /// - 1: Enabled
+    #[bit(0, RW, uro::UART_WKFL)]
     set_receive_fifo_not_empty_wakeup_event,
-    /// # Get Receive FIFO Not Empty Wake-up Event
-    get_receive_fifo_not_empty_wakeup_event}
 }
