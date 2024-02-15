@@ -395,8 +395,14 @@ impl<const PORT_PTR: usize> InterruptEnableRegister<PORT_PTR> {
 
     bit_impl! {0, RW,
     /// # Set Receive Frame Error Event Interrupt Enable
+    /// Set if stop bit not being recognized generates an interrupt
+    /// - 0: Disabled
+    /// - 1: Enabled
     set_receive_frame_error_event,
     /// # Get Receive Frame Error Event Interrupt Enable
+    /// Get if stop bit not being recognized generates an interrupt
+    /// - 0: Disabled
+    /// - 1: Enabled
     get_receive_frame_error_event}
 }
 
