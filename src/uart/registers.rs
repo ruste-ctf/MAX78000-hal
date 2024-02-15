@@ -455,10 +455,10 @@ impl<const PORT_PTR: usize> InterrptFlagRegister<PORT_PTR> {
 
     bit_impl! {2, RW1C,
     /// # Get Signal Change Interrupt Flag
-    /// The status flag for
-    get_signal_change_interrupt_flag,
+    /// The status flag for the
+    get_cts_signal_change_interrupt_flag,
     /// # Set Signal Change Interrupt Flag
-    set_signal_change_interrupt_flag}
+    set_cts_signal_change_interrupt_flag}
 
     bit_impl! {1, RW1C,
     /// # Get Receive Parity Error Interrupt Flag
