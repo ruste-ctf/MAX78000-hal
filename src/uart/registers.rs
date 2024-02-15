@@ -419,8 +419,14 @@ reg_impl!(
 impl<const PORT_PTR: usize> InterrptFlagRegister<PORT_PTR> {
     bit_impl! {6, RW1C,
     /// # Get Transmit FIFO Half-Empty Interrupt Flag
+    /// Get the status of the transmit FIFO half-empty flag
+    /// - 0: Disabled
+    /// - 1: Enabled
     get_transmit_fifo_half_empty_interrupt_flag,
     /// # Set Transmit FIFO Half-Empty Interrupt Flag
+    /// Set the status of the transmit FIFO half-empty flag
+    /// - 0: Disabled
+    /// - 1: Enabled
     set_transmit_fifo_half_empty_interrupt_flag}
 
     bit_impl! {4, RW1C,
