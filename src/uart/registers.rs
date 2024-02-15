@@ -354,7 +354,6 @@ make_device! {
     #[bit(0, RW1C, uro::UART_INTERRUPT_FL)]
     get_receive_frame_error_interrupt_flag,
 
-
     /// The UART Clock Divisor Register. See Page 183-184, Table 12-12
     /// # Get Baud Rate Divisor
     /// The divisor for generating the baud tick from baud clock
@@ -414,7 +413,6 @@ make_device! {
     /// - 1: Error occurred
     #[bit(8, RO, uro::UART_FIFO)]
     get_receive_fifo_byte_parity,
-
 
     /// Get/Set Transmit/Receive FIFO Data
     /// Sets outbound FIFO and Gets inbound FIFO data
@@ -480,7 +478,7 @@ make_device! {
 
     /// The UART Wakeup Flag register. See Page 186, Table 12-19.
     /// # Set Receive FIFO Threshold Wake-up Event
-    /// Flag to tell the CPU to wake up when the inbound FIFO has >= bytes than the threshold
+    /// Flag to tell the CPU to wake up when the inbound FIFO has more bytes than the threshold
     /// - 0: Disabled
     /// - 1: Enabled
     #[bit(2, RW, uro::UART_WKFL)]

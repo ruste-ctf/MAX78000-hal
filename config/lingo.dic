@@ -182,3 +182,7 @@ rx_thd_val
 C_RX_FIFO_DEPTH
 CTS
 LPUART
+1s
+0s
+FDM
+RTS's
