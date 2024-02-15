@@ -267,7 +267,7 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
 /// # UART Status Register
 /// The UART Status Register. See page 182, table 12-9
 pub struct StatusRegister<const PORT_PTR: usize> {}
-reg_impl!(RO, StatusRegister, uro::UART_CTRL);
+reg_impl!(RO, StatusRegister, uro::UART_STATUS);
 
 impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
     bit_impl! {12..=15, RO u8,
@@ -330,7 +330,7 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
 /// # UART Interrupt Enable Register
 /// The UART Interrupt Enable Register. See page 182, table 12-10
 pub struct InterruptEnableRegister<const PORT_PTR: usize> {}
-reg_impl!(RW, InterruptEnableRegister, uro::UART_CTRL);
+reg_impl!(RW, InterruptEnableRegister, uro::UART_INT_EN);
 
 impl<const PORT_PTR: usize> InterruptEnableRegister<PORT_PTR> {
     bit_impl! {6, RW,
@@ -431,14 +431,26 @@ impl<const PORT_PTR: usize> InterrptFlagRegister<PORT_PTR> {
 
     bit_impl! {4, RW1C,
     /// # Get Receive FIFO Threshold Interrupt Flag
+    /// Get the status flag for the FIFO-filled flag
+    /// - 0: Disabled
+    /// - 1: Enabled
     get_receive_fifo_threshold_interrupt_flag,
     /// # Set Receive FIFO Threshold Interrupt Flag
+    /// Set the status flag for the FIFO-filled flag
+    /// - 0: Disabled
+    /// - 1: Enabled
     set_receive_fifo_threshold_interrupt_flag}
 
     bit_impl! {3, RW1C,
     /// # Get Receive FIFO Overrun Interrupt Flag
+    /// Get the status flag for the FIFO buffer overrun flag
+    /// - 0: Disabled
+    /// - 1: Enabled
     get_receive_fifo_overrun_interrupt_flag,
     /// # Set Receive FIFO Overrun Interrupt Flag
+    /// Set the status flag for the FIFO buffer overrun flag
+    /// - 0: Disabled
+    /// - 1: Enabled
     set_receive_fifo_overrun_interrupt_flag}
 
     bit_impl! {2, RW1C,
