@@ -467,6 +467,42 @@ impl I2C<I2CPort0> {
         Ok(())
     }
 
+    fn master_transaction(
+        &self,
+        address: usize,
+        rx: Option<&mut [u8]>,
+        tx: Option<&[u8]>,
+    ) -> Result<()> {
+        let reading = rx.is_some();
+        let writing = tx.is_some();
+
+        if !reading || writing {}
+        todo!()
+    }
+
+    fn send_address_with_rw(&self, address: usize, is_writting: bool) {}
+
+    pub fn send_bus_event(&self, event: I2CBusControlEvent) -> Result<()> {
+        registers!(mmio::I2C_PORT_0);
+        if !self.master_enabled {
+            return Err(ErrorKind::BadState);
+        }
+
+        match event {
+            I2CBusControlEvent::Start => unsafe {
+                MasterControl::activate_start_master_mode_transfer();
+            },
+            I2CBusControlEvent::Restart => unsafe {
+                MasterControl::activate_send_repeated_start_condition();
+            },
+            I2CBusControlEvent::Stop => unsafe {
+                MasterControl::activate_send_stop_condition();
+            },
+        }
+
+        Ok(())
+    }
+
     pub fn clear_rx_fifo() {
         registers!(mmio::I2C_PORT_1);
         unsafe {
