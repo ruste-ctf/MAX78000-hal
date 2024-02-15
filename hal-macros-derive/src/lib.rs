@@ -244,7 +244,7 @@ pub fn make_device(input: TokenStream) -> TokenStream {
     let bit_impl: Vec<proc_macro2::TokenStream> = parsed_scope
         .bits
         .iter()
-        .map(|bit_item| generate_bit(bit_item))
+        .map(generate_bit)
         .collect();
 
     let set_masks = generate_set_masks(&parsed_scope.bits);
@@ -271,7 +271,7 @@ fn generate_new_constructer(
     let device_ports_vec = device_ports.0;
     let device_ports_string: String = device_ports_vec
         .iter()
-        .map(|path_token| format!(", {}", quote!(#path_token).to_string().replace(" ", "")))
+        .map(|path_token| format!(", {}", quote!(#path_token).to_string().replace(' ', "")))
         .collect::<String>()
         .chars()
         .skip(2)
@@ -327,9 +327,7 @@ fn generate_set_masks(bit: &Vec<BitBlock>) -> proc_macro2::TokenStream {
                 }
             }
             _ => {
-                if !bit_map.contains_key(&key) {
-                    bit_map.insert(key, 0);
-                }
+                bit_map.entry(key).or_insert(0);
             }
         }
     }
@@ -375,9 +373,8 @@ fn string_into_title(name: &str) -> proc_macro2::TokenStream {
     let name = format!(
         " # {}",
         name.to_lowercase()
-            .replace("_", " ")
+            .replace('_', " ")
             .chars()
-            .into_iter()
             .fold(
                 (true, String::new()),
                 |(is_last_space, mut string), value| {
@@ -402,7 +399,7 @@ fn generate_const(
     value: usize,
     docs: proc_macro2::TokenStream,
 ) -> proc_macro2::TokenStream {
-    let name_const = name.to_uppercase().replace(" ", "_");
+    let name_const = name.to_uppercase().replace(' ', "_");
     let name_tokens = format_ident!("{}", name_const);
     let doc_title = string_into_title(name);
     let doc_example_let = format!(" let my_const = Registers::{};", name_const);
@@ -445,10 +442,10 @@ fn generate_range_get(
     bit: &BitBlock,
     (start, end): (usize, usize),
 ) -> proc_macro2::TokenStream {
-    let name = format_ident!("{}", name.to_lowercase().replace(" ", "_"));
+    let name = format_ident!("{}", name.to_lowercase().replace(' ', "_"));
     let bit_type = min_type_for_range((start, end));
     let self_dot = format_ident!("{}", bit.bit_attr.register_name);
-    let const_name = bit.name.to_string().to_uppercase().replace(" ", "_");
+    let const_name = bit.name.to_string().to_uppercase().replace(' ', "_");
     let self_mask = format_ident!("{}_BIT_MASK", const_name);
     let self_shift = format_ident!("{}_BIT_START", const_name);
     let doc_title = string_into_title(name.to_string().as_str());
@@ -478,9 +475,9 @@ fn generate_range_get(
 }
 
 fn generate_single_get(name: &str, bit: &BitBlock) -> proc_macro2::TokenStream {
-    let name = format_ident!("{}", name.to_lowercase().replace(" ", "_"));
+    let name = format_ident!("{}", name.to_lowercase().replace(' ', "_"));
     let self_dot = format_ident!("{}", bit.bit_attr.register_name);
-    let const_name = bit.name.to_string().to_uppercase().replace(" ", "_");
+    let const_name = bit.name.to_string().to_uppercase().replace(' ', "_");
     let self_shift = format_ident!("{}_BIT", const_name);
     let doc_title = string_into_title(name.to_string().as_str());
     let doc = generate_doc_strings(&bit.doc_attr);
@@ -509,9 +506,9 @@ fn generate_single_get(name: &str, bit: &BitBlock) -> proc_macro2::TokenStream {
 }
 
 fn generate_single_set(name: &str, bit: &BitBlock, only_gen_one: bool) -> proc_macro2::TokenStream {
-    let name = format_ident!("{}", name.to_lowercase().replace(" ", "_"));
+    let name = format_ident!("{}", name.to_lowercase().replace(' ', "_"));
     let self_dot = format_ident!("{}", bit.bit_attr.register_name);
-    let const_name = bit.name.to_string().to_uppercase().replace(" ", "_");
+    let const_name = bit.name.to_string().to_uppercase().replace(' ', "_");
     let self_shift = format_ident!("{}_BIT", const_name);
     let doc_title = string_into_title(name.to_string().as_str());
     let doc = generate_doc_strings(&bit.doc_attr);
@@ -520,7 +517,7 @@ fn generate_single_set(name: &str, bit: &BitBlock, only_gen_one: bool) -> proc_m
         .register_name
         .to_string()
         .to_uppercase()
-        .replace(" ", "_");
+        .replace(' ', "_");
     let self_mask = format_ident!("{}_SET_MASK", reg_const_name);
 
     let param = if only_gen_one {
@@ -574,13 +571,13 @@ fn generate_range_set(
     bit: &BitBlock,
     (start, end): (usize, usize),
 ) -> proc_macro2::TokenStream {
-    let name = format_ident!("{}", name.to_lowercase().replace(" ", "_"));
+    let name = format_ident!("{}", name.to_lowercase().replace(' ', "_"));
     let bit_type = min_type_for_range((start, end));
     let self_dot = format_ident!("{}", bit.bit_attr.register_name);
-    let const_name = bit.name.to_string().to_uppercase().replace(" ", "_");
+    let const_name = bit.name.to_string().to_uppercase().replace(' ', "_");
     let self_mask = format_ident!("{}_BIT_MASK", const_name);
     let self_shift = format_ident!("{}_BIT_START", const_name);
-    let const_reg_name = bit.bit_attr.register_name.to_uppercase().replace(" ", "_");
+    let const_reg_name = bit.bit_attr.register_name.to_uppercase().replace(' ', "_");
     let self_set_mask = format_ident!("{}_SET_MASK", const_reg_name);
     let doc_title = string_into_title(name.to_string().as_str());
     let doc = generate_doc_strings(&bit.doc_attr);
