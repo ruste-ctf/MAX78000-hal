@@ -443,7 +443,7 @@ impl<const PORT_PTR: usize> InterrptFlagRegister<PORT_PTR> {
 
     bit_impl! {3, RW1C,
     /// # Get Receive FIFO Overrun Interrupt Flag
-    /// Get the status flag for the FIFO buffer overrun flag
+    /// Get the status flag for the inbound FIFO buffer overrun flag
     /// - 0: Disabled
     /// - 1: Enabled
     get_receive_fifo_overrun_interrupt_flag,
@@ -455,6 +455,7 @@ impl<const PORT_PTR: usize> InterrptFlagRegister<PORT_PTR> {
 
     bit_impl! {2, RW1C,
     /// # Get Signal Change Interrupt Flag
+    /// The status flag for
     get_signal_change_interrupt_flag,
     /// # Set Signal Change Interrupt Flag
     set_signal_change_interrupt_flag}
