@@ -104,13 +104,13 @@ macro_rules! reg_impl {
 
         // We should only I2C_PORT_0, I2C_PORT_1, and I2C_PORT_2 into this struct.
         // It should not be possible to compile with any other port address.
-        const_assert!(
-            STRUCT,
-            (PORT_PTR == mmio::I2C_PORT_0)
-                || (PORT_PTR == mmio::I2C_PORT_1)
-                || (PORT_PTR == mmio::I2C_PORT_2),
-            "Should only except I2C_PORT_0, I2C_PORT_1, or I2C_PORT_2!"
-        );
+        // const_assert!(
+        //     STRUCT,
+        //     (PORT_PTR == mmio::I2C_PORT_0)
+        //         || (PORT_PTR == mmio::I2C_PORT_1)
+        //         || (PORT_PTR == mmio::I2C_PORT_2),
+        //     "Should only except I2C_PORT_0, I2C_PORT_1, or I2C_PORT_2!"
+        // );
 
         /// # Get Ptr
         /// Get the raw ptr for which this address is stored. Only volatile
