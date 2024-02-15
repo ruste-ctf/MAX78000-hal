@@ -5,7 +5,7 @@ use crate::{bit_impl, reg_impl};
 use core::ptr;
 
 /// # UART Register Offsets
-/// See Max 78000 User Guide Page 180, Table 12-7
+/// See Max 78000 User Guide Page 180, Table 12-7.
 mod uro {
     /// # UART Control Register
     pub const UART_CTRL: usize = 0x0000;
@@ -223,9 +223,9 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
 /// # UART Status Register
 /// The UART Status Register. See page 182, table 12-9
 pub struct StatusRegister<const PORT_PTR: usize> {}
-reg_impl!(RO, StatusRegister, uro::UART_CTRL);
+reg_impl!(RO, StatusRegister, uro::UART_STATUS);
 
-impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
+impl<const PORT_PTR: usize> StatusRegister<PORT_PTR> {
     bit_impl! {12..=15, RO u8,
     /// # Transmit FIFO Level
     get_transmit_fifo_level}
@@ -256,13 +256,13 @@ impl<const PORT_PTR: usize> ControlRegister<PORT_PTR> {
 
     bit_impl! {0, RO,
     /// # Transmit Busy
-    is_transmit_buys}
+    is_transmit_busy}
 }
 
 /// # UART Interrupt Enable Register
 /// The UART Interrupt Enable Register. See page 182, table 12-10
 pub struct InterruptEnableRegister<const PORT_PTR: usize> {}
-reg_impl!(RW, InterruptEnableRegister, uro::UART_CTRL);
+reg_impl!(RW, InterruptEnableRegister, uro::UART_INT_EN);
 
 impl<const PORT_PTR: usize> InterruptEnableRegister<PORT_PTR> {
     bit_impl! {6, RW,
@@ -300,4 +300,210 @@ impl<const PORT_PTR: usize> InterruptEnableRegister<PORT_PTR> {
     set_receive_frame_error_event,
     /// # Get Receive Frame Error Event Interrupt Enable
     get_receive_frame_error_event}
+}
+
+/// # UART Interrupt Flag Register
+/// The UART Interrupt Flag Register. See Page 183, Table 12-11.
+pub struct InterrptFlagRegister<const PORT_PTR: usize> {}
+reg_impl!(
+    RW1C,
+    InterrptFlagRegister,
+    uro::UART_INTERRUPT_FL,
+    0b_00000000000000000000000000000000
+);
+
+impl<const PORT_PTR: usize> InterrptFlagRegister<PORT_PTR> {
+    bit_impl! {6, RW1C,
+    /// # Get Transmit FIFO Half-Empty Interrupt Flag
+    get_transmit_fifo_half_empty_interrupt_flag,
+    /// # Set Transmit FIFO Half-Empty Interrupt Flag
+    set_transmit_fifo_half_empty_interrupt_flag}
+
+    bit_impl! {4, RW1C,
+    /// # Get Receive FIFO Threshold Interrupt Flag
+    get_receive_fifo_threshold_interrupt_flag,
+    /// # Set Receive FIFO Threshold Interrupt Flag
+    set_receive_fifo_threshold_interrupt_flag}
+
+    bit_impl! {3, RW1C,
+    /// # Get Receive FIFO Overrun Interrupt Flag
+    get_receive_fifo_overrun_interrupt_flag,
+    /// # Set Receive FIFO Overrun Interrupt Flag
+    set_receive_fifo_overrun_interrupt_flag}
+
+    bit_impl! {2, RW1C,
+    /// # Get Signal Change Interrupt Flag
+    get_signal_change_interrupt_flag,
+    /// # Set Signal Change Interrupt Flag
+    set_signal_change_interrupt_flag}
+
+    bit_impl! {1, RW1C,
+    /// # Get Receive Parity Error Interrupt Flag
+    get_receive_parity_error_interrupt_flag,
+    /// # Set Receive Parity Error Interrupt Flag
+    set_receive_parity_error_interrupt_flag}
+
+    bit_impl! {0, RW1C,
+    /// # Get Receive Frame Error Interrupt Flag
+    get_receive_frame_error_interrupt_flag,
+    /// # Set Receive Frame Error Interrupt Flag
+    set_receive_frame_error_interrupt_flag}
+}
+
+/// # UART Clock Divisor Register
+/// The UART Clock Divisor Register. See Page 183-184, Table 12-12
+pub struct ClockDivisorRegister<const PORT_PTR: usize> {}
+reg_impl!(RW, ClockDivisorRegister, uro::UART_CLKDIV);
+
+impl<const PORT_PTR: usize> ClockDivisorRegister<PORT_PTR> {
+    bit_impl! {0..=19, RW u32,
+    /// FIXME These are not named correctly, set returns a value and vis versa
+    /// # Get Baud Rate Divisor
+    get_baud_rate_divisor,
+    /// # Set Baud Rate Divisor
+    set_baud_rate_divisor}
+}
+
+/// # UART Oversampling Control Register
+/// The UART Oversampling Control Register. See Page 184, Table 12-13
+pub struct OversamplingControlRegister<const PORT_PTR: usize> {}
+reg_impl!(RW, OversamplingControlRegister, uro::UART_OSR);
+
+impl<const PORT_PTR: usize> OversamplingControlRegister<PORT_PTR> {
+    bit_impl! {0..=2, RW u8,
+    /// # Get LPUART Over Sampling Rate
+    get_lpuart_oversampling_rate,
+    /// # Set LPUART Over Sampling Rate
+    set_lpuart_oversampling_rate}
+}
+
+/// # UART Transmit FIFO Register
+/// The UART Transmit FIFO Register. See Page 184, Table 12-14.
+pub struct TransmitFIFORegister<const PORT_PTR: usize> {}
+reg_impl!(RO, TransmitFIFORegister, uro::UART_TXPEEK);
+
+impl<const PORT_PTR: usize> TransmitFIFORegister<PORT_PTR> {
+    bit_impl! {0..=7, RO u8,
+    /// Get Transmit FIFO Data
+    get_transmit_fifo_data}
+}
+
+/// # UART Pin Control Register
+/// The UART Pin Control Register. See Page 184-185, Table 12-15.
+pub struct PinControlRegister<const PORT_PTR: usize> {}
+reg_impl!(RW, PinControlRegister, uro::UART_PNR);
+
+impl<const PORT_PTR: usize> PinControlRegister<PORT_PTR> {
+    bit_impl! {1, RW,
+    /// # Get RTS Output State
+    get_rts_output_state,
+    /// # Set RTS Output State
+    set_rts_output_state}
+
+    bit_impl! {0, RO,
+    /// # Get CTS Pin State
+    get_cts_pin_state}
+}
+
+/// # UART Data Register
+/// The UART Data Register. See Page 185, Table 12-16.
+pub struct DataRegister<const PORT_PTR: usize> {}
+reg_impl!(RW, DataRegister, uro::UART_FIFO);
+
+impl<const PORT_PTR: usize> DataRegister<PORT_PTR> {
+    bit_impl! {8, RO,
+    /// # Get Receive FIFO Byte Parity
+    get_receive_fifo_byte_parity}
+
+    bit_impl! {0..=7, RO u8,
+    /// # Get Receive FIFO Data
+    get_receive_fifo_data}
+    bit_impl! {0..=7, WO u8,
+    /// # Set Transmit FIFO Data
+    set_transmit_fifo_data}
+}
+
+/// # UART DMA Register
+/// The UART DMA Register. See Page 185, Table 12-17.
+pub struct DMARegister<const PORT_PTR: usize> {}
+reg_impl!(RW, DMARegister, uro::UART_DMA);
+
+impl<const PORT_PTR: usize> DMARegister<PORT_PTR> {
+    bit_impl! {9, RW,
+    /// # Set Receive DMA Channel Enable
+    /// The documentation has a typo for this bit's access.
+    /// It says "0" while it should say "R/W".
+    set_receive_dma_channel_enable,
+    /// # Get Receive DMA Channel Enable
+    is_receive_dma_channel_enable}
+
+    bit_impl! {5..=8, RW u8,
+    /// # Set Receive FIFO Level DMA Threshold
+    /// The documentation has a typo for this bit's access.
+    /// It says "0" while it should say "R/W".
+    set_receive_fifo_level_dma_threshold,
+    /// # Get Receive FIFO Level DMA Threshold
+    get_receive_fifo_level_dma_threshold}
+
+    bit_impl! {4, RW,
+    /// # Set Transmit DMA Channel Enable
+    set_transmit_dma_channel_enable,
+    /// # Get Transmit DMA Channel Enable
+    get_transmit_dma_channel_enable}
+
+    bit_impl! {0..=3, RW u8,
+    /// # Set Transmit FIFO Level DMA Threshold
+    set_transmit_dma_level_dma_threshold,
+    /// # Get Transmit FIFO Level DMA Threshold
+    get_transmit_dma_level_dma_threshold}
+}
+
+/// # UART Wakeup Enable
+/// The UART Wakeup Enable Register. See Page 185-186, Table 12-18.
+pub struct WakeupEnableRegister<const PORT_PTR: usize> {}
+reg_impl!(RW, WakeupEnableRegister, uro::UART_WKEN);
+
+impl<const PORT_PTR: usize> WakeupEnableRegister<PORT_PTR> {
+    bit_impl! {2, RW,
+    /// # Set Receive FIFO Threshold Wake-up Event Enable
+    set_receive_fifo_threshold_wakeup_event_enable,
+    /// # Get Receive FIFO Threshold Wake-up Event Enable
+    is_receive_fifo_threshold_wakeup_event_enable}
+
+    bit_impl! {1, RW,
+    /// # Receive FIFO Full Wake-up Event Enable
+    set_receive_fifo_full_wakeup_event_enable,
+    /// # Get Receive FIFO Full Wake-up Event Enable
+    get_receive_fifo_full_wakeup_event_enable}
+
+    bit_impl! {0, RW,
+    /// # Receive FIFO Not Empty Wake-up Event Enable
+    set_receive_fifo_not_empty_wakeup_event_enable,
+    /// # Get Receive FIFO Not Empty Wake-up Event Enable
+    get_receive_fifo_not_empty_wakeup_event_enable}
+}
+
+/// # UART Wakeup Flag Register
+/// The UART Wakeup Flag register. See Page 186, Table 12-19.
+pub struct WakeupFlagRegister<const PORT_PTR: usize> {}
+reg_impl!(RW, WakeupFlagRegister, uro::UART_WKFL);
+
+impl<const PORT_PTR: usize> WakeupFlagRegister<PORT_PTR> {
+    bit_impl! {2, RW,
+    /// # Set Receive FIFO Threshold Wake-up Event
+    set_receive_fifo_threshold_wakeup_event,
+    /// # Get Receive FIFO Threshold Wake-up Event
+    is_receive_fifo_threshold_wakeup_event}
+
+    bit_impl! {1, RW,
+    /// # Receive FIFO Full Wake-up Event
+    set_receive_fifo_full_wakeup_event,
+    /// # Get Receive FIFO Full Wake-up Event
+    get_receive_fifo_full_wakeup_event}
+
+    bit_impl! {0, RW,
+    /// # Receive FIFO Not Empty Wake-up Event
+    set_receive_fifo_not_empty_wakeup_event,
+    /// # Get Receive FIFO Not Empty Wake-up Event
+    get_receive_fifo_not_empty_wakeup_event}
 }
