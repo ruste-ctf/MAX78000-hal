@@ -175,7 +175,7 @@ make_device! {
 
     /// Receive FIFO Threshold
     /// The byte size of FIFO before CPU interrupt is sent
-    /// ```
+    /// ```text
     /// Note: Setting threshold too low at high speeds can slow CPU
     /// and cause loss of data
     /// ```

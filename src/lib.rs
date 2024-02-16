@@ -1,13 +1,16 @@
 #![no_std]
 pub mod aes;
 pub mod bits;
+pub mod debug;
 pub mod error;
 pub mod i2c;
 pub mod memory_map;
-pub mod registers;
-pub mod uart;
 pub mod timer;
 pub mod trng;
+pub mod uart;
+
+#[cfg(test)]
+pub mod tests;
 
 extern "C" {
     #[link_name = "SystemCoreClock"]
@@ -19,9 +22,6 @@ extern "C" {
 pub(crate) fn core_peripheral_clock() -> u32 {
     unsafe { SYSTEM_CORE_CLOCK / 2 }
 }
-
-
-
 
 /// # Const Assert
 /// Assert in a const context, useful for making sure that
