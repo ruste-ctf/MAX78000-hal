@@ -1,4 +1,3 @@
-use crate::error::Result;
 use crate::memory_map::mmio;
 use core::marker::PhantomData;
 
@@ -98,14 +97,17 @@ impl<Port: private::UARTPortCompatable> UART<Port> {
         uart.clear_tx_fifo();
 
         // Set the character length to 8
-        uart.set_character_length(CharacterLength::EightBits)
-            .unwrap();
+        uart.set_character_length(CharacterLength::EightBits);
 
         // Set the number of stop bits to 1
         uart.set_number_stop_bits(StopBits::OneBit);
 
         // Dissable parity
         uart.transmit_parity_enable(false);
+        // Set the Divisor to 64
+        uart.set_clock_divisor(64);
+        // Set the clock source
+        uart.set_baud_clock_source(ClockSources::IBRO);
         uart
     }
 
@@ -136,20 +138,18 @@ impl<Port: private::UARTPortCompatable> UART<Port> {
 
     /// # Set Character Length
     /// Sets the number of data bits to send in a UART frame
-    pub fn set_character_length(&mut self, length: CharacterLength) -> Result<()> {
+    pub fn set_character_length(&mut self, length: CharacterLength) {
         unsafe {
             self.reg.set_character_length(length as u8);
         }
-        Ok(())
     }
 
     /// # Set Baud Clock Source
     /// Sets the clock to derive the baud clock from
-    pub fn set_baud_clock_source(&mut self, source: ClockSources) -> Result<()> {
+    pub fn set_baud_clock_source(&mut self, source: ClockSources) {
         unsafe {
             self.reg.set_baud_clock_source(source as u8);
         }
-        Ok(())
     }
 
     /// # Set Baud Clock
