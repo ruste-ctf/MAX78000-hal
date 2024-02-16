@@ -1,4 +1,3 @@
-use crate::memory_map::mmio;
 use hal_macros::RW;
 use hal_macros_derive::make_device;
 
@@ -47,7 +46,7 @@ mod rro {
 }
 
 make_device! {
-    device_ports(mmio::I2C_PORT_0, mmio::I2C_PORT_1, mmio::I2C_PORT_2);
+    device_ports(crate::memory_map::mmio::I2C_PORT_0, crate::memory_map::mmio::I2C_PORT_1, crate::memory_map::mmio::I2C_PORT_2);
 
     /// The I2C entire control register field.
     #[bit(0..=15, RW, rro::I2C_CTRL)]

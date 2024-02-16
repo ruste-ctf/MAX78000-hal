@@ -337,7 +337,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
         let max_receive = fifo_free.min(rx.len());
 
         for data in rx.iter_mut().take(max_receive) {
-            *data = self.reg.get_fifo_data() as u8;
+            *data = self.reg.get_fifo_data();
         }
 
         max_receive

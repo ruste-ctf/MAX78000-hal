@@ -1,4 +1,4 @@
-static mut DEBUG_OUTPUT_STREAM: DebugStream = DebugStream { 0: None };
+static mut DEBUG_OUTPUT_STREAM: DebugStream = DebugStream(None);
 
 pub struct DebugStream(Option<&'static mut (dyn core::fmt::Write + Send + Sync)>);
 
