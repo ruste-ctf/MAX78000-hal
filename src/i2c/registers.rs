@@ -49,6 +49,10 @@ mod rro {
 make_device! {
     device_ports(mmio::I2C_PORT_0, mmio::I2C_PORT_1, mmio::I2C_PORT_2);
 
+    /// The I2C entire control register field.
+    #[bit(0..=15, RW, rro::I2C_CTRL)]
+    control_register,
+
     /// Set I2C to high speed mode, or set it to low speed mode.
     /// 0: Disabled
     /// 1: Enabled
@@ -221,6 +225,10 @@ make_device! {
     /// - 1: I2C bus is busy
     #[bit(0, RO, rro::I2C_STATUS)]
     transaction_active,
+
+    /// I2C has had an error on the Interrupt Flag 0 Register
+    #[bit(8..=14, RO, rro::I2C_INTFL0)]
+    error_condition,
 
     /// Slave Write Address Match Interrupt
     /// If this bit is set, the current device (currently configured for slave mode) has just been accessed for a write (ie. receive)
@@ -615,7 +623,7 @@ make_device! {
     /// - 0: Receive FIFO flush complete (or not started)
     /// - 1: Flushing the Receive FIFO
     #[bit(7, RW1O, rro::I2C_RXCTRL0)]
-    flush_receive_fifo,
+    receive_fifo_flush,
 
     /// Slave Do-Not-Respond
     /// If this device (configured only in slave mode operation) has just been addressed for a write operation, and the receive FIFO is not
@@ -738,7 +746,7 @@ make_device! {
     ///
     /// If the FIFO is full, this operation is ignored (the data will be lost).
     #[bit(0..=7, RW, rro::I2C_FIFO)]
-    write_fifo_data,
+    fifo_data,
 
     /// I2C Master Control Register
     /// The master control register is used to control the bus when the device is configured to be the master, page 235-236 (MAX78000 User Guide)
@@ -768,7 +776,7 @@ make_device! {
     /// Start Master Mode Transfer
     /// Start a master mode transfer over the I2C bus.
     #[bit(0, RW1O, rro::I2C_MSTCTRL)]
-    activate_start_master_mode_transfer,
+    start_master_mode_transfer,
 
       /// Clock Low Time
     /// Sets the current clock low time for `SCL`. Please use page 236 of the MAX78000 User Guide to determine
