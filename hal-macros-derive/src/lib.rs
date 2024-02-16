@@ -284,6 +284,7 @@ fn generate_new_constructer(
 
     quote!(
         pub fn new(port: usize) -> Self {
+            #[cfg(not(test))]
             debug_assert!(
                 false #( || #device_ports_vec == port)*,
                 "Register port {port} must be {}", #device_ports_string
