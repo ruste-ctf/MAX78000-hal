@@ -8,7 +8,9 @@ use self::registers::Registers;
 pub mod registers;
 
 mod private {
-    pub trait I2CPortCompatable {}
+    pub trait I2CPortCompatable {
+        const PORT_PTR: usize;
+    }
 }
 
 pub struct NoPort {}
@@ -16,16 +18,22 @@ pub struct I2CPort0 {}
 pub struct I2CPort1 {}
 pub struct I2CPort2 {}
 
-impl private::I2CPortCompatable for NoPort {}
-impl private::I2CPortCompatable for I2CPort0 {}
-impl private::I2CPortCompatable for I2CPort1 {}
-impl private::I2CPortCompatable for I2CPort2 {}
+impl private::I2CPortCompatable for I2CPort0 {
+    const PORT_PTR: usize = mmio::I2C_PORT_0;
+}
+impl private::I2CPortCompatable for I2CPort1 {
+    const PORT_PTR: usize = mmio::I2C_PORT_1;
+}
+impl private::I2CPortCompatable for I2CPort2 {
+    const PORT_PTR: usize = mmio::I2C_PORT_2;
+}
 
 #[allow(dead_code)]
-pub struct I2C {
+pub struct I2C<Port = NoPort> {
     reg: Registers,
     master_enabled: bool,
     slave_address: usize,
+    _ph: PhantomData<Port>,
 }
 
 /// # I2C Bus Control Event
@@ -79,6 +87,8 @@ const MAX_I2C_FASTPLUS_CLOCK_TIME: usize = 1000000;
 const MAX_I2C_HIGHSPEED_CLOCK_TIME: usize = 3400000;
 
 const MAX_I2C_FIFO_TRANSACTION: usize = 256;
+const MAX_TRANSMIT_FIFO_LEN: usize = 8;
+const MAX_RECEIVE_FIFO_LEN: usize = 8;
 
 #[cfg(not(test))]
 extern "C" {
@@ -95,48 +105,51 @@ fn microcontroller_delay(us: usize) {
 fn microcontroller_delay(_us: usize) {}
 
 #[allow(unused)]
-impl I2C {
-    fn init(enable_master: bool, slave_address: usize) -> Result<Self> {
+impl<Port: private::I2CPortCompatable> I2C<Port> {
+    fn init(master_enabled: bool, slave_address: usize) -> Result<Self> {
+        let mut i2c = Self {
+            reg: Registers::new(Port::PORT_PTR),
+            slave_address,
+            master_enabled,
+            _ph: PhantomData,
+        };
+
         // Attempt to take control of the bus
-        Self::bus_recover(16)?;
+        i2c.bus_recover(16)?;
 
         // Enable the I2C peripheral
         unsafe {
-            ControlRegister::set_i2c_peripheral_enable(true);
+            i2c.reg.set_i2c_peripheral_enable(true);
         }
 
-        Self::clear_rx_fifo();
-        Self::clear_tx_fifo();
+        i2c.clear_rx_fifo();
+        i2c.clear_tx_fifo();
 
-        Self::set_rx_fifo_threshold(2);
-        Self::set_tx_fifo_threshold(6);
+        i2c.set_rx_fifo_threshold(2);
+        i2c.set_tx_fifo_threshold(6);
 
-        Self::enable_master(enable_master)?;
+        i2c.enable_master(master_enabled)?;
 
-        if !enable_master {
-            Self::set_hardware_slave_address(slave_address)?;
+        if !master_enabled {
+            i2c.set_hardware_slave_address(slave_address)?;
         }
 
-        Ok(Self {
-            master_enabled: enable_master,
-            slave_address,
-            ph: PhantomData,
-        })
+        Ok(i2c)
     }
 
-    fn set_hardware_slave_address(&self, address: usize) -> Result<()> {
+    fn set_hardware_slave_address(&mut self, address: usize) -> Result<()> {
         if address > MAX_I2C_SLAVE_ADDRESS_10_BIT {
             return Err(ErrorKind::BadParam);
         }
 
         if address > MAX_I2C_SLAVE_ADDRESS_7_BIT {
             unsafe {
-                SlaveAddress::set_slave_mode_extended_address_length_select(true);
+                self.reg.set_slave_mode_extended_address_length_select(true);
             }
         }
 
         unsafe {
-            SlaveAddress::set_slave_mode_address(address as u16);
+            self.reg.set_slave_mode_address(address as u16);
         }
 
         Ok(())
@@ -148,16 +161,6 @@ impl I2C {
         rx: Option<&mut [u8]>,
         tx: Option<&[u8]>,
     ) -> Result<()> {
-        let reading = rx.is_some();
-        let writing = tx.is_some();
-
-        if !reading || writing {}
-        todo!()
-    }
-
-    fn send_address_with_rw(&self, address: usize, is_writting: bool) {}
-
-    pub fn send_bus_event(&self, event: I2CBusControlEvent) -> Result<()> {
         if !self.master_enabled {
             return Err(ErrorKind::BadState);
         }
@@ -166,31 +169,31 @@ impl I2C {
         let writing = tx.is_some();
 
         if !reading || writing {
-            Self::send_address_with_rw(address, true);
-            Self::send_bus_event(I2CBusControlEvent::Start)?;
+            self.send_address_with_rw(address, true);
+            self.send_bus_event(I2CBusControlEvent::Start)?;
         }
 
         // Not the best, but I think its fine for now
         let mut tx_iter = tx.unwrap_or(&[0_u8; 0]).iter().copied();
 
         loop {
-            if InterruptFlag0::is_transmit_fifo_threshold_level() {
-                if Self::write_fifo(&mut tx_iter) == 0 {
+            if self.reg.is_transmit_fifo_threshold_level_active() {
+                if self.write_fifo(&mut tx_iter) == 0 {
                     break;
                 }
 
-                unsafe { InterruptFlag0::clear_transmit_fifo_threshold_level() };
+                unsafe { self.reg.clear_transmit_fifo_threshold_level() };
             }
 
-            if InterruptFlag0::is_error_condition() {
-                Self::send_bus_event(I2CBusControlEvent::Stop)?;
+            if self.reg.get_error_condition() != 0 {
+                self.send_bus_event(I2CBusControlEvent::Stop)?;
                 return Err(ErrorKind::ComError);
             }
         }
 
         unsafe {
-            InterruptFlag0::clear_transfer_complete_flag();
-            InterruptFlag0::clear_receive_fifo_threshold_level();
+            self.reg.clear_transfer_complete_flag();
+            self.reg.clear_receive_fifo_threshold_level();
         }
 
         let mut bytes_written = 0;
@@ -200,29 +203,29 @@ impl I2C {
             } else {
                 rx.len() as u8
             };
-            unsafe { ReceiveControl1::set_receive_fifo_transaction_size(transaction_size) };
+            unsafe { self.reg.set_receive_fifo_transaction_size(transaction_size) };
 
-            Self::send_bus_event(I2CBusControlEvent::Start);
-            while MasterControl::is_send_repeated_start_condition() {}
+            self.send_bus_event(I2CBusControlEvent::Start);
+            while self.reg.is_send_repeated_start_condition_pending() {}
 
-            Self::send_address_with_rw(address, false);
+            self.send_address_with_rw(address, false);
 
             while bytes_written <= rx.len() {
-                if InterruptFlag0::is_receive_fifo_threshold_level()
-                    || InterruptFlag0::is_transfer_complete()
+                if self.reg.is_receive_fifo_threshold_level_active()
+                    || self.reg.is_transfer_complete_flag_active()
                 {
-                    bytes_written += Self::read_fifo(&mut rx[bytes_written..]);
-                    unsafe { InterruptFlag0::clear_receive_fifo_threshold_level() };
+                    bytes_written += self.read_fifo(&mut rx[bytes_written..]);
+                    unsafe { self.reg.clear_receive_fifo_threshold_level() };
                 }
 
-                if InterruptFlag0::is_error_condition() {
-                    Self::send_bus_event(I2CBusControlEvent::Stop)?;
+                if self.reg.get_error_condition() != 0 {
+                    self.send_bus_event(I2CBusControlEvent::Stop)?;
                     return Err(ErrorKind::ComError);
                 }
 
-                if InterruptFlag0::is_transfer_complete()
+                if self.reg.is_transfer_complete_flag_active()
                     && bytes_written <= rx.len()
-                    && FIFOLengthRegister::get_receive_fifo_len() == 0
+                    && self.reg.get_receive_fifo_len() == 0
                 {
                     let bytes_diff = rx.len() - bytes_written;
                     let transaction_size = if bytes_diff > MAX_I2C_FIFO_TRANSACTION {
@@ -232,25 +235,25 @@ impl I2C {
                     };
 
                     unsafe {
-                        ReceiveControl1::set_receive_fifo_transaction_size(transaction_size);
-                        Self::send_bus_event(I2CBusControlEvent::Restart)?;
-                        InterruptFlag0::clear_transfer_complete_flag();
-                        Self::send_address_with_rw(address, false);
+                        self.reg.set_receive_fifo_transaction_size(transaction_size);
+                        self.send_bus_event(I2CBusControlEvent::Restart)?;
+                        self.reg.clear_transfer_complete_flag();
+                        self.send_address_with_rw(address, false);
                     }
                 }
             }
         }
 
-        Self::send_bus_event(I2CBusControlEvent::Stop)?;
-        while !InterruptFlag0::is_slave_mode_stop_condition() {}
-        while !InterruptFlag0::is_transfer_complete() {}
+        self.send_bus_event(I2CBusControlEvent::Stop)?;
+        while !self.reg.is_slave_mode_stop_condition_active() {}
+        while !self.reg.is_transfer_complete_flag_active() {}
 
         unsafe {
-            InterruptFlag0::clear_transfer_complete_flag();
-            InterruptFlag0::clear_slave_mode_stop_condition();
+            self.reg.clear_transfer_complete_flag();
+            self.reg.clear_slave_mode_stop_condition();
         }
 
-        if InterruptFlag0::is_error_condition() {
+        if self.reg.get_error_condition() != 0 {
             Err(ErrorKind::ComError)
         } else {
             Ok(())
@@ -279,20 +282,21 @@ impl I2C {
         }
 
         unsafe {
-            HighSCLControl::set_clock_high_time((high_clock_time + high_clock_roundover) as u16);
-            LowSCLControl::set_clock_low_time(low_clock_time as u16);
+            self.reg
+                .set_clock_high_time((high_clock_time + high_clock_roundover) as u16);
+            self.reg.set_clock_low_time(low_clock_time as u16);
         }
 
-        Ok(Self::get_freq())
+        Ok(self.get_freq())
     }
 
     fn get_freq(&self) -> usize {
-        if ControlRegister::is_high_speed_mode_enabled() {
+        if self.reg.get_high_speed_mode() {
             todo!("Highspeed I2C Mode is currently not supported");
         }
 
-        let cycles_low = LowSCLControl::get_clock_low_time();
-        let cycles_high = HighSCLControl::get_clock_high_time();
+        let cycles_low = self.reg.get_clock_low_time();
+        let cycles_high = self.reg.get_clock_high_time();
 
         debug_assert_ne!(cycles_low, 0, "Cycles low should be larger then 0!");
         debug_assert_ne!(cycles_high, 0, "Cycles High should be larger then 0!");
@@ -306,8 +310,8 @@ impl I2C {
     where
         Bytes: Iterator<Item = u8>,
     {
-        let current_fifo_level = FIFOLengthRegister::get_transmit_fifo_len() as usize;
-        let max_fifo_level = FIFOLengthRegister::MAX_FIFO_TRANSMIT_LEN;
+        let current_fifo_level = self.reg.get_transmit_fifo_len() as usize;
+        let max_fifo_level = MAX_TRANSMIT_FIFO_LEN;
         let fifo_free = max_fifo_level - current_fifo_level;
         let mut bytes_written = 0;
 
@@ -317,7 +321,7 @@ impl I2C {
             };
 
             unsafe {
-                DataRegister::write_fifo_data(data);
+                self.reg.set_fifo_data(data);
             }
 
             bytes_written += 1;
@@ -327,13 +331,13 @@ impl I2C {
     }
 
     fn read_fifo(&self, rx: &mut [u8]) -> usize {
-        let current_fifo_level = FIFOLengthRegister::get_receive_fifo_len() as usize;
-        let max_fifo_level = FIFOLengthRegister::MAX_FIFO_RECEIVE_LEN;
+        let current_fifo_level = self.reg.get_receive_fifo_len() as usize;
+        let max_fifo_level = MAX_RECEIVE_FIFO_LEN;
         let fifo_free = max_fifo_level - current_fifo_level;
         let max_receive = fifo_free.min(rx.len());
 
         for data in rx.iter_mut().take(max_receive) {
-            *data = DataRegister::read() as u8;
+            *data = self.reg.get_fifo_data() as u8;
         }
 
         max_receive
@@ -344,20 +348,21 @@ impl I2C {
         // TODO: We should check the state of the FIFO before adding data to it!
         //       What if the FIFO is full, we do not want to loose data here.
         unsafe {
-            DataRegister::write_fifo_data((address << 1 | writting_value) as u8);
+            self.reg
+                .set_fifo_data((address << 1 | writting_value) as u8);
         }
     }
 
     fn send_bus_event(&self, event: I2CBusControlEvent) -> Result<()> {
         match event {
             I2CBusControlEvent::Start => unsafe {
-                MasterControl::activate_start_master_mode_transfer();
+                self.reg.activate_start_master_mode_transfer();
             },
             I2CBusControlEvent::Restart => unsafe {
-                MasterControl::activate_send_repeated_start_condition();
+                self.reg.activate_send_repeated_start_condition();
             },
             I2CBusControlEvent::Stop => unsafe {
-                MasterControl::activate_send_stop_condition();
+                self.reg.activate_send_stop_condition();
             },
         }
 
@@ -366,18 +371,18 @@ impl I2C {
 
     pub fn clear_rx_fifo(&self) {
         unsafe {
-            ReceiveControl0::activate_flush_receive_fifo();
+            self.reg.activate_receive_fifo_flush();
         }
 
-        while ReceiveControl0::is_flush_receive_fifo() {}
+        while self.reg.is_receive_fifo_flush_pending() {}
     }
 
     pub fn clear_tx_fifo(&self) {
         unsafe {
-            TransmitControl0::activate_transmit_fifo_flush();
+            self.reg.activate_transmit_fifo_flush();
         }
 
-        while TransmitControl0::is_transmit_fifo_flush() {}
+        while self.reg.is_transmit_fifo_flush_pending() {}
     }
 
     pub fn set_rx_fifo_threshold(&self, threshold: usize) {
@@ -387,7 +392,7 @@ impl I2C {
         );
 
         unsafe {
-            ReceiveControl0::set_receive_fifo_threshold_level(threshold as u8);
+            self.reg.set_receive_fifo_threshold_level(threshold as u8);
         }
     }
 
@@ -398,7 +403,7 @@ impl I2C {
         );
 
         unsafe {
-            TransmitControl0::set_transmit_fifo_threshold_level(threshold as u8);
+            self.reg.set_transmit_fifo_threshold_level(threshold as u8);
         }
     }
 
@@ -406,16 +411,16 @@ impl I2C {
         if flag {
             // Another Master is currently controlling the bus,
             // we should not enable master mode!
-            if StatusRegister::is_transaction_active() {
+            if self.reg.get_transaction_active() {
                 return Err(ErrorKind::BadState);
             }
 
             unsafe {
-                ControlRegister::set_master_mode_enable(true);
+                self.reg.set_master_mode_enable(true);
             }
         } else {
             unsafe {
-                ControlRegister::set_master_mode_enable(false);
+                self.reg.set_master_mode_enable(false);
             }
         }
 
@@ -424,17 +429,17 @@ impl I2C {
 
     pub fn bus_recover(&self, retry_count: usize) -> Result<()> {
         // Save the state so we can restore it
-        let state_prior = ControlRegister::read();
+        let state_prior = self.reg.get_control_register();
 
         // Switch to Software Mode, and enable the I2C bus
         unsafe {
-            ControlRegister::set_software_i2c_mode(true);
-            ControlRegister::set_i2c_peripheral_enable(true);
+            self.reg.set_software_i2c_mode(true);
+            self.reg.set_i2c_peripheral_enable(true);
         }
 
-        let release_scl_and_sda = || unsafe {
-            ControlRegister::set_scl_hardware_pin_released(true);
-            ControlRegister::set_sda_hardware_pin_released(true);
+        let mut release_scl_and_sda = || unsafe {
+            self.reg.set_scl_hardware_pin_released(true);
+            self.reg.set_sda_hardware_pin_released(true);
         };
 
         let mut success = false;
@@ -444,13 +449,13 @@ impl I2C {
 
             // Pull SCL low
             unsafe {
-                ControlRegister::set_scl_hardware_pin_released(false);
+                self.reg.set_scl_hardware_pin_released(false);
             }
 
             microcontroller_delay(10);
 
             // If SCL is high we were unable to pull the bus low
-            if ControlRegister::get_scl_pin() {
+            if self.reg.get_scl_pin() {
                 release_scl_and_sda();
                 continue;
             }
@@ -458,13 +463,13 @@ impl I2C {
             microcontroller_delay(10);
 
             unsafe {
-                ControlRegister::set_scl_hardware_pin_released(true);
+                self.reg.set_scl_hardware_pin_released(true);
             }
 
             microcontroller_delay(10);
 
             // If SCL is low we were unable to release the bus
-            if !ControlRegister::get_scl_pin() {
+            if !self.reg.get_scl_pin() {
                 release_scl_and_sda();
                 continue;
             }
@@ -472,13 +477,13 @@ impl I2C {
             microcontroller_delay(10);
 
             unsafe {
-                ControlRegister::set_sda_hardware_pin_released(false);
+                self.reg.set_sda_hardware_pin_released(false);
             }
 
             microcontroller_delay(10);
 
             // If SDA is high we were unable to pull the bus low
-            if ControlRegister::get_sda_pin() {
+            if self.reg.get_sda_pin() {
                 release_scl_and_sda();
                 continue;
             }
@@ -486,13 +491,13 @@ impl I2C {
             microcontroller_delay(10);
 
             unsafe {
-                ControlRegister::set_sda_hardware_pin_released(true);
+                self.reg.set_sda_hardware_pin_released(true);
             }
 
             microcontroller_delay(10);
 
             // If SDA is low we were unable to pull release the bus
-            if !ControlRegister::get_sda_pin() {
+            if !self.reg.get_sda_pin() {
                 release_scl_and_sda();
                 continue;
             }
@@ -508,7 +513,7 @@ impl I2C {
         }
 
         unsafe {
-            ControlRegister::write(state_prior);
+            self.reg.set_control_register(state_prior);
         }
 
         Ok(())
