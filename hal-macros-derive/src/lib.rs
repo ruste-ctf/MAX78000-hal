@@ -501,7 +501,7 @@ fn generate_single_get(name: &str, bit: &BitBlock) -> proc_macro2::TokenStream {
         #[inline(always)]
         pub fn #name(&self) -> bool {
             use hal_macros::VolatileRead;
-            (self.#self_dot.read() & (<Self>::#self_shift as u32)) != 0
+            (self.#self_dot.read() & (1u32 << <Self>::#self_shift)) != 0
         }
     }
 }
@@ -578,6 +578,7 @@ fn generate_range_set(
     let const_name = bit.name.to_string().to_uppercase().replace(' ', "_");
     let self_mask = format_ident!("{}_BIT_MASK", const_name);
     let self_shift = format_ident!("{}_BIT_START", const_name);
+    let self_end = format_ident!("{}_BIT_END", const_name);
     let const_reg_name = bit.bit_attr.register_name.to_uppercase().replace(' ', "_");
     let self_set_mask = format_ident!("{}_SET_MASK", const_reg_name);
     let doc_title = string_into_title(name.to_string().as_str());
@@ -618,9 +619,9 @@ fn generate_range_set(
         #[inline(always)]
         pub unsafe fn #name(&mut self, flag: #bit_type) {
             use hal_macros::{VolatileRead, VolatileWrite};
-            debug_assert_eq!((flag as usize) >> (<Self>::#self_shift + 1), 0, "Provided flag {flag} is too large for provided setter range {}..={}!", #start, #end);
+            debug_assert_eq!((flag as usize) >> (<Self>::#self_end - <Self>::#self_shift + 1), 0, "Provided flag {flag} is too large for provided setter range {}..={}!", #start, #end);
             let flag_shift: u32 = (flag as u32) << (<Self>::#self_shift as u32);
-            let read_value: u32 = self.#self_dot.read() & (<Self>::#self_mask as u32) & (<Self>::#self_set_mask as u32);
+            let read_value: u32 = self.#self_dot.read() & (!<Self>::#self_mask as u32) & (<Self>::#self_set_mask as u32);
             self.#self_dot.write(read_value | flag_shift);
         }
     }
@@ -696,11 +697,7 @@ fn generate_bit_single(single: usize, bit: &BitBlock) -> proc_macro2::TokenStrea
         _ => ("set", false, "get_", ""),
     };
 
-    let const_start = generate_const(
-        format!("{}_BIT", bit.name).as_str(),
-        1 << single,
-        doc_string,
-    );
+    let const_start = generate_const(format!("{}_BIT", bit.name).as_str(), single, doc_string);
 
     let (write, read) = match bit.bit_attr.access {
         Access::RO => (false, true),
