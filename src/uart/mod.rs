@@ -96,8 +96,6 @@ impl<Port: private::UARTPortCompatable> UART<Port> {
         unsafe {
             self.reg.set_character_length(length);
         }
-        // TODO Check if this will every return
-        while self.reg.get_character_length() != length {}
         Ok(())
     }
 
@@ -110,8 +108,6 @@ impl<Port: private::UARTPortCompatable> UART<Port> {
         unsafe {
             self.reg.set_baud_clock_source(source);
         }
-        // TODO Check if this will every return
-        while self.reg.get_baud_clock_source() != source {}
         Ok(())
     }
 
@@ -164,7 +160,6 @@ impl<Port: private::UARTPortCompatable> UART<Port> {
 
     pub fn set_clock_divisor(&mut self, divisor: u32) {
         unsafe {
-            // FIXME the functions need to be renamed
             self.reg.set_baud_rate_divisor(divisor);
         }
     }
