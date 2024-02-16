@@ -16,23 +16,23 @@ mod rro {
 make_device! {
     device_ports(mmio::TRNG);
 
-    /// # Wipe Key. See Page 363, Table 25-2.
+    /// Wipe Key. See Page 363, Table 25-2.
     #[bit(15, RW, rro::TRNG_CTRL)]
     wipe_key,
 
-    /// # Generate Key. See Page 363, Table 25-2.
+    /// Generate Key. See Page 363, Table 25-2.
     #[bit(3, RW, rro::TRNG_CTRL)]
     generate_key,
 
-    /// # Random Number Interrupt Enable. See Page 363, Table 25-2.
+    /// Random Number Interrupt Enable. See Page 363, Table 25-2.
     #[bit(1, RW, rro::TRNG_CTRL)]
     random_number_interrupt_enable,
 
-    /// # Get Random Number Ready. See Page 363-364, Table 25-3.
+    /// Random Number Ready. See Page 363-364, Table 25-3.
     #[bit(0, RO, rro::TRNG_STATUS)]
-    get_random_number_ready,
+    random_number_ready,
 
-    /// # Get TRNG Data. See Page 364, Table 25-4.
+    /// TRNG Data. See Page 364, Table 25-4.
     #[bit(0..=31, RO, rro::TRNG_DATA)]
-    get_trng_data,
+    trng_data,
 }
