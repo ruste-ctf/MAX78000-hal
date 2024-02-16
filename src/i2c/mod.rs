@@ -156,7 +156,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
     }
 
     pub fn master_transaction(
-        &self,
+        &mut self,
         address: usize,
         rx: Option<&mut [u8]>,
         tx: Option<&[u8]>,
@@ -260,7 +260,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
         }
     }
 
-    fn set_freq(&self, hz: usize) -> Result<usize> {
+    fn set_freq(&mut self, hz: usize) -> Result<usize> {
         if hz > MAX_I2C_HIGHSPEED_CLOCK_TIME {
             return Err(ErrorKind::BadParam);
         }
@@ -306,7 +306,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
         (core_peripheral_clock() as usize) / (cycles_total as usize)
     }
 
-    fn write_fifo<Bytes>(&self, tx: &mut Bytes) -> usize
+    fn write_fifo<Bytes>(&mut self, tx: &mut Bytes) -> usize
     where
         Bytes: Iterator<Item = u8>,
     {
@@ -343,7 +343,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
         max_receive
     }
 
-    fn send_address_with_rw(&self, address: usize, is_writting: bool) {
+    fn send_address_with_rw(&mut self, address: usize, is_writting: bool) {
         let writting_value = if is_writting { 0 } else { 1 };
         // TODO: We should check the state of the FIFO before adding data to it!
         //       What if the FIFO is full, we do not want to loose data here.
@@ -353,7 +353,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
         }
     }
 
-    fn send_bus_event(&self, event: I2CBusControlEvent) -> Result<()> {
+    fn send_bus_event(&mut self, event: I2CBusControlEvent) -> Result<()> {
         match event {
             I2CBusControlEvent::Start => unsafe {
                 self.reg.activate_start_master_mode_transfer();
@@ -369,7 +369,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
         Ok(())
     }
 
-    pub fn clear_rx_fifo(&self) {
+    pub fn clear_rx_fifo(&mut self) {
         unsafe {
             self.reg.activate_receive_fifo_flush();
         }
@@ -377,7 +377,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
         while self.reg.is_receive_fifo_flush_pending() {}
     }
 
-    pub fn clear_tx_fifo(&self) {
+    pub fn clear_tx_fifo(&mut self) {
         unsafe {
             self.reg.activate_transmit_fifo_flush();
         }
@@ -385,7 +385,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
         while self.reg.is_transmit_fifo_flush_pending() {}
     }
 
-    pub fn set_rx_fifo_threshold(&self, threshold: usize) {
+    pub fn set_rx_fifo_threshold(&mut self, threshold: usize) {
         debug_assert!(
             threshold <= 8,
             "Cannot set the bytes threshold {threshold} over the max register threshold of 8!"
@@ -396,7 +396,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
         }
     }
 
-    pub fn set_tx_fifo_threshold(&self, threshold: usize) {
+    pub fn set_tx_fifo_threshold(&mut self, threshold: usize) {
         debug_assert!(
             threshold <= 7,
             "Cannot set the bytes threshold {threshold} over the max register threshold of 8!"
@@ -407,7 +407,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
         }
     }
 
-    pub fn enable_master(&self, flag: bool) -> Result<()> {
+    pub fn enable_master(&mut self, flag: bool) -> Result<()> {
         if flag {
             // Another Master is currently controlling the bus,
             // we should not enable master mode!
@@ -427,7 +427,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
         Ok(())
     }
 
-    pub fn bus_recover(&self, retry_count: usize) -> Result<()> {
+    pub fn bus_recover(&mut self, retry_count: usize) -> Result<()> {
         // Save the state so we can restore it
         let state_prior = self.reg.get_control_register();
 
@@ -436,11 +436,6 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
             self.reg.set_software_i2c_mode(true);
             self.reg.set_i2c_peripheral_enable(true);
         }
-
-        let mut release_scl_and_sda = || unsafe {
-            self.reg.set_scl_hardware_pin_released(true);
-            self.reg.set_sda_hardware_pin_released(true);
-        };
 
         let mut success = false;
         // Lets try and recover the bus
@@ -456,7 +451,8 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
 
             // If SCL is high we were unable to pull the bus low
             if self.reg.get_scl_pin() {
-                release_scl_and_sda();
+                unsafe { self.reg.set_scl_hardware_pin_released(true) };
+                unsafe { self.reg.set_sda_hardware_pin_released(true) };
                 continue;
             }
 
@@ -470,7 +466,8 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
 
             // If SCL is low we were unable to release the bus
             if !self.reg.get_scl_pin() {
-                release_scl_and_sda();
+                unsafe { self.reg.set_scl_hardware_pin_released(true) };
+                unsafe { self.reg.set_sda_hardware_pin_released(true) };
                 continue;
             }
 
@@ -484,7 +481,8 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
 
             // If SDA is high we were unable to pull the bus low
             if self.reg.get_sda_pin() {
-                release_scl_and_sda();
+                unsafe { self.reg.set_scl_hardware_pin_released(true) };
+                unsafe { self.reg.set_sda_hardware_pin_released(true) };
                 continue;
             }
 
@@ -498,7 +496,8 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
 
             // If SDA is low we were unable to pull release the bus
             if !self.reg.get_sda_pin() {
-                release_scl_and_sda();
+                unsafe { self.reg.set_scl_hardware_pin_released(true) };
+                unsafe { self.reg.set_sda_hardware_pin_released(true) };
                 continue;
             }
 
