@@ -1,11 +1,14 @@
 use crate::error::{ErrorKind, Result};
 use crate::memory_map::mmio;
-use crate::uart::registers::{ClockDivisorRegister, ControlRegister, StatusRegister};
 use core::marker::PhantomData;
+
+use self::registers::Registers;
 pub mod registers;
 
 mod private {
-    pub trait UARTPortCompatable {}
+    pub trait UARTPortCompatable {
+        const PORT_PTR: usize;
+    }
 }
 
 pub struct NoPort {}
@@ -13,12 +16,18 @@ pub struct UART0 {}
 pub struct UART1 {}
 pub struct UART2 {}
 
-impl private::UARTPortCompatable for NoPort {}
-impl private::UARTPortCompatable for UART0 {}
-impl private::UARTPortCompatable for UART1 {}
-impl private::UARTPortCompatable for UART2 {}
+impl private::UARTPortCompatable for UART0 {
+    const PORT_PTR: usize = mmio::UART_0;
+}
+impl private::UARTPortCompatable for UART1 {
+    const PORT_PTR: usize = mmio::UART_1;
+}
+impl private::UARTPortCompatable for UART2 {
+    const PORT_PTR: usize = mmio::UART_2;
+}
 
-pub struct UART<Port: private::UARTPortCompatable = NoPort> {
+pub struct UART<Port = NoPort> {
+    reg: Registers,
     ph: PhantomData<Port>,
 }
 
@@ -27,11 +36,22 @@ impl UART<NoPort> {
     pub fn port_0_init() -> UART<UART0> {
         UART::<UART0>::init()
     }
+
+    pub fn port_1_init() -> UART<UART1> {
+        UART::<UART1>::init()
+    }
+
+    pub fn port_2_init() -> UART<UART2> {
+        UART::<UART2>::init()
+    }
 }
 
-impl UART<UART0> {
+impl<Port: private::UARTPortCompatable> UART<Port> {
     fn init() -> Self {
-        let uart = Self { ph: PhantomData };
+        let mut uart = Self {
+            reg: Registers::new(Port::PORT_PTR),
+            ph: PhantomData,
+        };
 
         // Clear the FIFOs
         uart.clear_rx_fifo();
@@ -48,104 +68,104 @@ impl UART<UART0> {
         uart
     }
 
-    pub fn print_string(&self, string: &str) {
+    pub fn print_string(&mut self, string: &str) {
         for char in string.bytes() {
             while self.transmit_busy() {}
             self.write_transmit_fifo(char);
         }
     }
 
-    pub fn clear_rx_fifo(&self) {
+    pub fn clear_rx_fifo(&mut self) {
         unsafe {
-            ControlRegister::activate_receive_fifo_flush();
+            self.reg.activate_receive_fifo_flush();
         }
     }
 
-    pub fn clear_tx_fifo(&self) {
+    pub fn clear_tx_fifo(&mut self) {
         unsafe {
-            ControlRegister::activiate_transmit_fifo_flush();
+            self.reg.activate_transmit_fifo_flush();
         }
     }
 
-    pub fn set_character_length(&self, length: u8) -> Result<()> {
+    pub fn set_character_length(&mut self, length: u8) -> Result<()> {
         // If the value is not in the allowed range, Err
         if length > 3 {
             return Err(ErrorKind::BadParam);
         }
 
         unsafe {
-            ControlRegister::set_character_length(length);
+            self.reg.set_character_length(length);
         }
         // TODO Check if this will every return
-        while ControlRegister::check_character_length() != length {}
+        while self.reg.get_character_length() != length {}
         Ok(())
     }
 
-    pub fn set_baud_clock_source(&self, source: u8) -> Result<()> {
+    pub fn set_baud_clock_source(&mut self, source: u8) -> Result<()> {
         // If the value is not in the allowed range, Err
         if source > 3 {
             return Err(ErrorKind::BadParam);
         }
 
         unsafe {
-            ControlRegister::set_baud_clock_source(source);
+            self.reg.set_baud_clock_source(source);
         }
         // TODO Check if this will every return
-        while ControlRegister::check_baud_clock_source() != source {}
+        while self.reg.get_baud_clock_source() != source {}
         Ok(())
     }
 
-    pub fn set_baud_clock(&self, enable: bool) {
-        unsafe { ControlRegister::set_baud_clock_enable(enable) }
+    pub fn set_baud_clock(&mut self, enable: bool) {
+        unsafe { self.reg.set_baud_clock_enable(enable) }
     }
 
-    pub fn set_number_stop_bits(&self, number: bool) {
+    pub fn set_number_stop_bits(&mut self, number: bool) {
         unsafe {
             // A "number" of true means use 1 stop bit
-            ControlRegister::set_number_of_stop_bits(number);
+            self.reg.set_number_of_stop_bits(number);
         }
     }
 
-    pub fn parity_enable(&self, enabled: bool) {
+    pub fn parity_enable(&mut self, enabled: bool) {
         unsafe {
-            ControlRegister::set_transmit_parity_generation_enable(enabled);
+            self.reg.set_transmit_parity_generation_enable(enabled);
         }
     }
 
     pub fn receive_busy(&self) -> bool {
-        StatusRegister::is_receive_busy()
+        self.reg.get_receive_busy()
     }
 
     pub fn transmit_busy(&self) -> bool {
-        StatusRegister::is_transmit_busy()
+        self.reg.get_transmit_busy()
     }
 
     pub fn peek_transmit_fifo(&self) -> u8 {
-        TransmitFIFORegister::get_transmit_fifo_data()
+        self.reg.get_transmit_fifo_data()
     }
 
     pub fn get_transmit_fifo_level(&self) -> u8 {
-        StatusRegister::get_transmit_fifo_level()
+        self.reg.get_transmit_fifo_level()
     }
 
     pub fn get_receive_fifo_level(&self) -> u8 {
-        StatusRegister::get_receive_fifo_level()
+        self.reg.get_receive_fifo_level()
     }
 
     pub fn read_receive_fifo(&self) -> u8 {
-        DataRegister::get_receive_fifo_data()
+        self.reg.get_fifo_data()
     }
 
-    pub fn write_transmit_fifo(&self, data: u8) {
+    pub fn write_transmit_fifo(&mut self, data: u8) {
         unsafe {
-            DataRegister::set_transmit_fifo_data(data);
+            self.reg.set_fifo_data(data);
         }
     }
 
-    pub fn set_clock_divisor(&self, divisor: u32) {
+    pub fn set_clock_divisor(&mut self, divisor: u32) {
         unsafe {
             // FIXME the functions need to be renamed
-            ClockDivisorRegister::get_baud_rate_divisor(divisor);
+            self.reg.set_baud_rate_divisor(divisor);
         }
     }
 }
