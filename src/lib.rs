@@ -9,6 +9,9 @@ pub mod timer;
 pub mod trng;
 pub mod uart;
 
+#[cfg(test)]
+pub mod tests;
+
 extern "C" {
     #[link_name = "SystemCoreClock"]
     pub(crate) static SYSTEM_CORE_CLOCK: u32;
