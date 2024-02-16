@@ -2,6 +2,7 @@ use crate::error::{ErrorKind, Result};
 use crate::memory_map::mmio;
 use core::marker::PhantomData;
 
+use self::private::UARTPortCompatable;
 use self::registers::Registers;
 pub mod registers;
 
@@ -162,5 +163,12 @@ impl<Port: private::UARTPortCompatable> UART<Port> {
         unsafe {
             self.reg.set_baud_rate_divisor(divisor);
         }
+    }
+}
+
+impl<Port: private::UARTPortCompatable> core::fmt::Write for UART<Port> {
+    fn write_str(&mut self, s: &str) -> core::fmt::Result {
+        self.print_string(s);
+        Ok(())
     }
 }
