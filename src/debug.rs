@@ -1,8 +1,8 @@
 static mut DEBUG_OUTPUT_STREAM: DebugStream = DebugStream(None);
 
-pub struct DebugStream(Option<&'static mut (dyn core::fmt::Write + Send + Sync)>);
+pub struct DebugStream(Option<&'static mut (dyn core::fmt::Write)>);
 
-pub fn attach_debug(stream: &'static mut (dyn core::fmt::Write + Send + Sync)) {
+pub fn attach_debug(stream: &'static mut (dyn core::fmt::Write)) {
     unsafe {
         DEBUG_OUTPUT_STREAM.0 = Some(stream);
     }
