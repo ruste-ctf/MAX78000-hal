@@ -14,12 +14,12 @@ pub mod tests;
 
 extern "C" {
     #[link_name = "SystemCoreClock"]
-    pub(crate) static SYSTEM_CORE_CLOCK: u32;
+    pub static SYSTEM_CORE_CLOCK: u32;
 }
 
 /// # Core Peripheral Clock
 /// Get the peripheral clock used for timing things like I2C and UART for the CPU.
-pub(crate) fn core_peripheral_clock() -> u32 {
+pub fn core_peripheral_clock() -> u32 {
     unsafe { SYSTEM_CORE_CLOCK / 2 }
 }
 
