@@ -168,8 +168,8 @@ TimerB
 Prescaler
 𝝓𝑨
 𝝓𝑨′
-Deassert 
-deassert 
+Deassert
+deassert
 RTS
 Deasserted
 deasserted

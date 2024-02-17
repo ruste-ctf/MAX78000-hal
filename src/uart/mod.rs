@@ -69,7 +69,7 @@ pub enum CharacterLength {
 /// The clock source to use for UART
 #[repr(u8)]
 pub enum ClockSources {
-    PLCK = 0,
+    PCLK = 0,
     IBRO = 2,
 }
 
@@ -81,6 +81,28 @@ pub enum ClockSources {
 pub enum StopBits {
     OneBit = 0,
     TwoBits = 1,
+}
+
+#[repr(u8)]
+pub enum ThresholdSize {
+    Threshold1 = 1,
+    Threshold2 = 2,
+    Threshold3 = 3,
+    Threshold4 = 4,
+    Threshold5 = 5,
+    Threshold6 = 6,
+    Threshold7 = 7,
+    Threshold8 = 8,
+}
+
+pub enum HFCDeassertCondition {
+    EqualsFIFODepth,
+    ExceedsRxThreshold,
+}
+
+pub enum ParityValueSelect {
+    OneBased,
+    ZeroBased,
 }
 
 impl<Port: private::UARTPortCompatable> UART<Port> {
@@ -136,6 +158,31 @@ impl<Port: private::UARTPortCompatable> UART<Port> {
         }
     }
 
+    /// # Enable CTS Sampling
+    /// Enables or disables CTS sampling
+    pub fn enable_cts_sampling(&mut self, disable: bool) {
+        unsafe { self.reg.set_cts_sampling_disable(disable) }
+    }
+
+    /// # Get CTS Sampling Value
+    /// Gets the value of the CTS pin
+    pub fn get_cts_pin_value(&mut self) -> bool {
+        self.reg.get_cts_sampling_disable()
+    }
+
+    /// # Parity Value Select
+    /// Selects the parity value
+    pub fn parity_value_select(&mut self, value: ParityValueSelect) {
+        let value = match value {
+            ParityValueSelect::OneBased => true,
+            ParityValueSelect::ZeroBased => false,
+        };
+
+        unsafe {
+            self.reg.set_parity_value(value);
+        }
+    }
+
     /// # Set Character Length
     /// Sets the number of data bits to send in a UART frame
     pub fn set_character_length(&mut self, length: CharacterLength) {
@@ -156,6 +203,28 @@ impl<Port: private::UARTPortCompatable> UART<Port> {
     /// Enables or disables the baud clock
     pub fn set_baud_clock(&mut self, enable: bool) {
         unsafe { self.reg.set_baud_clock_enable(enable) }
+    }
+
+    /// # Hardware Flow Control RTS Deassert Condition
+    /// Controls when RTS is deasserted
+    pub fn set_hardware_flow_control_rts_deassert_condition(
+        &mut self,
+        condition: HFCDeassertCondition,
+    ) {
+        let condition = match condition {
+            HFCDeassertCondition::EqualsFIFODepth => false,
+            HFCDeassertCondition::ExceedsRxThreshold => true,
+        };
+
+        unsafe {
+            self.reg.set_hardware_flow_rts_deassert_condition(condition);
+        }
+    }
+
+    /// # Hardware Flow Control Enable
+    /// Enables or disables hardware flow control
+    pub fn enable_hardware_flow_control(&mut self, enable: bool) {
+        unsafe { self.reg.set_hardware_flow_control(enable) }
     }
 
     /// # Set Number Stop Bits
@@ -223,12 +292,162 @@ impl<Port: private::UARTPortCompatable> UART<Port> {
         }
     }
 
+    /// # Get Receive FIFO Parity
+    /// Gets the
+
     /// # Set Clock Divisor
     /// Sets the divisor to use in UART clock generation
     pub fn set_clock_divisor(&mut self, divisor: u32) {
         unsafe {
             self.reg.set_baud_rate_divisor(divisor);
         }
+    }
+
+    /// # Set Baud Rate
+    /// Sets the clock source to , and sets the divisor to generate the specified baud rate
+    pub fn set_baud_rate(&mut self, rate: BaudRates) {
+        // Match the baud rate with 7.3728 MHz / rate
+        let divisor = 7372800 / rate as u32;
+        // Set the clock divisor
+        self.set_clock_divisor(divisor);
+    }
+
+    /// # Enable Receive DMA
+    /// Enables the receive dma to be triggered
+    pub fn enable_receive_dma(&mut self, enable: bool) {
+        unsafe {
+            self.reg.set_receive_dma_channel_enable(enable);
+        }
+    }
+
+    /// # Enable Transmit DMA
+    /// Enables the transmit dma to be triggered
+    pub fn enable_transmit_dma(&mut self, enable: bool) {
+        unsafe {
+            self.reg.set_transmit_dma_channel_enable(enable);
+        }
+    }
+
+    /// # Transmit FIFO Level
+    /// Gets the current level of the transmit FIFO
+    pub fn get_tx_fifo_level(&mut self) -> u8 {
+        self.reg.get_transmit_fifo_level()
+    }
+
+    /// # Receive FIFO Level
+    /// Gets the current level of the receive FIFO
+    pub fn get_rx_fifo_level(&mut self) -> u8 {
+        self.reg.get_receive_fifo_level()
+    }
+
+    /// # Set Receive FIFO Threshold
+    /// Sets the receive FIFO threshold
+    pub fn set_rx_fifo_threshold(&mut self, threshold: ThresholdSize) {
+        unsafe {
+            self.reg.set_recieve_fifo_threshold(threshold as u8);
+        }
+    }
+
+    /// # Enable Transmit FIFO Half-Empty Interrupt
+    /// Enables or disables the FIFO Half-Empty Interrupt
+    pub fn enable_tx_half_empty_interrupt(&mut self, enable: bool) {
+        unsafe { self.reg.set_transmit_fifo_half_empty_event(enable) }
+    }
+
+    /// # Enable Receive FIFO Threshold Event Interrupt
+    /// Enables or disables the receive FIFO threshold event interrupt
+    pub fn enable_rx_fifo_threshold_interrupt(&mut self, enable: bool) {
+        unsafe {
+            self.reg.set_receive_fifo_thershold_event(enable);
+        }
+    }
+
+    /// # Enable Receive FIFO Overrun Event Interrupt Enable
+    /// Enables or disables the receive FIFO overrun interrupt
+    pub fn enable_rx_fifo_overrun_interrupt(&mut self, enable: bool) {
+        unsafe {
+            self.reg.set_receive_fifo_overrun_event(enable);
+        }
+    }
+
+    /// # CTS Signal Change Event Interrupt Enable
+    /// Enables or disables the CTS signal change interrupt
+    pub fn enable_cts_interrupt(&mut self, enable: bool) {
+        unsafe {
+            self.reg.set_cts_signal_change_event(enable);
+        }
+    }
+
+    /// # Receive Parity Event Interrupt Enable
+    /// Enables or disables the receive parity interrupt
+    pub fn enable_rx_parity_interrupt(&mut self, enable: bool) {
+        unsafe {
+            self.reg.set_receive_parity_event(enable);
+        }
+    }
+
+    /// # Receive Frame Error Event Interrupt Enable
+    /// Enables or disables the frame error interrupt
+    pub fn enable_rx_frame_error_interrupt(&mut self, enable: bool) {
+        unsafe {
+            self.reg.set_receive_frame_error_event(enable);
+        }
+    }
+
+    /// # Get Transmit FIFO Half-Empty Interrupt Flag
+    /// Gets the state of the transmit FIFO half-empty flag
+    pub fn get_tx_half_empty_flag(&mut self) -> bool {
+        self.reg.get_transmit_fifo_half_empty_event()
+    }
+
+    /// # Get Receive FIFO Threshold Interrupt Flag
+    /// Gets the state of the receive FIFO threshold flag
+    pub fn get_rx_threshold_flag(&mut self) -> bool {
+        self.reg.get_receive_fifo_threshold_wakeup_event()
+    }
+
+    /// # Get Receive FIFO Overrun Interrupt Flag
+    /// Gets the state of the receive FIFO overrun flag
+    pub fn get_rx_overrun_flag(&mut self) -> bool {
+        self.reg.get_receive_fifo_overrun_event()
+    }
+
+    /// # Get CTS Signal Change Interrupt Flag
+    /// Gets the state of the CTS signal change interrupt
+    pub fn get_cts_signal_change_interrupt(&mut self) -> bool {
+        self.reg.get_cts_signal_change_event()
+    }
+
+    /// # Get Receive Parity Error Flag
+    /// Gets the state of the receive parity flag
+    pub fn get_receive_parity_error_flag(&mut self) -> bool {
+        self.reg.get_receive_parity_event()
+    }
+
+    /// # Get Receive Frame Error Interrupt Flag
+    /// Gets the state of the receive frame error flag
+    pub fn get_receive_frame_error_flag(&mut self) -> bool {
+        self.reg.get_receive_frame_error_event()
+    }
+
+    /// # Set RTS State
+    /// Sets the state of the RTS pin
+    pub fn set_rts_state(&mut self, enable: bool) {
+        unsafe {
+            self.reg.set_rts_output_state(enable);
+        }
+    }
+
+    /// # Get RTS State
+    /// Gets the state of the RTS pin
+    pub fn get_rts_state(&mut self) -> bool {
+        self.reg.get_rts_output_state()
+    }
+
+    /// # Get CTS State
+    /// Gets the state of the CTS pin
+    pub fn get_cts_state(&mut self) -> bool {
+        self.reg.get_cts_pin_state()
     }
 }
 
