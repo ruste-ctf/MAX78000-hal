@@ -13,8 +13,6 @@ impl TRNG {
             registers: Registers::new(mmio::TRNG),
             has_key: false,
         };
-        registers.wipe_key();
-        registers.generate_new_key();
         registers
     }
 
