@@ -49,4 +49,12 @@ impl TRNG {
         while !self.registers.get_random_number_ready() {}
         self.registers.get_trng_data()
     }
+
+    pub fn ready(&self) -> bool {
+        !self.registers.get_random_number_ready()
+    }
+
+    pub fn get(&self) -> u32 {
+        self.registers.get_trng_data()
+    }
 }
