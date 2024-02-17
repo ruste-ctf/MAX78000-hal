@@ -13,6 +13,7 @@ impl TRNG {
             registers: Registers::new(mmio::TRNG),
             has_key: false,
         };
+        registers.wipe_key();
         registers.generate_new_key();
         registers
     }
@@ -51,7 +52,7 @@ impl TRNG {
     }
 
     pub fn ready(&self) -> bool {
-        !self.registers.get_random_number_ready()
+        self.registers.get_random_number_ready()
     }
 
     pub fn get(&self) -> u32 {
