@@ -152,7 +152,7 @@ pub enum ParityValueSelect {
 }
 
 impl<Port: private::UARTPortCompatable> UART<Port> {
-    /// # 
+    /// #
     /// Creates a UART communication channel
 
     fn init(
@@ -243,7 +243,7 @@ impl<Port: private::UARTPortCompatable> UART<Port> {
     /// # Write Transmit FIFO
     /// Writes to the FIFO if possible
     pub fn write_transmit_fifo(&mut self, data: u8) -> Result<()> {
-        if self.reg.get_receive_fifo_full() {
+        if self.reg.get_transmit_fifo_full() {
             Err(ErrorKind::Busy)
         } else {
             unsafe { self.reg.set_fifo_data(data) }
@@ -254,7 +254,7 @@ impl<Port: private::UARTPortCompatable> UART<Port> {
     /// # Read Receive FIFO
     /// Reads from the receive FIFO if possible
     pub fn read_receive_fifo(&mut self) -> Result<u8> {
-        if self.reg.get_transmit_fifo_empty() {
+        if self.reg.get_receive_fifo_empty() {
             Err(ErrorKind::NoneAvailable)
         } else {
             Ok(self.reg.get_fifo_data())
