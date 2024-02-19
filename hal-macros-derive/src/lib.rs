@@ -178,7 +178,7 @@ impl Parse for BitBlock {
                     ..
                 }) = &attr.meta
                 else {
-                    return Err(input.error("Could not parse doc comment"));
+                    return Err(input.error("Could not parse doc comment, as the `doc` attribute was found but ill formed"));
                 };
 
                 doc_attr.push(format!(" {}", string.value().trim_start()));
@@ -191,7 +191,8 @@ impl Parse for BitBlock {
 
         Ok(Self {
             doc_attr,
-            bit_attr: bit_attr.ok_or(input.error("Reqires a #[bit(...)]"))?,
+            bit_attr: bit_attr
+                .ok_or(input.error("Reqires a #[bit(...)] attribute before a name (ie. Ident)."))?,
             name: input.parse()?,
         })
     }
