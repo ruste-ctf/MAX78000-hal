@@ -104,6 +104,20 @@ fn microcontroller_delay(us: usize) {
 #[cfg(test)]
 fn microcontroller_delay(_us: usize) {}
 
+impl I2C<NoPort> {
+    pub fn init_port_0_master() -> Result<I2C<I2CPort0>> {
+        I2C::<I2CPort0>::init(true, 0x00)
+    }
+
+    pub fn init_port_1_master() -> Result<I2C<I2CPort1>> {
+        I2C::<I2CPort1>::init(true, 0x00)
+    }
+
+    pub fn init_port_2_master() -> Result<I2C<I2CPort2>> {
+        I2C::<I2CPort2>::init(true, 0x00)
+    }
+}
+
 #[allow(unused)]
 impl<Port: private::I2CPortCompatable> I2C<Port> {
     fn init(master_enabled: bool, slave_address: usize) -> Result<Self> {
