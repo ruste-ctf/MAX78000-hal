@@ -91,7 +91,7 @@ const MAX_TRANSMIT_FIFO_LEN: usize = 8;
 const MAX_RECEIVE_FIFO_LEN: usize = 8;
 
 fn microcontroller_delay(us: usize) {
-    for _ in 0..10000000 {
+    for _ in 0..1000000 {
         unsafe { core::arch::asm!("nop") }
     }
 }
