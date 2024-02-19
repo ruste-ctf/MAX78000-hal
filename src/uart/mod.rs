@@ -32,6 +32,26 @@ pub struct UART<Port = NoPort> {
 
 #[allow(unused)]
 impl UART<NoPort> {
+    /// # Port 0 Init
+    /// Initializes UART 0
+    /// # Arguments
+    /// * `baud_rate` - The baud rate that the UART will use
+    /// * `character_length` - The number of data bits that will be transferred in a frame
+    /// * `stop_bits` - The number of stop bits that will be used
+    /// * `transmit_parity` - Enables the generation of the parity bit
+    /// * `hfc` - Enables the use of hardware flow control
+    /// # Example
+    ///
+    /// ```
+    /// let mut uart_test = UART::port_0_init(
+    ///     BaudRates::Baud115200,
+    ///     CharacterLength::EightBits,
+    ///     StopBits::OneBit,
+    ///     false,
+    ///     ParityValueSelect::OneBased,
+    ///     false,
+    /// );
+    /// ```
     pub fn port_0_init(
         baud_rate: BaudRates,
         character_length: CharacterLength,
@@ -49,7 +69,26 @@ impl UART<NoPort> {
             hfc,
         )
     }
-
+    /// # Port 1 Init
+    /// Initializes UART 1
+    /// # Arguments
+    /// * `baud_rate` - The baud rate that the UART will use
+    /// * `character_length` - The number of data bits that will be transferred in a frame
+    /// * `stop_bits` - The number of stop bits that will be used
+    /// * `transmit_parity` - Enables the generation of the parity bit
+    /// * `hfc` - Enables the use of hardware flow control
+    /// # Example
+    ///
+    /// ```
+    /// let mut uart_test = UART::port_1_init(
+    ///     BaudRates::Baud115200,
+    ///     CharacterLength::EightBits,
+    ///     StopBits::OneBit,
+    ///     false,
+    ///     ParityValueSelect::OneBased,
+    ///     false,
+    /// );
+    /// ```
     pub fn port_1_init(
         baud_rate: BaudRates,
         character_length: CharacterLength,
@@ -67,7 +106,26 @@ impl UART<NoPort> {
             hfc,
         )
     }
-
+    /// # Port 2 Init
+    /// Initializes UART 2
+    /// # Arguments
+    /// * `baud_rate` - The baud rate that the UART will use
+    /// * `character_length` - The number of data bits that will be transferred in a frame
+    /// * `stop_bits` - The number of stop bits that will be used
+    /// * `transmit_parity` - Enables the generation of the parity bit
+    /// * `hfc` - Enables the use of hardware flow control
+    /// # Example
+    ///
+    /// ```
+    /// let mut uart_test = UART::port_2_init(
+    ///     BaudRates::Baud115200,
+    ///     CharacterLength::EightBits,
+    ///     StopBits::OneBit,
+    ///     false,
+    ///     ParityValueSelect::OneBased,
+    ///     false,
+    /// );
+    /// ```
     pub fn port_2_init(
         baud_rate: BaudRates,
         character_length: CharacterLength,
@@ -125,18 +183,13 @@ pub enum StopBits {
     TwoBits,
 }
 
-/// # Threshold Size
-/// Then number of bits to apply to a FIFO threshold
-#[repr(u8)]
-pub enum ThresholdSize {
-    Threshold1 = 1,
-    Threshold2 = 2,
-    Threshold3 = 3,
-    Threshold4 = 4,
-    Threshold5 = 5,
-    Threshold6 = 6,
-    Threshold7 = 7,
-    Threshold8 = 8,
+impl Into<bool> for StopBits {
+    fn into(self) -> bool {
+        match self {
+            StopBits::OneBit => false,
+            StopBits::TwoBits => true,
+        }
+    }
 }
 
 /// # Hardware Flow Control Deassert Condition
@@ -151,10 +204,16 @@ pub enum ParityValueSelect {
     ZeroBased,
 }
 
-impl<Port: private::UARTPortCompatable> UART<Port> {
-    /// #
-    /// Creates a UART communication channel
+impl Into<bool> for ParityValueSelect {
+    fn into(self) -> bool {
+        match self {
+            ParityValueSelect::OneBased => false,
+            ParityValueSelect::ZeroBased => true,
+        }
+    }
+}
 
+impl<Port: private::UARTPortCompatable> UART<Port> {
     fn init(
         baud_rate: BaudRates,
         character_length: CharacterLength,
@@ -175,19 +234,11 @@ impl<Port: private::UARTPortCompatable> UART<Port> {
         unsafe {
             uart.reg.set_character_length(character_length as u8);
             // Set the number of stop bits to 1
-            let stop_bits = match stop_bits {
-                StopBits::OneBit => true,
-                StopBits::TwoBits => false,
-            };
-            uart.reg.set_number_of_stop_bits(stop_bits);
+            uart.reg.set_number_of_stop_bits(stop_bits.into());
             uart.reg
                 .set_transmit_parity_generation_enable(transmit_parity);
             // Set the parity value
-            let parity_value = match parity_value {
-                ParityValueSelect::OneBased => false,
-                ParityValueSelect::ZeroBased => true,
-            };
-            uart.reg.set_parity_value(parity_value);
+            uart.reg.set_parity_value(parity_value.into());
             // Set the clock source to IBRO
             uart.reg.set_baud_clock_source(ClockSources::IBRO as u8);
             // Set the clock divisor to 7.3728 Mhz / baud rate
@@ -202,6 +253,7 @@ impl<Port: private::UARTPortCompatable> UART<Port> {
 
     /// # Print String
     /// Prints the string passed
+    /// Note: Calls ```write_blocking_transmit_fifo(char)```
     pub fn print_string(&mut self, string: &str) {
         for char in string.bytes() {
             self.write_blocking_transmit_fifo(char);
