@@ -1,4 +1,4 @@
-use crate::core_peripheral_clock;
+use crate::{core_peripheral_clock, debug_println, debug_print};
 use crate::error::{ErrorKind, Result};
 use crate::memory_map::mmio;
 use core::marker::PhantomData;
@@ -446,6 +446,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
         let mut success = false;
         // Lets try and recover the bus
         for _ in 0..retry_count {
+            debug_print!("Testing I2C Bus... ");
             microcontroller_delay(10);
 
             // Pull SCL low
@@ -457,10 +458,12 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
 
             // If SCL is high we were unable to pull the bus low
             if self.reg.get_scl_pin() {
+                debug_println!("SCL-LOW-FAIL")
                 unsafe { self.reg.set_scl_hardware_pin_released(true) };
                 unsafe { self.reg.set_sda_hardware_pin_released(true) };
                 continue;
             }
+            debug_print!("SCL-LOW ")
 
             microcontroller_delay(10);
 
@@ -472,10 +475,12 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
 
             // If SCL is low we were unable to release the bus
             if !self.reg.get_scl_pin() {
+                debug_println!("SCL-HIGH-FAIL");
                 unsafe { self.reg.set_scl_hardware_pin_released(true) };
                 unsafe { self.reg.set_sda_hardware_pin_released(true) };
                 continue;
             }
+            debug_print!("SCL-HIGH ");
 
             microcontroller_delay(10);
 
@@ -487,10 +492,12 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
 
             // If SDA is high we were unable to pull the bus low
             if self.reg.get_sda_pin() {
+                debug_println!("SDA-LOW-FAIL");
                 unsafe { self.reg.set_scl_hardware_pin_released(true) };
                 unsafe { self.reg.set_sda_hardware_pin_released(true) };
                 continue;
             }
+            debug_print!("SDA-LOW ");
 
             microcontroller_delay(10);
 
@@ -502,10 +509,13 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
 
             // If SDA is low we were unable to pull release the bus
             if !self.reg.get_sda_pin() {
+                debug_println!("SDA-HIGH-FAIL");
                 unsafe { self.reg.set_scl_hardware_pin_released(true) };
                 unsafe { self.reg.set_sda_hardware_pin_released(true) };
                 continue;
             }
+
+            debug_print!("SDA-HIGH ");
 
             // We where able to take control over the bus!
             success = true;
@@ -520,6 +530,8 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
         unsafe {
             self.reg.set_control_register(state_prior);
         }
+
+        debug_println!("  -- OK");
 
         Ok(())
     }
