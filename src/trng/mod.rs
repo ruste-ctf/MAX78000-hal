@@ -9,7 +9,7 @@ pub struct TRNG {
 
 impl TRNG {
     pub fn init() -> Self {
-        let mut registers = Self {
+        let registers = Self {
             registers: Registers::new(mmio::TRNG),
             has_key: false,
         };
