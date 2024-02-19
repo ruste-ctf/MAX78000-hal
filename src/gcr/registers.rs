@@ -243,7 +243,7 @@ make_device! {
     gpio1_port_and_pad_logic_clock_disable,
 
     #[bit(0, RW, rro::GCR_PCLKDIS0)]
-    gpio0_port_adn_pad_logic_clock_disable,
+    gpio0_port_and_pad_logic_clock_disable,
 
     #[bit(16, RW, rro::GCR_MEMCTRL)]
     sysram0_ecc_enable,
