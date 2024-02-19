@@ -90,19 +90,11 @@ const MAX_I2C_FIFO_TRANSACTION: usize = 256;
 const MAX_TRANSMIT_FIFO_LEN: usize = 8;
 const MAX_RECEIVE_FIFO_LEN: usize = 8;
 
-#[cfg(not(test))]
-extern "C" {
-    fn MXC_Delay(us: u32);
-}
-
-/// # We need this for I2C, but uh I have not gotten to it yet :)
-#[cfg(not(test))]
 fn microcontroller_delay(us: usize) {
-    unsafe { MXC_Delay(us as u32) }
+    for _ in 0..10000000 {
+        unsafe { core::arch::asm!("nop") }
+    }
 }
-
-#[cfg(test)]
-fn microcontroller_delay(_us: usize) {}
 
 impl I2C<NoPort> {
     pub fn init_port_0_master() -> Result<I2C<I2CPort0>> {
