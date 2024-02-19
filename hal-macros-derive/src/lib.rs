@@ -58,13 +58,21 @@ impl Parse for BitRange {
                 })
                 .unwrap_or(Ok(Bound::Unbounded))?;
 
-            Ok(Self::Range((first, second)))
+            let (start, end) = get_real_range((first, second));
+
+            if start >= end {
+                Err(input.error("Range start must be larger then range end!"))
+            } else {
+                Ok(Self::Range((first, second)))
+            }
         } else if input.peek(LitInt) {
             let value: LitInt = input.parse()?;
 
             Ok(Self::Single(value.base10_parse()?))
         } else {
-            Err(input.error("Could not parse BitRange"))
+            Err(input.error(
+                "Could not parse bit, must provide a single bit '0' or multiple bits '0..=10'!",
+            ))
         }
     }
 }
@@ -104,7 +112,7 @@ impl Parse for Access {
             input.parse::<access::RW1O>()?;
             Ok(Access::RW1O)
         } else {
-            Err(input.error("Not a valid access token"))
+            Err(input.error("Not a valid access type, please use 'RO', 'WO', 'RW1C', or 'RW1O'"))
         }
     }
 }
@@ -127,7 +135,12 @@ impl Parse for BitAttribute {
         let register_name = path
             .segments
             .last()
-            .ok_or(input.error("Could not find const path ident"))?
+            .ok_or(input.error(
+                r#"
+                Could not find valid const item in #[bit(...)] attribute. 
+                Please use a constant to represent the current item. 
+                This macro uses the constant to name internal items used for this register."#,
+            ))?
             .ident
             .to_string()
             .to_ascii_lowercase();
