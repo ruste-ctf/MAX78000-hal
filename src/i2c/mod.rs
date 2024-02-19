@@ -1,6 +1,6 @@
-use crate::{core_peripheral_clock, debug_println, debug_print};
 use crate::error::{ErrorKind, Result};
 use crate::memory_map::mmio;
+use crate::{core_peripheral_clock, debug_print, debug_println};
 use core::marker::PhantomData;
 
 use self::registers::Registers;
@@ -458,12 +458,12 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
 
             // If SCL is high we were unable to pull the bus low
             if self.reg.get_scl_pin() {
-                debug_println!("SCL-LOW-FAIL")
+                debug_println!("SCL-LOW-FAIL");
                 unsafe { self.reg.set_scl_hardware_pin_released(true) };
                 unsafe { self.reg.set_sda_hardware_pin_released(true) };
                 continue;
             }
-            debug_print!("SCL-LOW ")
+            debug_print!("SCL-LOW ");
 
             microcontroller_delay(10);
 
