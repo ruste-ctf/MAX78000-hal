@@ -42,8 +42,8 @@ impl UART<NoPort> {
     /// * `hfc` - Enables the use of hardware flow control
     /// # Example
     ///
-    /// ```
-    /// use max78000_hal::uart::{BaudRates, CharacterLength, StopBits, ParityValueSelect};
+    /// ```no_run
+    /// use max78000_hal::uart::{UART, BaudRates, CharacterLength, StopBits, ParityValueSelect};
     /// let mut uart_test = UART::port_0_init(
     ///     BaudRates::Baud115200,
     ///     CharacterLength::EightBits,
@@ -80,8 +80,8 @@ impl UART<NoPort> {
     /// * `hfc` - Enables the use of hardware flow control
     /// # Example
     ///
-    /// ```
-    /// use max78000_hal::uart::{BaudRates, CharacterLength, StopBits, ParityValueSelect};
+    /// ```no_run
+    /// use max78000_hal::uart::{UART, BaudRates, CharacterLength, StopBits, ParityValueSelect};
     /// let mut uart_test = UART::port_1_init(
     ///     BaudRates::Baud115200,
     ///     CharacterLength::EightBits,
@@ -118,8 +118,8 @@ impl UART<NoPort> {
     /// * `hfc` - Enables the use of hardware flow control
     /// # Example
     ///
-    /// ```
-    /// use max78000_hal::uart::{BaudRates, CharacterLength, StopBits, ParityValueSelect};
+    /// ```no_run
+    /// use max78000_hal::uart::{UART, BaudRates, CharacterLength, StopBits, ParityValueSelect};
     /// let mut uart_test = UART::port_2_init(
     ///     BaudRates::Baud115200,
     ///     CharacterLength::EightBits,
