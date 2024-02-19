@@ -7,6 +7,8 @@ const THREE_4_BYTES: usize = 2;
 const FOUR_4_BYTES: usize = 3;
 
 make_device! {
+    // No need for device ports when testing, since
+    // the macro will disable its checking.
     device_ports();
 
     #[bit(0, RW, FIRST_4_BYTES)]
@@ -166,6 +168,8 @@ macro_rules! range_bit_test {
     };
 }
 
+// Test the full range, but since its u32 it can take some time
+// so we make it multithreaded here.
 range_bit_test!(0, range_bit_test_0);
 range_bit_test!(1, range_bit_test_1);
 range_bit_test!(2, range_bit_test_2);
