@@ -303,6 +303,10 @@ fn generate_new_constructer(
                 false #( || #device_ports_vec == port)*,
                 "Register port {port} must be {}", #device_ports_string
             );
+            #[cfg(test)]
+            {
+                #( let _ = #device_ports_vec; )*
+            }
 
             Self {
                 #(#fields,)*
