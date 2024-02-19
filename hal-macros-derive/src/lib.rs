@@ -297,6 +297,26 @@ fn generate_new_constructer(
         .collect();
 
     quote!(
+        /// # New
+        /// Make a new Registers struct that has the base offset of `port`. Since all bits
+        /// internally have their own offsets given by the constants passed to `#[bit(...)]`
+        /// they will correctly line up with hardware `mmio` registers.
+        ///
+        /// # Safety
+        /// This function requires that the user setup `device_ports` with correct
+        /// constants that point to correct and safe memory locations. This function
+        /// will `debug_assert!` that the given port input is one of the possible
+        /// inputs denoted by `device_ports`.
+        ///
+        /// # Panics
+        /// This function will panic in debug mode if the given register input does not match
+        /// one of the expected possible port inputs.
+        ///
+        /// However, checking is disabled in release and in testing mode. This will allow one
+        /// to test this structure while in testing mode. For release, checks are disabled due
+        /// to `assert!`'s need for Debug and large amount of code generation that might not be
+        /// desirable during production. Mostly these tests and asserts help with development, and
+        /// not so much for production.
         pub fn new(port: usize) -> Self {
             #[cfg(not(test))]
             debug_assert!(
@@ -421,6 +441,7 @@ fn generate_const(
     let name_const = name.to_uppercase().replace(' ', "_");
     let name_tokens = format_ident!("{}", name_const);
     let doc_title = string_into_title(name);
+    let doc_example_hidden = format!("# const {}: usize = {};", name_const, value);
     let doc_example_let = format!(" let my_const = Registers::{};", name_const);
     let doc_example_assert = format!(" assert_eq!(my_const, {});", value);
     quote!(
@@ -436,7 +457,11 @@ fn generate_const(
         /// contain the value 0, and `<MY FLAG>_BIT_END` will be 7.
         ///
         /// # Example
-        /// ```ignore
+        /// ```
+        /// # #[derive(Debug)] pub struct Registers {}
+        /// # impl Registers {
+        #[doc = #doc_example_hidden]
+        /// # }
         #[doc = #doc_example_let]
         #[doc = #doc_example_assert]
         /// ```
