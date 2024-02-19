@@ -13,7 +13,6 @@ impl TRNG {
             registers: Registers::new(mmio::TRNG),
             has_key: false,
         };
-        registers.generate_new_key();
         registers
     }
 
@@ -47,6 +46,14 @@ impl TRNG {
     /// learn about what happens when you generate a number without having a key.
     pub unsafe fn unchecked_get_trng_data(&self) -> u32 {
         while !self.registers.get_random_number_ready() {}
+        self.registers.get_trng_data()
+    }
+
+    pub fn ready(&self) -> bool {
+        self.registers.get_random_number_ready()
+    }
+
+    pub fn get(&self) -> u32 {
         self.registers.get_trng_data()
     }
 }
