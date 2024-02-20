@@ -1,4 +1,6 @@
 use crate::error::{ErrorKind, Result};
+use crate::gcr::system_clock_enable;
+use crate::gpio::GpioPin;
 use crate::memory_map::mmio;
 use crate::{core_peripheral_clock, debug_print, debug_println};
 use core::marker::PhantomData;
@@ -10,6 +12,7 @@ pub mod registers;
 mod private {
     pub trait I2CPortCompatable {
         const PORT_PTR: usize;
+        const PORT_NUM: usize;
     }
 }
 
@@ -20,12 +23,15 @@ pub struct I2CPort2 {}
 
 impl private::I2CPortCompatable for I2CPort0 {
     const PORT_PTR: usize = mmio::I2C_PORT_0;
+    const PORT_NUM: usize = 0;
 }
 impl private::I2CPortCompatable for I2CPort1 {
     const PORT_PTR: usize = mmio::I2C_PORT_1;
+    const PORT_NUM: usize = 1;
 }
 impl private::I2CPortCompatable for I2CPort2 {
     const PORT_PTR: usize = mmio::I2C_PORT_2;
+    const PORT_NUM: usize = 2;
 }
 
 #[allow(dead_code)]
@@ -33,6 +39,7 @@ pub struct I2C<Port = NoPort> {
     reg: Registers,
     master_enabled: bool,
     slave_address: usize,
+    gpio: [GpioPin; 2],
     _ph: PhantomData<Port>,
 }
 
@@ -98,14 +105,17 @@ fn microcontroller_delay(us: usize) {
 
 impl I2C<NoPort> {
     pub fn init_port_0_master() -> Result<I2C<I2CPort0>> {
+        system_clock_enable(crate::gcr::HardwareSource::I2C0, true);
         I2C::<I2CPort0>::init(true, 0x00)
     }
 
     pub fn init_port_1_master() -> Result<I2C<I2CPort1>> {
+        system_clock_enable(crate::gcr::HardwareSource::I2C1, true);
         I2C::<I2CPort1>::init(true, 0x00)
     }
 
     pub fn init_port_2_master() -> Result<I2C<I2CPort2>> {
+        system_clock_enable(crate::gcr::HardwareSource::I2C2, true);
         I2C::<I2CPort2>::init(true, 0x00)
     }
 }
@@ -116,6 +126,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
         let mut i2c = Self {
             reg: Registers::new(Port::PORT_PTR),
             slave_address,
+            gpio: crate::gpio::hardware::i2c_n(Port::PORT_NUM).ok_or(ErrorKind::Busy)?,
             master_enabled,
             _ph: PhantomData,
         };
