@@ -468,7 +468,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
             microcontroller_delay(10);
 
             // If SCL is high we were unable to pull the bus low
-            if self.reg.get_scl_pin() {
+            if !self.reg.get_scl_pin() {
                 debug_println!("SCL-LOW-FAIL");
                 unsafe { self.reg.set_scl_hardware_pin_released(true) };
                 unsafe { self.reg.set_sda_hardware_pin_released(true) };
@@ -486,7 +486,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
             microcontroller_delay(10);
 
             // If SCL is low we were unable to release the bus
-            if !self.reg.get_scl_pin() {
+            if self.reg.get_scl_pin() {
                 debug_println!("SCL-HIGH-FAIL");
                 unsafe { self.reg.set_scl_hardware_pin_released(true) };
                 unsafe { self.reg.set_sda_hardware_pin_released(true) };
