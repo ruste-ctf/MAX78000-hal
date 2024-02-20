@@ -21,7 +21,7 @@ mod rro {
     pub const GCR_PCLKDIS0: usize = 0x0024;
     /// # Memory Clock Control
     pub const GCR_MEMCTRL: usize = 0x0028;
-    /// # Memory Zeroize Register
+    /// # Memory `Zeroize` Register
     pub const GCR_MEMZ: usize = 0x002C;
     /// # System Status Flags
     pub const GCR_SYSST: usize = 0x0040;

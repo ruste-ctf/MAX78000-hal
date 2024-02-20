@@ -81,14 +81,14 @@ pub(super) mod rro {
     pub const GPIO_DS0GPIO: BaseOffset = 0x00B0;
     /// # Output Drive Strength Bit 1 Register
     pub const GPIO_DS11GPIO: BaseOffset = 0x00B4;
-    /// # Pulldown/Pullup Strength Select Register
+    /// # Pull down/Pull up Strength Select Register
     pub const GPIO_PS: BaseOffset = 0x00B8;
     /// # Voltage Select Register
     pub const GPIO_VSSEL: BaseOffset = 0x00C0;
 }
 
 /// # Write GPIO
-/// Write to a gpio register and port.
+/// Write to a GPIO register and port.
 pub(crate) unsafe fn write_gpio(base: BaseOffset, port: PortOffset, value: u32) {
     let ptr = (base + port) as *mut u32;
 
@@ -96,7 +96,7 @@ pub(crate) unsafe fn write_gpio(base: BaseOffset, port: PortOffset, value: u32) 
 }
 
 /// # Read GPIO
-/// Read from the gpio register and port.
+/// Read from the GPIO register and port.
 pub(crate) unsafe fn read_gpio(base: BaseOffset, port: PortOffset) -> u32 {
     let ptr = (base + port) as *const u32;
 
@@ -104,7 +104,7 @@ pub(crate) unsafe fn read_gpio(base: BaseOffset, port: PortOffset) -> u32 {
 }
 
 /// # Enable Bit
-/// Enable the bit for the given gpio port and register.
+/// Enable the bit for the given GPIO port and register.
 pub(crate) unsafe fn enable_bit(base: BaseOffset, port: PortOffset, bit: usize) {
     let read = read_gpio(base, port);
     let bit = 1 << bit;
@@ -112,7 +112,7 @@ pub(crate) unsafe fn enable_bit(base: BaseOffset, port: PortOffset, bit: usize) 
 }
 
 /// # Disable Bit
-/// Disable the bit for the given gpio port and register.
+/// Disable the bit for the given GPIO port and register.
 pub(crate) unsafe fn disable_bit(base: BaseOffset, port: PortOffset, bit: usize) {
     let read = read_gpio(base, port);
     let bit = 1 << bit;

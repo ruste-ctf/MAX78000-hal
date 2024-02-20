@@ -20,7 +20,7 @@ fn ensure_gcr() {
 }
 
 /// # Hardware Source
-/// Possible hardware devices on the MAX78000 Chipset. Use this enum
+/// Possible hardware devices on the MAX78000 Chip set. Use this enum
 /// to select which hardware device to use when enabling/disabling clock
 /// or other hardware features.
 pub enum HardwareSource {
