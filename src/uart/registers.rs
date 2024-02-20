@@ -266,20 +266,20 @@ make_device! {
     transmit_fifo_half_empty_event,
 
 
-    /// Receive FIFO Half-Empty Event Interrupt Enable
-    /// Sets whether the interrupt for half-full inbound FIFO buffer is enabled
+    /// Receive FIFO Threshold Event
+    /// Sets whether the interrupt for the receive FIFO threshold event is enabled
     /// - 0: Disabled
     /// - 1: Enabled
     #[bit(4, RW, rro::UART_INT_EN)]
-    receive_fifo_half_empty_even,
+    receive_fifo_thershold_event,
 
 
-    /// Receive FIFO Threshold Event Interrupt Enable
-    /// Sets whether the interrupt for filled inbound FIFO buffer is enabled
+    /// Receive FIFO Overrun Event
+    /// Sets whether the interrupt for the receive FIFO overrun event is enabled
     /// - 0: Disabled
     /// - 1: Enabled
     #[bit(3, RW, rro::UART_INT_EN)]
-    receive_fifo_thershold_event,
+    receive_fifo_overrun_event,
 
 
     /// `CTS` Signal Change Event Interrupt Enable
