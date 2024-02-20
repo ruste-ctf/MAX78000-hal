@@ -2,8 +2,8 @@ use super::GpioPin;
 
 /// # Led 0
 /// Pre-configured pin for led-0.
-pub fn led0() -> Option<GpioPin> {
-    let pin = GpioPin::new(super::GpioSelect::Gpio2, 0)?;
+pub fn led0(test: usize) -> Option<GpioPin> {
+    let pin = GpioPin::new(super::GpioSelect::Gpio2, 0 + test)?;
 
     pin.configure_output(
         super::OutputDriveStrength::Strength0(super::VoltageSelect::VddIOH),
