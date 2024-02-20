@@ -93,3 +93,46 @@ pub fn system_clock_enable(clock: HardwareSource, enable: bool) {
         }
     }
 }
+
+/// # Peripheral Reset
+/// Reset the given device to default settings and configuration.
+pub fn peripheral_reset(device: HardwareSource) {
+    ensure_gcr();
+
+    let gcr = unsafe { GLOBAL_CONTROL_REGISTER.as_mut().unwrap() };
+    unsafe {
+        match device {
+            HardwareSource::GPIO0 => gcr.activate_gpio0_reset(),
+            HardwareSource::GPIO1 => gcr.activate_gpio1_reset(),
+            HardwareSource::DMA => gcr.activate_dma_access_block_reset(),
+            HardwareSource::SPI1 => gcr.activate_spi1_reset(),
+            HardwareSource::UART0 => gcr.activate_uart0_reset(),
+            HardwareSource::UART1 => gcr.activate_uart1_reset(),
+            HardwareSource::I2C0 => gcr.activate_i2c0_reset(),
+            HardwareSource::I2C2 => gcr.activate_i2c2_reset(),
+            HardwareSource::TMR0 => gcr.activate_tiemr0_reset(),
+            HardwareSource::TMR1 => gcr.activate_timer1_reset(),
+            HardwareSource::TMR2 => gcr.activate_timer2_reset(),
+            HardwareSource::TMR3 => gcr.activate_timer3_reset(),
+            HardwareSource::ADC => gcr.activate_adc_reset(),
+            HardwareSource::CNN => gcr.activate_cnn_reset(),
+            HardwareSource::I2C1 => gcr.activate_i2c1_reset(),
+            HardwareSource::PT => gcr.activate_pulse_train_reset(),
+            HardwareSource::UART2 => gcr.activate_uart2_reset(),
+            HardwareSource::TRNG => gcr.activate_trng_reset(),
+            HardwareSource::SMPHR => gcr.activate_semaphore_block_reset(),
+            HardwareSource::OWIRE => gcr.activate_one_wire_reset(),
+            HardwareSource::CRC => gcr.activate_crc_reset(),
+            HardwareSource::AES => gcr.activate_aes_block_reset(),
+            HardwareSource::I2S => gcr.activate_audio_interface_reset(),
+            HardwareSource::SPI0 => gcr.activate_spi0_reset(),
+            HardwareSource::WDT0 => gcr.activate_watchdog_timer0_reset(),
+            HardwareSource::CPU1 => gcr.activate_cpu1_riscv32_reset(),
+            HardwareSource::WDT1 => gcr.activate_watchdog_timer0_reset(),
+            HardwareSource::LPCOMP => gcr.activate_adc_reset(),
+        }
+    }
+
+    // Wait until reset is complete
+    while gcr.get_reset_status0() | gcr.get_reset_status1() != 0 {}
+}

@@ -50,6 +50,12 @@ mod rro {
 make_device! {
     device_ports(mmio::GLOBAL_CONTROL);
 
+    #[bit(0..=31, RO, rro::GCR_RST0)]
+    reset_status0,
+
+    #[bit(0..=31, RO, rro::GCR_RST1)]
+    reset_status1,
+
     #[bit(16..=17, RW, rro::GCR_SYSCTRL)]
     operating_voltage_range,
 
@@ -275,7 +281,7 @@ make_device! {
     #[bit(0, RO, rro::GCR_SYSST)]
     arm_ice_lock_status,
 
-    #[bit(31, RO, rro::GCR_RST1)]
+    #[bit(31, RW1O, rro::GCR_RST1)]
     cpu1_riscv32_reset,
 
     #[bit(25, RW1O, rro::GCR_RST1)]
