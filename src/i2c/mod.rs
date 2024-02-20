@@ -1,5 +1,5 @@
 use crate::error::{ErrorKind, Result};
-use crate::gcr::system_clock_enable;
+use crate::gcr::{peripheral_reset, system_clock_enable};
 use crate::gpio::GpioPin;
 use crate::memory_map::mmio;
 use crate::{core_peripheral_clock, debug_print, debug_println};
@@ -105,16 +105,19 @@ fn microcontroller_delay(us: usize) {
 
 impl I2C<NoPort> {
     pub fn init_port_0_master() -> Result<I2C<I2CPort0>> {
+        peripheral_reset(crate::gcr::HardwareSource::I2C0);
         system_clock_enable(crate::gcr::HardwareSource::I2C0, true);
         I2C::<I2CPort0>::init(true, 0x00)
     }
 
     pub fn init_port_1_master() -> Result<I2C<I2CPort1>> {
+        peripheral_reset(crate::gcr::HardwareSource::I2C1);
         system_clock_enable(crate::gcr::HardwareSource::I2C1, true);
         I2C::<I2CPort1>::init(true, 0x00)
     }
 
     pub fn init_port_2_master() -> Result<I2C<I2CPort2>> {
+        peripheral_reset(crate::gcr::HardwareSource::I2C2);
         system_clock_enable(crate::gcr::HardwareSource::I2C2, true);
         I2C::<I2CPort2>::init(true, 0x00)
     }
