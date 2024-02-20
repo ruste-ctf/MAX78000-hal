@@ -129,16 +129,7 @@ impl GpioPin {
     }
 
     pub fn set_output(&self, output_enable: bool) {
-        unsafe {
-            self.set_bit(
-                if output_enable {
-                    registers::rro::GPIO_OUTEN_SET
-                } else {
-                    registers::rro::GPIO_OUTEN_CLR
-                },
-                true,
-            )
-        };
+        unsafe { self.set_bit(registers::rro::GPIO_OUT, output_enable) };
     }
 
     pub fn get_input(&self) -> bool {
