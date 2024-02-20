@@ -163,6 +163,8 @@ impl GpioPin {
             self.set_bit(registers::rro::GPIO_PADCTRL1, pad_ctrl1);
             self.set_bit(registers::rro::GPIO_PS, pull_ctrl);
             self.set_bit(registers::rro::GPIO_VSSEL, power_ctrl);
+            self.set_bit(registers::rro::GPIO_OUTEN_CLR, true);
+            self.set_bit(registers::rro::GPIO_IN, true);
         });
     }
 
@@ -182,6 +184,8 @@ impl GpioPin {
             self.set_bit(registers::rro::GPIO_DS1, ds_ctrl1);
             self.set_bit(registers::rro::GPIO_DS0, ds_ctrl0);
             self.set_bit(registers::rro::GPIO_VSSEL, v_sel);
+            self.set_bit(registers::rro::GPIO_IN, false);
+            self.set_bit(registers::rro::GPIO_OUTEN_SET, true);
         });
     }
 }
