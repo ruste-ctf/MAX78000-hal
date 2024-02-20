@@ -95,17 +95,21 @@ impl GpioPin {
         Func: FnOnce(),
     {
         unsafe {
+            self.set_bit(registers::rro::GPIO_EN0_SET, true);
+
+            func();
+
             let is_alt = match function {
                 PinFunction::AF1 => {
                     // Alt Functions need EN0 set before ALT1 can be entered
-                    self.set_bit(registers::rro::GPIO_EN0_SET, true);
+                    self.set_bit(registers::rro::GPIO_EN0_CLR, true);
                     self.set_bit(registers::rro::GPIO_EN1_CLR, true);
                     self.set_bit(registers::rro::GPIO_EN2_CLR, true);
                     true
                 }
                 PinFunction::AF2 => {
                     // Alt Functions need EN0 set before ALT2 can be entered
-                    self.set_bit(registers::rro::GPIO_EN0_SET, true);
+                    self.set_bit(registers::rro::GPIO_EN0_CLR, true);
                     self.set_bit(registers::rro::GPIO_EN1_SET, true);
                     self.set_bit(registers::rro::GPIO_EN2_CLR, true);
                     true
@@ -118,13 +122,6 @@ impl GpioPin {
                     false
                 }
             };
-
-            func();
-
-            if is_alt {
-                // Set alt function if alt
-                self.set_bit(registers::rro::GPIO_EN0_CLR, true);
-            }
         }
     }
 

@@ -450,8 +450,8 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
 
         // Switch to Software Mode, and enable the I2C bus
         unsafe {
-            self.reg.set_software_i2c_mode(true);
             self.reg.set_i2c_peripheral_enable(true);
+            self.reg.set_software_i2c_mode(true);
         }
 
         let mut success = false;
@@ -478,6 +478,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
 
             microcontroller_delay(10);
 
+            // Release SCL (pull high)
             unsafe {
                 self.reg.set_scl_hardware_pin_released(true);
             }
@@ -495,6 +496,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
 
             microcontroller_delay(10);
 
+            // Pull SDA Low
             unsafe {
                 self.reg.set_sda_hardware_pin_released(false);
             }
@@ -512,6 +514,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
 
             microcontroller_delay(10);
 
+            // Release SDA (pull high)
             unsafe {
                 self.reg.set_sda_hardware_pin_released(true);
             }
