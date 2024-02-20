@@ -1,3 +1,4 @@
+mod ownership;
 pub mod registers;
 
 /// # GPIO Select
@@ -20,16 +21,11 @@ impl Into<registers::PortOffset> for GpioSelect {
 }
 
 pub enum ResistorStrength {
-    HighImpedance,
+    None,
     WeakPullup,
     StrongPullup,
     WeakPulldown,
     StrongPulldown,
-}
-
-pub enum Mode {
-    Input,
-    Output,
 }
 
 pub enum VoltageSelect {
@@ -37,54 +33,138 @@ pub enum VoltageSelect {
     VddIOH,
 }
 
-static mut GLOBAL_OWNED_MASKS: [u32; 3] = [0_u32; 3];
-
-fn is_owned(masks: &[u32; 3]) -> bool {
-    for (i, port) in unsafe { GLOBAL_OWNED_MASKS }.iter().enumerate() {
-        let mask_port = masks[i];
-
-        if mask_port & port != 0 {
-            return true;
-        }
-    }
-
-    false
+pub enum OutputDriveStrength {
+    Strength0(VoltageSelect),
+    Strength1(VoltageSelect),
+    Strength2(VoltageSelect),
 }
 
-fn set_owned(masks: &[u32; 3]) {
-    for (i, port) in unsafe { GLOBAL_OWNED_MASKS }.iter_mut().enumerate() {
-        let mask_port = masks[i];
+pub enum PinFunction {
+    AF1,
+    AF2,
+    IO,
+}
 
-        *port &= mask_port;
+pub struct GpioPin(u8);
+
+impl GpioPin {
+    pub fn new(port: GpioSelect, pin: usize) -> Option<Self> {
+        let port_number = port as u8;
+        let pin_number = pin as u8;
+        let combined_number = (port_number << 6) | (pin_number & 0x3F);
+
+        let gpio = Self(combined_number);
+
+        if ownership::is_owned(&gpio) {
+            None
+        } else {
+            ownership::set_owned(&gpio);
+            Some(gpio)
+        }
+    }
+
+    #[inline]
+    pub fn get_port(&self) -> GpioSelect {
+        let number = self.0 >> 6;
+
+        match number {
+            0 => GpioSelect::Gpio0,
+            1 => GpioSelect::Gpio1,
+            2 => GpioSelect::Gpio2,
+            _ => unreachable!("Should not be possible to set a value higher then 2."),
+        }
+    }
+
+    #[inline]
+    pub fn get_pin(&self) -> usize {
+        (self.0 & 0x3F) as usize
+    }
+
+    unsafe fn set_bit(&self, reg_offset: registers::BaseOffset, flag: bool) {
+        if flag {
+            registers::enable_bit(reg_offset, self.get_port().into(), self.get_pin())
+        } else {
+            registers::disable_bit(reg_offset, self.get_port().into(), self.get_pin())
+        }
+    }
+
+    fn switch_function<Func>(&self, function: PinFunction, func: Func)
+    where
+        Func: FnOnce() -> (),
+    {
+        unsafe {
+            let is_alt = match function {
+                PinFunction::AF1 => {
+                    // Alt Functions need EN0 set before ALT1 can be entered
+                    self.set_bit(registers::rro::GPIO_EN0_SET, true);
+                    self.set_bit(registers::rro::GPIO_EN1_CLR, true);
+                    self.set_bit(registers::rro::GPIO_EN2_CLR, true);
+                    true
+                }
+                PinFunction::AF2 => {
+                    // Alt Functions need EN0 set before ALT2 can be entered
+                    self.set_bit(registers::rro::GPIO_EN0_SET, true);
+                    self.set_bit(registers::rro::GPIO_EN1_SET, true);
+                    self.set_bit(registers::rro::GPIO_EN2_CLR, true);
+                    true
+                }
+                PinFunction::IO => {
+                    // The different IO modes do not change pin behavior
+                    self.set_bit(registers::rro::GPIO_EN0_SET, true);
+                    self.set_bit(registers::rro::GPIO_EN1_CLR, true);
+                    self.set_bit(registers::rro::GPIO_EN2_CLR, true);
+                    false
+                }
+            };
+
+            func();
+
+            if is_alt {
+                // Set alt function if alt
+                self.set_bit(registers::rro::GPIO_EN0_CLR, true);
+            }
+        }
+    }
+
+    pub fn configure_input(&self, res: ResistorStrength, function: PinFunction) {
+        let (pad_ctrl1, pad_ctrl0, pull_ctrl, power_ctrl) = match res {
+            ResistorStrength::None => (false, false, false, false),
+            ResistorStrength::WeakPullup => (false, true, false, false),
+            ResistorStrength::StrongPullup => (false, true, true, false),
+            ResistorStrength::WeakPulldown => (true, false, false, true),
+            ResistorStrength::StrongPulldown => (true, false, true, true),
+        };
+
+        self.switch_function(function, || unsafe {
+            self.set_bit(registers::rro::GPIO_PADCTRL0, pad_ctrl0);
+            self.set_bit(registers::rro::GPIO_PADCTRL1, pad_ctrl1);
+            self.set_bit(registers::rro::GPIO_PS, pull_ctrl);
+            self.set_bit(registers::rro::GPIO_VSSEL, power_ctrl);
+        });
+    }
+
+    pub fn configure_output(&self, strength: OutputDriveStrength, function: PinFunction) {
+        let (ds_ctrl1, ds_ctrl0, v_sel) = match strength {
+            OutputDriveStrength::Strength0(setting) => (false, false, setting),
+            OutputDriveStrength::Strength1(setting) => (false, true, setting),
+            OutputDriveStrength::Strength2(setting) => (true, true, setting),
+        };
+
+        let v_sel = match v_sel {
+            VoltageSelect::VddIO => false,
+            VoltageSelect::VddIOH => true,
+        };
+
+        self.switch_function(function, || unsafe {
+            self.set_bit(registers::rro::GPIO_DS1, ds_ctrl1);
+            self.set_bit(registers::rro::GPIO_DS0, ds_ctrl0);
+            self.set_bit(registers::rro::GPIO_VSSEL, v_sel);
+        });
     }
 }
 
-pub struct GpioPins([u32; 3]);
-
-impl GpioPins {
-    pub fn new_single_pin(port: GpioSelect, pin: u32) -> Option<Self> {
-        let index = port as u8 as usize;
-        let pin_mask = 1 << pin;
-
-        let mut mask = [0u32; 3];
-        mask[index] |= pin_mask;
-
-        if is_owned(&mask) {
-            None
-        } else {
-            set_owned(&mask);
-            Some(GpioPins(mask))
-        }
+impl Drop for GpioPin {
+    fn drop(&mut self) {
+        ownership::disown_pin(&self);
     }
-
-    pub fn new_multi_pin_raw(mask: [u32; 3]) -> Option<Self> {
-        if is_owned(&mask) {
-            None
-        } else {
-            set_owned(&mask);
-            Some(GpioPins(mask))
-        }
-    }
-
-    pub fn configure_mode(&self, mode: Mode) {}
 }
