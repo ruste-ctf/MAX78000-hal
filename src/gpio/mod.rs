@@ -10,6 +10,7 @@ pub enum GpioSelect {
     Gpio2 = 2,
 }
 
+#[allow(clippy::from_over_into)]
 impl Into<registers::PortOffset> for GpioSelect {
     fn into(self) -> usize {
         match self {
@@ -90,7 +91,7 @@ impl GpioPin {
 
     fn switch_function<Func>(&self, function: PinFunction, func: Func)
     where
-        Func: FnOnce() -> (),
+        Func: FnOnce(),
     {
         unsafe {
             let is_alt = match function {
@@ -123,6 +124,27 @@ impl GpioPin {
                 // Set alt function if alt
                 self.set_bit(registers::rro::GPIO_EN0_CLR, true);
             }
+        }
+    }
+
+    pub fn set_output(&self, output_enable: bool) {
+        unsafe {
+            self.set_bit(
+                if output_enable {
+                    registers::rro::GPIO_OUTEN_SET
+                } else {
+                    registers::rro::GPIO_OUTEN_CLR
+                },
+                true,
+            )
+        };
+    }
+
+    pub fn get_input(&self) -> bool {
+        unsafe {
+            (registers::read_gpio(registers::rro::GPIO_IN, self.get_port().into())
+                & (1 << self.get_pin()))
+                != 0
         }
     }
 
@@ -165,6 +187,6 @@ impl GpioPin {
 
 impl Drop for GpioPin {
     fn drop(&mut self) {
-        ownership::disown_pin(&self);
+        ownership::disown_pin(self);
     }
 }
