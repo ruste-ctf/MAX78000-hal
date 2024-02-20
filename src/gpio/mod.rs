@@ -1,3 +1,4 @@
+pub mod hardware;
 mod ownership;
 pub mod registers;
 
