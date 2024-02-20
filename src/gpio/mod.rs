@@ -99,7 +99,7 @@ impl GpioPin {
 
             func();
 
-            let is_alt = match function {
+            match function {
                 PinFunction::AF1 => {
                     // Alt Functions need EN0 set before ALT1 can be entered
                     self.set_bit(registers::rro::GPIO_EN0_CLR, true);
