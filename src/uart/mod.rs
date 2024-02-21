@@ -1,4 +1,5 @@
 use crate::error::{ErrorKind, Result};
+use crate::gpio::GpioPin;
 use crate::memory_map::mmio;
 use core::marker::PhantomData;
 
@@ -7,6 +8,7 @@ pub mod registers;
 mod private {
     pub trait UARTPortCompatable {
         const PORT_PTR: usize;
+        const PORT_NUM: usize;
     }
 }
 
@@ -17,17 +19,22 @@ pub struct UART2 {}
 
 impl private::UARTPortCompatable for UART0 {
     const PORT_PTR: usize = mmio::UART_0;
+    const PORT_NUM: usize = 0;
 }
 impl private::UARTPortCompatable for UART1 {
     const PORT_PTR: usize = mmio::UART_1;
+    const PORT_NUM: usize = 1;
 }
 impl private::UARTPortCompatable for UART2 {
     const PORT_PTR: usize = mmio::UART_2;
+    const PORT_NUM: usize = 2;
 }
 
+#[allow(dead_code)]
 pub struct UART<Port = NoPort> {
     reg: registers::Registers,
     ph: PhantomData<Port>,
+    gpio: [GpioPin; 2],
 }
 
 #[allow(unused)]
@@ -60,7 +67,7 @@ impl UART<NoPort> {
         transmit_parity: bool,
         parity_value: ParityValueSelect,
         hfc: bool,
-    ) -> UART<UART0> {
+    ) -> Result<UART<UART0>> {
         UART::<UART0>::init(
             baud_rate,
             character_length,
@@ -98,7 +105,7 @@ impl UART<NoPort> {
         transmit_parity: bool,
         parity_value: ParityValueSelect,
         hfc: bool,
-    ) -> UART<UART1> {
+    ) -> Result<UART<UART1>> {
         UART::<UART1>::init(
             baud_rate,
             character_length,
@@ -136,7 +143,7 @@ impl UART<NoPort> {
         transmit_parity: bool,
         parity_value: ParityValueSelect,
         hfc: bool,
-    ) -> UART<UART2> {
+    ) -> Result<UART<UART2>> {
         UART::<UART2>::init(
             baud_rate,
             character_length,
@@ -216,6 +223,7 @@ impl Into<bool> for ParityValueSelect {
     }
 }
 
+#[allow(unused)]
 impl<Port: private::UARTPortCompatable> UART<Port> {
     fn init(
         baud_rate: BaudRates,
@@ -224,9 +232,10 @@ impl<Port: private::UARTPortCompatable> UART<Port> {
         transmit_parity: bool,
         parity_value: ParityValueSelect,
         hfc: bool,
-    ) -> Self {
+    ) -> Result<Self> {
         let mut uart = Self {
             reg: registers::Registers::new(Port::PORT_PTR),
+            gpio: crate::gpio::hardware::uart_n(Port::PORT_NUM).ok_or(ErrorKind::Busy)?,
             ph: PhantomData,
         };
 
@@ -251,7 +260,7 @@ impl<Port: private::UARTPortCompatable> UART<Port> {
             uart.reg.set_hardware_flow_control(hfc);
         }
 
-        uart
+        Ok(uart)
     }
 
     /// # Print String
