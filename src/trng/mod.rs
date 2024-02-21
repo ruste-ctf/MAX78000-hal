@@ -9,10 +9,11 @@ pub struct TRNG {
 
 impl TRNG {
     pub fn init() -> Self {
-        let registers = Self {
+        let mut registers = Self {
             registers: Registers::new(mmio::TRNG),
             has_key: false,
         };
+        registers.generate_key();
         registers
     }
 
@@ -27,7 +28,7 @@ impl TRNG {
         self.has_key = false;
     }
 
-    pub fn generate_new_key(&mut self) {
+    pub fn generate_key(&mut self) {
         unsafe {
             self.registers.set_generate_key(true);
         }
