@@ -58,13 +58,21 @@ impl Parse for BitRange {
                 })
                 .unwrap_or(Ok(Bound::Unbounded))?;
 
-            Ok(Self::Range((first, second)))
+            let (start, end) = get_real_range((first, second));
+
+            if start >= end {
+                Err(input.error("Range start must be larger then range end!"))
+            } else {
+                Ok(Self::Range((first, second)))
+            }
         } else if input.peek(LitInt) {
             let value: LitInt = input.parse()?;
 
             Ok(Self::Single(value.base10_parse()?))
         } else {
-            Err(input.error("Could not parse BitRange"))
+            Err(input.error(
+                "Could not parse bit, must provide a single bit '0' or multiple bits '0..=10'!",
+            ))
         }
     }
 }
@@ -104,7 +112,7 @@ impl Parse for Access {
             input.parse::<access::RW1O>()?;
             Ok(Access::RW1O)
         } else {
-            Err(input.error("Not a valid access token"))
+            Err(input.error("Not a valid access type, please use 'RO', 'WO', 'RW1C', or 'RW1O'"))
         }
     }
 }
@@ -127,7 +135,12 @@ impl Parse for BitAttribute {
         let register_name = path
             .segments
             .last()
-            .ok_or(input.error("Could not find const path ident"))?
+            .ok_or(input.error(
+                r#"
+                Could not find valid const item in #[bit(...)] attribute. 
+                Please use a constant to represent the current item. 
+                This macro uses the constant to name internal items used for this register."#,
+            ))?
             .ident
             .to_string()
             .to_ascii_lowercase();
@@ -165,7 +178,7 @@ impl Parse for BitBlock {
                     ..
                 }) = &attr.meta
                 else {
-                    return Err(input.error("Could not parse doc comment"));
+                    return Err(input.error("Could not parse doc comment, as the `doc` attribute was found but ill formed"));
                 };
 
                 doc_attr.push(format!(" {}", string.value().trim_start()));
@@ -178,7 +191,8 @@ impl Parse for BitBlock {
 
         Ok(Self {
             doc_attr,
-            bit_attr: bit_attr.ok_or(input.error("Reqires a #[bit(...)]"))?,
+            bit_attr: bit_attr
+                .ok_or(input.error("Reqires a #[bit(...)] attribute before a name (ie. Ident)."))?,
             name: input.parse()?,
         })
     }
@@ -283,11 +297,36 @@ fn generate_new_constructer(
         .collect();
 
     quote!(
+        /// # New
+        /// Make a new Registers struct that has the base offset of `port`. Since all bits
+        /// internally have their own offsets given by the constants passed to `#[bit(...)]`
+        /// they will correctly line up with hardware `mmio` registers.
+        ///
+        /// # Safety
+        /// This function requires that the user setup `device_ports` with correct
+        /// constants that point to correct and safe memory locations. This function
+        /// will `debug_assert!` that the given port input is one of the possible
+        /// inputs denoted by `device_ports`.
+        ///
+        /// # Panics
+        /// This function will panic in debug mode if the given register input does not match
+        /// one of the expected possible port inputs.
+        ///
+        /// However, checking is disabled in release and in testing mode. This will allow one
+        /// to test this structure while in testing mode. For release, checks are disabled due
+        /// to `assert!`'s need for Debug and large amount of code generation that might not be
+        /// desirable during production. Mostly these tests and asserts help with development, and
+        /// not so much for production.
         pub fn new(port: usize) -> Self {
+            #[cfg(not(test))]
             debug_assert!(
                 false #( || #device_ports_vec == port)*,
                 "Register port {port} must be {}", #device_ports_string
             );
+            #[cfg(test)]
+            {
+                #( let _ = #device_ports_vec; )*
+            }
 
             Self {
                 #(#fields,)*
@@ -402,6 +441,7 @@ fn generate_const(
     let name_const = name.to_uppercase().replace(' ', "_");
     let name_tokens = format_ident!("{}", name_const);
     let doc_title = string_into_title(name);
+    let doc_example_hidden = format!("# const {}: usize = {};", name_const, value);
     let doc_example_let = format!(" let my_const = Registers::{};", name_const);
     let doc_example_assert = format!(" assert_eq!(my_const, {});", value);
     quote!(
@@ -417,7 +457,11 @@ fn generate_const(
         /// contain the value 0, and `<MY FLAG>_BIT_END` will be 7.
         ///
         /// # Example
-        /// ```ignore
+        /// ```
+        /// # #[derive(Debug)] pub struct Registers {}
+        /// # impl Registers {
+        #[doc = #doc_example_hidden]
+        /// # }
         #[doc = #doc_example_let]
         #[doc = #doc_example_assert]
         /// ```
@@ -500,7 +544,7 @@ fn generate_single_get(name: &str, bit: &BitBlock) -> proc_macro2::TokenStream {
         #[inline(always)]
         pub fn #name(&self) -> bool {
             use hal_macros::VolatileRead;
-            (self.#self_dot.read() & (<Self>::#self_shift as u32)) != 0
+            (self.#self_dot.read() & (1u32 << <Self>::#self_shift)) != 0
         }
     }
 }
@@ -577,6 +621,7 @@ fn generate_range_set(
     let const_name = bit.name.to_string().to_uppercase().replace(' ', "_");
     let self_mask = format_ident!("{}_BIT_MASK", const_name);
     let self_shift = format_ident!("{}_BIT_START", const_name);
+    let self_end = format_ident!("{}_BIT_END", const_name);
     let const_reg_name = bit.bit_attr.register_name.to_uppercase().replace(' ', "_");
     let self_set_mask = format_ident!("{}_SET_MASK", const_reg_name);
     let doc_title = string_into_title(name.to_string().as_str());
@@ -617,9 +662,9 @@ fn generate_range_set(
         #[inline(always)]
         pub unsafe fn #name(&mut self, flag: #bit_type) {
             use hal_macros::{VolatileRead, VolatileWrite};
-            debug_assert_eq!((flag as usize) >> (<Self>::#self_shift + 1), 0, "Provided flag {flag} is too large for provided setter range {}..={}!", #start, #end);
+            debug_assert_eq!((flag as usize) >> (<Self>::#self_end - <Self>::#self_shift + 1), 0, "Provided flag {flag} is too large for provided setter range {}..={}!", #start, #end);
             let flag_shift: u32 = (flag as u32) << (<Self>::#self_shift as u32);
-            let read_value: u32 = self.#self_dot.read() & (<Self>::#self_mask as u32) & (<Self>::#self_set_mask as u32);
+            let read_value: u32 = self.#self_dot.read() & (!<Self>::#self_mask as u32) & (<Self>::#self_set_mask as u32);
             self.#self_dot.write(read_value | flag_shift);
         }
     }
@@ -695,11 +740,7 @@ fn generate_bit_single(single: usize, bit: &BitBlock) -> proc_macro2::TokenStrea
         _ => ("set", false, "get_", ""),
     };
 
-    let const_start = generate_const(
-        format!("{}_BIT", bit.name).as_str(),
-        1 << single,
-        doc_string,
-    );
+    let const_start = generate_const(format!("{}_BIT", bit.name).as_str(), single, doc_string);
 
     let (write, read) = match bit.bit_attr.access {
         Access::RO => (false, true),

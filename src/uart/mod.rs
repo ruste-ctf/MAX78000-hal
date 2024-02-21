@@ -2,7 +2,6 @@ use crate::error::{ErrorKind, Result};
 use crate::memory_map::mmio;
 use core::marker::PhantomData;
 
-use self::registers::Registers;
 pub mod registers;
 
 mod private {
@@ -27,29 +26,207 @@ impl private::UARTPortCompatable for UART2 {
 }
 
 pub struct UART<Port = NoPort> {
-    reg: Registers,
+    reg: registers::Registers,
     ph: PhantomData<Port>,
 }
 
 #[allow(unused)]
 impl UART<NoPort> {
-    pub fn port_0_init() -> UART<UART0> {
-        UART::<UART0>::init()
+    /// # Port 0 Init
+    /// Initializes UART 0
+    /// # Arguments
+    /// * `baud_rate` - The baud rate that the UART will use
+    /// * `character_length` - The number of data bits that will be transferred in a frame
+    /// * `stop_bits` - The number of stop bits that will be used
+    /// * `transmit_parity` - Enables the generation of the parity bit
+    /// * `hfc` - Enables the use of hardware flow control
+    /// # Example
+    ///
+    /// ```no_run
+    /// use max78000_hal::uart::{UART, BaudRates, CharacterLength, StopBits, ParityValueSelect};
+    /// let mut uart_test = UART::port_0_init(
+    ///     BaudRates::Baud115200,
+    ///     CharacterLength::EightBits,
+    ///     StopBits::OneBit,
+    ///     false,
+    ///     ParityValueSelect::OneBased,
+    ///     false,
+    /// );
+    /// ```
+    pub fn port_0_init(
+        baud_rate: BaudRates,
+        character_length: CharacterLength,
+        stop_bits: StopBits,
+        transmit_parity: bool,
+        parity_value: ParityValueSelect,
+        hfc: bool,
+    ) -> UART<UART0> {
+        UART::<UART0>::init(
+            baud_rate,
+            character_length,
+            stop_bits,
+            transmit_parity,
+            parity_value,
+            hfc,
+        )
     }
-
-    pub fn port_1_init() -> UART<UART1> {
-        UART::<UART1>::init()
+    /// # Port 1 Init
+    /// Initializes UART 1
+    /// # Arguments
+    /// * `baud_rate` - The baud rate that the UART will use
+    /// * `character_length` - The number of data bits that will be transferred in a frame
+    /// * `stop_bits` - The number of stop bits that will be used
+    /// * `transmit_parity` - Enables the generation of the parity bit
+    /// * `hfc` - Enables the use of hardware flow control
+    /// # Example
+    ///
+    /// ```no_run
+    /// use max78000_hal::uart::{UART, BaudRates, CharacterLength, StopBits, ParityValueSelect};
+    /// let mut uart_test = UART::port_1_init(
+    ///     BaudRates::Baud115200,
+    ///     CharacterLength::EightBits,
+    ///     StopBits::OneBit,
+    ///     false,
+    ///     ParityValueSelect::OneBased,
+    ///     false,
+    /// );
+    /// ```
+    pub fn port_1_init(
+        baud_rate: BaudRates,
+        character_length: CharacterLength,
+        stop_bits: StopBits,
+        transmit_parity: bool,
+        parity_value: ParityValueSelect,
+        hfc: bool,
+    ) -> UART<UART1> {
+        UART::<UART1>::init(
+            baud_rate,
+            character_length,
+            stop_bits,
+            transmit_parity,
+            parity_value,
+            hfc,
+        )
     }
+    /// # Port 2 Init
+    /// Initializes UART 2
+    /// # Arguments
+    /// * `baud_rate` - The baud rate that the UART will use
+    /// * `character_length` - The number of data bits that will be transferred in a frame
+    /// * `stop_bits` - The number of stop bits that will be used
+    /// * `transmit_parity` - Enables the generation of the parity bit
+    /// * `hfc` - Enables the use of hardware flow control
+    /// # Example
+    ///
+    /// ```no_run
+    /// use max78000_hal::uart::{UART, BaudRates, CharacterLength, StopBits, ParityValueSelect};
+    /// let mut uart_test = UART::port_2_init(
+    ///     BaudRates::Baud115200,
+    ///     CharacterLength::EightBits,
+    ///     StopBits::OneBit,
+    ///     false,
+    ///     ParityValueSelect::OneBased,
+    ///     false,
+    /// );
+    /// ```
+    pub fn port_2_init(
+        baud_rate: BaudRates,
+        character_length: CharacterLength,
+        stop_bits: StopBits,
+        transmit_parity: bool,
+        parity_value: ParityValueSelect,
+        hfc: bool,
+    ) -> UART<UART2> {
+        UART::<UART2>::init(
+            baud_rate,
+            character_length,
+            stop_bits,
+            transmit_parity,
+            parity_value,
+            hfc,
+        )
+    }
+}
+#[repr(u32)]
+pub enum BaudRates {
+    Baud1200 = 1200,
+    Baud2400 = 2400,
+    Baud4800 = 4800,
+    Baud9600 = 9600,
+    Baud19200 = 19200,
+    Baud38400 = 38400,
+    Baud57600 = 57600,
+    Baud115200 = 115200,
+}
 
-    pub fn port_2_init() -> UART<UART2> {
-        UART::<UART2>::init()
+/// # Character Length
+/// The number of data bits in a UART frame.
+#[repr(u8)]
+pub enum CharacterLength {
+    FiveBits = 0,
+    SixBits = 1,
+    SevenBits = 2,
+    EightBits = 3,
+}
+
+/// # Clock Sources
+/// The clock source to use for UART
+#[repr(u8)]
+pub enum ClockSources {
+    PCLK = 0,
+    IBRO = 2,
+}
+
+/// # Stop Bits
+/// The number of stop bits to use.
+/// Note: When using a character length of five bits, passing the variant
+/// `TwoBits` uses 1.5 bits.
+pub enum StopBits {
+    OneBit,
+    TwoBits,
+}
+
+impl Into<bool> for StopBits {
+    fn into(self) -> bool {
+        match self {
+            StopBits::OneBit => false,
+            StopBits::TwoBits => true,
+        }
+    }
+}
+
+/// # Hardware Flow Control Deassert Condition
+/// When to deassert the hardware flow control
+pub enum HFCDeassertCondition {
+    EqualsFIFODepth,
+    ExceedsRxThreshold,
+}
+
+pub enum ParityValueSelect {
+    OneBased,
+    ZeroBased,
+}
+
+impl Into<bool> for ParityValueSelect {
+    fn into(self) -> bool {
+        match self {
+            ParityValueSelect::OneBased => false,
+            ParityValueSelect::ZeroBased => true,
+        }
     }
 }
 
 impl<Port: private::UARTPortCompatable> UART<Port> {
-    fn init() -> Self {
+    fn init(
+        baud_rate: BaudRates,
+        character_length: CharacterLength,
+        stop_bits: StopBits,
+        transmit_parity: bool,
+        parity_value: ParityValueSelect,
+        hfc: bool,
+    ) -> Self {
         let mut uart = Self {
-            reg: Registers::new(Port::PORT_PTR),
+            reg: registers::Registers::new(Port::PORT_PTR),
             ph: PhantomData,
         };
 
@@ -57,115 +234,92 @@ impl<Port: private::UARTPortCompatable> UART<Port> {
         uart.clear_rx_fifo();
         uart.clear_tx_fifo();
 
-        // Set the character length to 8
-        uart.set_character_length(3).unwrap();
+        unsafe {
+            uart.reg.set_character_length(character_length as u8);
+            // Set the number of stop bits to 1
+            uart.reg.set_number_of_stop_bits(stop_bits.into());
+            uart.reg
+                .set_transmit_parity_generation_enable(transmit_parity);
+            // Set the parity value
+            uart.reg.set_parity_value(parity_value.into());
+            // Set the clock source to IBRO
+            uart.reg.set_baud_clock_source(ClockSources::IBRO as u8);
+            // Set the clock divisor to 7.3728 Mhz / baud rate
+            let divisor = 7372800 / baud_rate as u32;
+            uart.reg.set_baud_rate_divisor(divisor);
+            // Set the Hardware Flow Control
+            uart.reg.set_hardware_flow_control(hfc);
+        }
 
-        // Set the number of stop bits to 1
-        uart.set_number_stop_bits(false);
-
-        // Dissable parity
-        uart.parity_enable(false);
         uart
     }
 
+    /// # Print String
+    /// Prints the string passed
+    /// Note: Calls ```write_blocking_transmit_fifo(char)```
     pub fn print_string(&mut self, string: &str) {
         for char in string.bytes() {
-            while self.transmit_busy() {}
-            self.write_transmit_fifo(char);
+            self.write_blocking_transmit_fifo(char);
         }
     }
 
+    /// # Clear RX FIFO
+    /// Clears all data from the receiving FIFO
     pub fn clear_rx_fifo(&mut self) {
         unsafe {
             self.reg.activate_receive_fifo_flush();
         }
     }
 
+    /// # Clear TX FIFO
+    /// Clears all data from the transmit FIFO
     pub fn clear_tx_fifo(&mut self) {
         unsafe {
             self.reg.activate_transmit_fifo_flush();
         }
     }
 
-    pub fn set_character_length(&mut self, length: u8) -> Result<()> {
-        // If the value is not in the allowed range, Err
-        if length > 3 {
-            return Err(ErrorKind::BadParam);
-        }
-
-        unsafe {
-            self.reg.set_character_length(length);
-        }
-        // TODO Check if this will every return
-        while self.reg.get_character_length() != length {}
-        Ok(())
-    }
-
-    pub fn set_baud_clock_source(&mut self, source: u8) -> Result<()> {
-        // If the value is not in the allowed range, Err
-        if source > 3 {
-            return Err(ErrorKind::BadParam);
-        }
-
-        unsafe {
-            self.reg.set_baud_clock_source(source);
-        }
-        // TODO Check if this will every return
-        while self.reg.get_baud_clock_source() != source {}
-        Ok(())
-    }
-
-    pub fn set_baud_clock(&mut self, enable: bool) {
-        unsafe { self.reg.set_baud_clock_enable(enable) }
-    }
-
-    pub fn set_number_stop_bits(&mut self, number: bool) {
-        unsafe {
-            // A "number" of true means use 1 stop bit
-            self.reg.set_number_of_stop_bits(number);
-        }
-    }
-
-    pub fn parity_enable(&mut self, enabled: bool) {
-        unsafe {
-            self.reg.set_transmit_parity_generation_enable(enabled);
-        }
-    }
-
-    pub fn receive_busy(&self) -> bool {
-        self.reg.get_receive_busy()
-    }
-
-    pub fn transmit_busy(&self) -> bool {
-        self.reg.get_transmit_busy()
-    }
-
-    pub fn peek_transmit_fifo(&self) -> u8 {
-        self.reg.get_transmit_fifo_data()
-    }
-
-    pub fn get_transmit_fifo_level(&self) -> u8 {
-        self.reg.get_transmit_fifo_level()
-    }
-
-    pub fn get_receive_fifo_level(&self) -> u8 {
-        self.reg.get_receive_fifo_level()
-    }
-
-    pub fn read_receive_fifo(&self) -> u8 {
-        self.reg.get_fifo_data()
-    }
-
-    pub fn write_transmit_fifo(&mut self, data: u8) {
+    /// # Write Blocking Transmit FIFO
+    /// Writes to the FIFO, waiting until it is empty
+    pub fn write_blocking_transmit_fifo(&mut self, data: u8) {
+        while self.reg.get_transmit_busy() {}
         unsafe {
             self.reg.set_fifo_data(data);
         }
     }
 
-    pub fn set_clock_divisor(&mut self, divisor: u32) {
-        unsafe {
-            // FIXME the functions need to be renamed
-            self.reg.set_baud_rate_divisor(divisor);
+    /// # Read Blocking Receive FIFO
+    /// Reads from the receive FIFO, but only after it is done receiving
+    pub fn read_blocking_receive_fifo(&mut self) -> u8 {
+        while self.reg.get_receive_busy() {}
+        self.reg.get_fifo_data()
+    }
+
+    /// # Write Transmit FIFO
+    /// Writes to the FIFO if possible
+    pub fn write_transmit_fifo(&mut self, data: u8) -> Result<()> {
+        if self.reg.get_transmit_fifo_full() {
+            Err(ErrorKind::Busy)
+        } else {
+            unsafe { self.reg.set_fifo_data(data) }
+            Ok(())
         }
+    }
+
+    /// # Read Receive FIFO
+    /// Reads from the receive FIFO if possible
+    pub fn read_receive_fifo(&mut self) -> Result<u8> {
+        if self.reg.get_receive_fifo_empty() {
+            Err(ErrorKind::NoneAvailable)
+        } else {
+            Ok(self.reg.get_fifo_data())
+        }
+    }
+}
+
+impl<Port: private::UARTPortCompatable> core::fmt::Write for UART<Port> {
+    fn write_str(&mut self, s: &str) -> core::fmt::Result {
+        self.print_string(s);
+        Ok(())
     }
 }

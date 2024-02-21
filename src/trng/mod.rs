@@ -9,11 +9,10 @@ pub struct TRNG {
 
 impl TRNG {
     pub fn init() -> Self {
-        let mut registers = Self {
+        let registers = Self {
             registers: Registers::new(mmio::TRNG),
             has_key: false,
         };
-        registers.generate_new_key();
         registers
     }
 
@@ -52,6 +51,14 @@ impl TRNG {
         let _invalid = self.registers.get_trng_data();
 
         while !self.registers.get_random_number_ready() {}
+        self.registers.get_trng_data()
+    }
+
+    pub fn ready(&self) -> bool {
+        self.registers.get_random_number_ready()
+    }
+
+    pub fn get(&self) -> u32 {
         self.registers.get_trng_data()
     }
 }

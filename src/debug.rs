@@ -1,8 +1,8 @@
-static mut DEBUG_OUTPUT_STREAM: DebugStream = DebugStream { 0: None };
+static mut DEBUG_OUTPUT_STREAM: DebugStream = DebugStream(None);
 
-pub struct DebugStream(Option<&'static mut (dyn core::fmt::Write + Send + Sync)>);
+pub struct DebugStream(Option<&'static mut (dyn core::fmt::Write)>);
 
-pub fn attach_debug(stream: &'static mut (dyn core::fmt::Write + Send + Sync)) {
+pub fn attach_debug(stream: &'static mut (dyn core::fmt::Write)) {
     unsafe {
         DEBUG_OUTPUT_STREAM.0 = Some(stream);
     }
@@ -10,15 +10,15 @@ pub fn attach_debug(stream: &'static mut (dyn core::fmt::Write + Send + Sync)) {
 
 impl core::fmt::Write for DebugStream {
     fn write_str(&mut self, s: &str) -> core::fmt::Result {
-        self.0.unwrap().write_str(s)
+        self.0.as_mut().unwrap().write_str(s)
     }
 
     fn write_char(&mut self, c: char) -> core::fmt::Result {
-        self.0.unwrap().write_char(c)
+        self.0.as_mut().unwrap().write_char(c)
     }
 
     fn write_fmt(&mut self, args: core::fmt::Arguments<'_>) -> core::fmt::Result {
-        self.0.unwrap().write_fmt(args)
+        self.0.as_mut().unwrap().write_fmt(args)
     }
 }
 

@@ -1,6 +1,8 @@
-use crate::core_peripheral_clock;
 use crate::error::{ErrorKind, Result};
+use crate::gcr::{peripheral_reset, system_clock_enable};
+use crate::gpio::GpioPin;
 use crate::memory_map::mmio;
+use crate::{core_peripheral_clock, debug_print, debug_println};
 use core::marker::PhantomData;
 
 use self::registers::Registers;
@@ -10,6 +12,7 @@ pub mod registers;
 mod private {
     pub trait I2CPortCompatable {
         const PORT_PTR: usize;
+        const PORT_NUM: usize;
     }
 }
 
@@ -20,12 +23,15 @@ pub struct I2CPort2 {}
 
 impl private::I2CPortCompatable for I2CPort0 {
     const PORT_PTR: usize = mmio::I2C_PORT_0;
+    const PORT_NUM: usize = 0;
 }
 impl private::I2CPortCompatable for I2CPort1 {
     const PORT_PTR: usize = mmio::I2C_PORT_1;
+    const PORT_NUM: usize = 1;
 }
 impl private::I2CPortCompatable for I2CPort2 {
     const PORT_PTR: usize = mmio::I2C_PORT_2;
+    const PORT_NUM: usize = 2;
 }
 
 #[allow(dead_code)]
@@ -33,6 +39,7 @@ pub struct I2C<Port = NoPort> {
     reg: Registers,
     master_enabled: bool,
     slave_address: usize,
+    gpio: [GpioPin; 2],
     _ph: PhantomData<Port>,
 }
 
@@ -90,19 +97,31 @@ const MAX_I2C_FIFO_TRANSACTION: usize = 256;
 const MAX_TRANSMIT_FIFO_LEN: usize = 8;
 const MAX_RECEIVE_FIFO_LEN: usize = 8;
 
-#[cfg(not(test))]
-extern "C" {
-    fn MXC_Delay(us: u32);
-}
-
-/// # We need this for I2C, but uh I have not gotten to it yet :)
-#[cfg(not(test))]
 fn microcontroller_delay(us: usize) {
-    unsafe { MXC_Delay(us as u32) }
+    for _ in 0..1000000 {
+        unsafe { core::arch::asm!("nop") }
+    }
 }
 
-#[cfg(test)]
-fn microcontroller_delay(_us: usize) {}
+impl I2C<NoPort> {
+    pub fn init_port_0_master() -> Result<I2C<I2CPort0>> {
+        peripheral_reset(crate::gcr::HardwareSource::I2C0);
+        system_clock_enable(crate::gcr::HardwareSource::I2C0, true);
+        I2C::<I2CPort0>::init(true, 0x00)
+    }
+
+    pub fn init_port_1_master() -> Result<I2C<I2CPort1>> {
+        peripheral_reset(crate::gcr::HardwareSource::I2C1);
+        system_clock_enable(crate::gcr::HardwareSource::I2C1, true);
+        I2C::<I2CPort1>::init(true, 0x00)
+    }
+
+    pub fn init_port_2_master() -> Result<I2C<I2CPort2>> {
+        peripheral_reset(crate::gcr::HardwareSource::I2C2);
+        system_clock_enable(crate::gcr::HardwareSource::I2C2, true);
+        I2C::<I2CPort2>::init(true, 0x00)
+    }
+}
 
 #[allow(unused)]
 impl<Port: private::I2CPortCompatable> I2C<Port> {
@@ -110,6 +129,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
         let mut i2c = Self {
             reg: Registers::new(Port::PORT_PTR),
             slave_address,
+            gpio: crate::gpio::hardware::i2c_n(Port::PORT_NUM).ok_or(ErrorKind::Busy)?,
             master_enabled,
             _ph: PhantomData,
         };
@@ -337,7 +357,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
         let max_receive = fifo_free.min(rx.len());
 
         for data in rx.iter_mut().take(max_receive) {
-            *data = self.reg.get_fifo_data() as u8;
+            *data = self.reg.get_fifo_data();
         }
 
         max_receive
@@ -433,13 +453,14 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
 
         // Switch to Software Mode, and enable the I2C bus
         unsafe {
-            self.reg.set_software_i2c_mode(true);
             self.reg.set_i2c_peripheral_enable(true);
+            self.reg.set_software_i2c_mode(true);
         }
 
         let mut success = false;
         // Lets try and recover the bus
         for _ in 0..retry_count {
+            debug_print!("Testing I2C Bus... ");
             microcontroller_delay(10);
 
             // Pull SCL low
@@ -450,14 +471,17 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
             microcontroller_delay(10);
 
             // If SCL is high we were unable to pull the bus low
-            if self.reg.get_scl_pin() {
+            if !self.reg.get_scl_pin() {
+                debug_println!("SCL-LOW-FAIL");
                 unsafe { self.reg.set_scl_hardware_pin_released(true) };
                 unsafe { self.reg.set_sda_hardware_pin_released(true) };
                 continue;
             }
+            debug_print!("SCL-LOW ");
 
             microcontroller_delay(10);
 
+            // Release SCL (pull high)
             unsafe {
                 self.reg.set_scl_hardware_pin_released(true);
             }
@@ -465,14 +489,17 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
             microcontroller_delay(10);
 
             // If SCL is low we were unable to release the bus
-            if !self.reg.get_scl_pin() {
+            if self.reg.get_scl_pin() {
+                debug_println!("SCL-HIGH-FAIL");
                 unsafe { self.reg.set_scl_hardware_pin_released(true) };
                 unsafe { self.reg.set_sda_hardware_pin_released(true) };
                 continue;
             }
+            debug_print!("SCL-HIGH ");
 
             microcontroller_delay(10);
 
+            // Pull SDA Low
             unsafe {
                 self.reg.set_sda_hardware_pin_released(false);
             }
@@ -481,13 +508,16 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
 
             // If SDA is high we were unable to pull the bus low
             if self.reg.get_sda_pin() {
+                debug_println!("SDA-LOW-FAIL");
                 unsafe { self.reg.set_scl_hardware_pin_released(true) };
                 unsafe { self.reg.set_sda_hardware_pin_released(true) };
                 continue;
             }
+            debug_print!("SDA-LOW ");
 
             microcontroller_delay(10);
 
+            // Release SDA (pull high)
             unsafe {
                 self.reg.set_sda_hardware_pin_released(true);
             }
@@ -496,10 +526,13 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
 
             // If SDA is low we were unable to pull release the bus
             if !self.reg.get_sda_pin() {
+                debug_println!("SDA-HIGH-FAIL");
                 unsafe { self.reg.set_scl_hardware_pin_released(true) };
                 unsafe { self.reg.set_sda_hardware_pin_released(true) };
                 continue;
             }
+
+            debug_print!("SDA-HIGH ");
 
             // We where able to take control over the bus!
             success = true;
@@ -514,6 +547,8 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
         unsafe {
             self.reg.set_control_register(state_prior);
         }
+
+        debug_println!("  -- OK");
 
         Ok(())
     }
