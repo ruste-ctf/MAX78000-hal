@@ -570,9 +570,9 @@ fn generate_single_set(name: &str, bit: &BitBlock, only_gen_one: bool) -> proc_m
         quote!(, flag: bool)
     };
     let flag_or_true = if only_gen_one {
-        quote!(1)
+        quote!(true)
     } else {
-        quote!(if flag { 1 } else { 0 })
+        quote!(flag)
     };
     quote! {
         #doc_title
@@ -604,8 +604,13 @@ fn generate_single_set(name: &str, bit: &BitBlock, only_gen_one: bool) -> proc_m
         pub unsafe fn #name(&mut self #param) {
             use hal_macros::{VolatileRead, VolatileWrite};
             let read_value: u32 = self.#self_dot.read() & (<Self>::#self_mask as u32);
-            let flag_value: u32 = (#flag_or_true) << (<Self>::#self_shift as u32);
-            self.#self_dot.write(read_value | flag_value);
+            let flag_value: u32 = 1 << (<Self>::#self_shift as u32);
+            let write = if #flag_or_true {
+                read_value | flag_value
+            } else {
+                read_value & !flag_value
+            };
+            self.#self_dot.write(write);
         }
     }
 }
