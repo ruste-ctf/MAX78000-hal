@@ -36,8 +36,11 @@ impl TRNG {
     }
 
     pub fn get_trng_data(&mut self) -> u32 {
-        // FIXME use interrupts
         assert!(self.has_key);
+
+        let _invalid = self.registers.get_trng_data();
+
+        // FIXME use interrupt
         while !self.registers.get_random_number_ready() {}
         self.registers.get_trng_data()
     }
@@ -46,6 +49,8 @@ impl TRNG {
     /// This function is for educational purposes only. It should only be used to
     /// learn about what happens when you generate a number without having a key.
     pub unsafe fn unchecked_get_trng_data(&self) -> u32 {
+        let _invalid = self.registers.get_trng_data();
+
         while !self.registers.get_random_number_ready() {}
         self.registers.get_trng_data()
     }
