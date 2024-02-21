@@ -146,6 +146,14 @@ macro_rules! single_bit_test {
             unsafe { reg.$set(true) };
             assert_eq!(reg.first_4_bytes.read(), 0b1 << $bit);
             assert_eq!(reg.$get(), true);
+
+            unsafe { reg.$set(false) };
+            assert_eq!(reg.first_4_bytes.read(), 0b0);
+            assert_eq!(reg.$get(), false);
+
+            unsafe { reg.$set(true) };
+            assert_eq!(reg.first_4_bytes.read(), 0b1 << $bit);
+            assert_eq!(reg.$get(), true);
         }
     };
 }
