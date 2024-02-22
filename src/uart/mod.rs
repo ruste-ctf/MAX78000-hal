@@ -1,4 +1,5 @@
 use crate::error::{ErrorKind, Result};
+use crate::gcr::{peripheral_reset, system_clock_enable};
 use crate::gpio::GpioPin;
 use crate::memory_map::mmio;
 use core::marker::PhantomData;
@@ -30,11 +31,10 @@ impl private::UARTPortCompatable for UART2 {
     const PORT_NUM: usize = 2;
 }
 
-#[allow(dead_code)]
 pub struct UART<Port = NoPort> {
     reg: registers::Registers,
-    ph: PhantomData<Port>,
-    gpio: [GpioPin; 2],
+    _ph: PhantomData<Port>,
+    _gpio: [GpioPin; 2],
 }
 
 #[allow(unused)]
@@ -68,6 +68,8 @@ impl UART<NoPort> {
         parity_value: ParityValueSelect,
         hfc: bool,
     ) -> Result<UART<UART0>> {
+        peripheral_reset(crate::gcr::HardwareSource::UART0);
+        system_clock_enable(crate::gcr::HardwareSource::UART0, true);
         UART::<UART0>::init(
             baud_rate,
             character_length,
@@ -106,6 +108,8 @@ impl UART<NoPort> {
         parity_value: ParityValueSelect,
         hfc: bool,
     ) -> Result<UART<UART1>> {
+        peripheral_reset(crate::gcr::HardwareSource::UART1);
+        system_clock_enable(crate::gcr::HardwareSource::UART1, true);
         UART::<UART1>::init(
             baud_rate,
             character_length,
@@ -144,6 +148,8 @@ impl UART<NoPort> {
         parity_value: ParityValueSelect,
         hfc: bool,
     ) -> Result<UART<UART2>> {
+        peripheral_reset(crate::gcr::HardwareSource::UART2);
+        system_clock_enable(crate::gcr::HardwareSource::UART2, true);
         UART::<UART2>::init(
             baud_rate,
             character_length,
@@ -223,7 +229,6 @@ impl Into<bool> for ParityValueSelect {
     }
 }
 
-#[allow(unused)]
 impl<Port: private::UARTPortCompatable> UART<Port> {
     fn init(
         baud_rate: BaudRates,
@@ -235,8 +240,8 @@ impl<Port: private::UARTPortCompatable> UART<Port> {
     ) -> Result<Self> {
         let mut uart = Self {
             reg: registers::Registers::new(Port::PORT_PTR),
-            gpio: crate::gpio::hardware::uart_n(Port::PORT_NUM).ok_or(ErrorKind::Busy)?,
-            ph: PhantomData,
+            _gpio: crate::gpio::hardware::uart_n(Port::PORT_NUM).ok_or(ErrorKind::Busy)?,
+            _ph: PhantomData,
         };
 
         // Clear the FIFOs
