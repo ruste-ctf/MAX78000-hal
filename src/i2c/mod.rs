@@ -429,7 +429,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
             self.reg.activate_transmit_fifo_flush();
         }
 
-        while self.reg.is_transmit_fifo_flush_pending() {}
+        //while self.reg.is_transmit_fifo_flush_pending() {}
     }
 
     pub fn set_rx_fifo_threshold(&mut self, threshold: usize) {
