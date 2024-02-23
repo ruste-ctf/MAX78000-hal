@@ -52,6 +52,14 @@ make_device! {
     #[bit(0..=15, RW, rro::I2C_CTRL)]
     control_register,
 
+    /// The entire I2C interrupt flags0 register.
+    #[bit(0..=31, RW, rro::I2C_INTFL0)]
+    interrupt_flags_0,
+
+    /// The entire I2C interrupt flags1 register.
+    #[bit(0..=31, RW, rro::I2C_INTFL1)]
+    interrupt_flags_1,
+
     /// Set I2C to high speed mode, or set it to low speed mode.
     /// 0: Disabled
     /// 1: Enabled

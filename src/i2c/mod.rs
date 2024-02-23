@@ -193,6 +193,70 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
         Ok(())
     }
 
+    pub fn slave_transaction<RXFun, TXFun>(&mut self, mut rx: RXFun, mut tx: TXFun) -> Result<()>
+    where
+        RXFun: FnMut(u8) -> Result<()>,
+        TXFun: FnMut() -> Result<u8>,
+    {
+        if self.master_enabled {
+            return Err(ErrorKind::BadState);
+        }
+
+        unsafe {
+            self.clear_rx_fifo();
+            self.clear_tx_fifo();
+
+            // Clear any flags
+            self.reg
+                .set_interrupt_flags_0(self.reg.get_interrupt_flags_0());
+            self.reg
+                .set_interrupt_flags_1(self.reg.get_interrupt_flags_1());
+        }
+
+        self.set_rx_fifo_threshold(1);
+        self.set_tx_fifo_threshold(1);
+
+        // TODO: Refacter this to be async later
+        loop {
+            if self.reg.is_slave_mode_receive_fifo_overflow_flag_active() {
+                todo!("Buffer Overrun")
+            }
+
+            if self.reg.is_slave_mode_transmit_fifo_underflow_flag_active() {
+                todo!("Buffer Underrun")
+            }
+
+            if self.reg.is_receive_fifo_threshold_level_active() {
+                unsafe { self.reg.clear_receive_fifo_threshold_level() };
+
+                while !self.reg.get_receive_fifo_empty() {
+                    rx(self.reg.get_fifo_data())?;
+                }
+            }
+
+            if self.reg.is_transmit_fifo_threshold_level_active() {
+                unsafe { self.reg.clear_transmit_fifo_threshold_level() };
+
+                while !self.reg.get_transmit_fifo_full() {
+                    let byte = tx()?;
+
+                    unsafe { self.reg.set_fifo_data(byte) };
+                }
+            }
+
+            if self.reg.is_slave_mode_stop_condition_active()
+                || self.reg.is_transfer_complete_flag_active()
+            {
+                unsafe {
+                    self.reg.clear_slave_mode_stop_condition();
+                    self.reg.clear_transfer_complete_flag();
+                }
+
+                return Ok(());
+            }
+        }
+    }
+
     pub fn master_transaction(
         &mut self,
         address: usize,
