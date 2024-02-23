@@ -121,6 +121,24 @@ impl I2C<NoPort> {
         system_clock_enable(crate::gcr::HardwareSource::I2C2, true);
         I2C::<I2CPort2>::init(true, 0x00)
     }
+
+    pub fn init_port_0_slave(address: usize) -> Result<I2C<I2CPort0>> {
+        peripheral_reset(crate::gcr::HardwareSource::I2C0);
+        system_clock_enable(crate::gcr::HardwareSource::I2C0, true);
+        I2C::<I2CPort0>::init(false, address)
+    }
+
+    pub fn init_port_1_slave(address: usize) -> Result<I2C<I2CPort1>> {
+        peripheral_reset(crate::gcr::HardwareSource::I2C1);
+        system_clock_enable(crate::gcr::HardwareSource::I2C1, true);
+        I2C::<I2CPort1>::init(false, address)
+    }
+
+    pub fn init_port_2_slave(address: usize) -> Result<I2C<I2CPort2>> {
+        peripheral_reset(crate::gcr::HardwareSource::I2C2);
+        system_clock_enable(crate::gcr::HardwareSource::I2C2, true);
+        I2C::<I2CPort2>::init(false, address)
+    }
 }
 
 #[allow(unused)]
