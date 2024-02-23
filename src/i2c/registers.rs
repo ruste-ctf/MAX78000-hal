@@ -226,7 +226,7 @@ make_device! {
     transaction_active,
 
     /// I2C has had an error on the Interrupt Flag 0 Register
-    #[bit(8..=14, RO, rro::I2C_INTFL0)]
+    #[bit(8..=14, RW, rro::I2C_INTFL0)]
     error_condition,
 
     /// Slave Write Address Match Interrupt
