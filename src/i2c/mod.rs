@@ -98,7 +98,7 @@ const MAX_TRANSMIT_FIFO_LEN: usize = 8;
 const MAX_RECEIVE_FIFO_LEN: usize = 8;
 
 fn microcontroller_delay(us: usize) {
-    for _ in 0..1000000 {
+    for _ in 0..100000 {
         unsafe { core::arch::asm!("nop") }
     }
 }
@@ -185,12 +185,17 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
             return Err(ErrorKind::BadState);
         }
 
+        unsafe {
+            self.reg.clear_transmit_fifo_locked();
+            self.clear_tx_fifo();
+        }
+
         let reading = rx.is_some();
         let writing = tx.is_some();
 
         if !reading || writing {
             self.send_address_with_rw(address, true);
-            self.send_bus_event(I2CBusControlEvent::Start)?;
+            self.send_bus_event(I2CBusControlEvent::Start);
         }
 
         // Not the best, but I think its fine for now
@@ -198,15 +203,19 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
 
         loop {
             if self.reg.is_transmit_fifo_threshold_level_active() {
-                if self.write_fifo(&mut tx_iter) == 0 {
+                if self.write_fifo(&mut tx_iter).is_err() {
                     break;
                 }
 
                 unsafe { self.reg.clear_transmit_fifo_threshold_level() };
             }
 
-            if self.reg.get_error_condition() != 0 {
-                self.send_bus_event(I2CBusControlEvent::Stop)?;
+            let error = self.reg.get_error_condition();
+            if error != 0 {
+                // Clear the error
+                unsafe { self.reg.set_error_condition(error) };
+                self.send_bus_event(I2CBusControlEvent::Stop);
+
                 return Err(ErrorKind::ComError);
             }
         }
@@ -239,7 +248,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
                 }
 
                 if self.reg.get_error_condition() != 0 {
-                    self.send_bus_event(I2CBusControlEvent::Stop)?;
+                    self.send_bus_event(I2CBusControlEvent::Stop);
                     return Err(ErrorKind::ComError);
                 }
 
@@ -256,7 +265,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
 
                     unsafe {
                         self.reg.set_receive_fifo_transaction_size(transaction_size);
-                        self.send_bus_event(I2CBusControlEvent::Restart)?;
+                        self.send_bus_event(I2CBusControlEvent::Restart);
                         self.reg.clear_transfer_complete_flag();
                         self.send_address_with_rw(address, false);
                     }
@@ -264,7 +273,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
             }
         }
 
-        self.send_bus_event(I2CBusControlEvent::Stop)?;
+        self.send_bus_event(I2CBusControlEvent::Stop);
         while !self.reg.is_slave_mode_stop_condition_active() {}
         while !self.reg.is_transfer_complete_flag_active() {}
 
@@ -273,7 +282,9 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
             self.reg.clear_slave_mode_stop_condition();
         }
 
-        if self.reg.get_error_condition() != 0 {
+        let error = self.reg.get_error_condition();
+        if error != 0 {
+            unsafe { self.reg.set_error_condition(error) };
             Err(ErrorKind::ComError)
         } else {
             Ok(())
@@ -326,7 +337,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
         (core_peripheral_clock() as usize) / (cycles_total as usize)
     }
 
-    fn write_fifo<Bytes>(&mut self, tx: &mut Bytes) -> usize
+    fn write_fifo<Bytes>(&mut self, tx: &mut Bytes) -> Result<usize>
     where
         Bytes: Iterator<Item = u8>,
     {
@@ -337,7 +348,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
 
         for i in 0..fifo_free {
             let Some(data) = tx.next() else {
-                return bytes_written;
+                return Err(ErrorKind::NoneAvailable);
             };
 
             unsafe {
@@ -347,7 +358,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
             bytes_written += 1;
         }
 
-        bytes_written
+        Ok(bytes_written)
     }
 
     fn read_fifo(&self, rx: &mut [u8]) -> usize {
@@ -373,7 +384,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
         }
     }
 
-    fn send_bus_event(&mut self, event: I2CBusControlEvent) -> Result<()> {
+    fn send_bus_event(&mut self, event: I2CBusControlEvent) {
         match event {
             I2CBusControlEvent::Start => unsafe {
                 self.reg.activate_start_master_mode_transfer();
@@ -385,8 +396,6 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
                 self.reg.activate_send_stop_condition();
             },
         }
-
-        Ok(())
     }
 
     pub fn clear_rx_fifo(&mut self) {
@@ -448,6 +457,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
     }
 
     pub fn bus_recover(&mut self, retry_count: usize) -> Result<()> {
+        microcontroller_delay(10);
         // Save the state so we can restore it
         let state_prior = self.reg.get_control_register();
 
@@ -471,7 +481,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
             microcontroller_delay(10);
 
             // If SCL is high we were unable to pull the bus low
-            if !self.reg.get_scl_pin() {
+            if self.reg.get_scl_pin() {
                 debug_println!("SCL-LOW-FAIL");
                 unsafe { self.reg.set_scl_hardware_pin_released(true) };
                 unsafe { self.reg.set_sda_hardware_pin_released(true) };
@@ -489,7 +499,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
             microcontroller_delay(10);
 
             // If SCL is low we were unable to release the bus
-            if self.reg.get_scl_pin() {
+            if !self.reg.get_scl_pin() {
                 debug_println!("SCL-HIGH-FAIL");
                 unsafe { self.reg.set_scl_hardware_pin_released(true) };
                 unsafe { self.reg.set_sda_hardware_pin_released(true) };

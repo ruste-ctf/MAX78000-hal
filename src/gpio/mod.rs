@@ -61,6 +61,7 @@ impl GpioPin {
             None
         } else {
             ownership::set_owned(&gpio);
+            unsafe { gpio.set_bit(registers::rro::GPIO_INEN, true) };
             Some(gpio)
         }
     }
@@ -152,7 +153,7 @@ impl GpioPin {
             self.set_bit(registers::rro::GPIO_PS, pull_ctrl);
             self.set_bit(registers::rro::GPIO_VSSEL, power_ctrl);
             self.set_bit(registers::rro::GPIO_OUTEN_CLR, true);
-            self.set_bit(registers::rro::GPIO_INTEN_SET, true);
+            self.set_bit(registers::rro::GPIO_INEN, true);
         });
     }
 
@@ -172,9 +173,17 @@ impl GpioPin {
             self.set_bit(registers::rro::GPIO_DS1, ds_ctrl1);
             self.set_bit(registers::rro::GPIO_DS0, ds_ctrl0);
             self.set_bit(registers::rro::GPIO_VSSEL, v_sel);
-            self.set_bit(registers::rro::GPIO_INTEN_CLR, true);
+            self.set_bit(registers::rro::GPIO_INEN, false);
             self.set_bit(registers::rro::GPIO_OUTEN_SET, true);
         });
+    }
+
+    pub unsafe fn raw_output_enable(&self) {
+        self.set_bit(registers::rro::GPIO_OUTEN_SET, true);
+    }
+
+    pub unsafe fn raw_input_enable(&self) {
+        self.set_bit(registers::rro::GPIO_INEN, true);
     }
 }
 

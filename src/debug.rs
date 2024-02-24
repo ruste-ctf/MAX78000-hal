@@ -10,15 +10,24 @@ pub fn attach_debug(stream: &'static mut (dyn core::fmt::Write)) {
 
 impl core::fmt::Write for DebugStream {
     fn write_str(&mut self, s: &str) -> core::fmt::Result {
-        self.0.as_mut().unwrap().write_str(s)
+        match self.0.as_mut() {
+            Some(inner) => inner.write_str(s),
+            None => Ok(()),
+        }
     }
 
     fn write_char(&mut self, c: char) -> core::fmt::Result {
-        self.0.as_mut().unwrap().write_char(c)
+        match self.0.as_mut() {
+            Some(inner) => inner.write_char(c),
+            None => Ok(()),
+        }
     }
 
     fn write_fmt(&mut self, args: core::fmt::Arguments<'_>) -> core::fmt::Result {
-        self.0.as_mut().unwrap().write_fmt(args)
+        match self.0.as_mut() {
+            Some(inner) => inner.write_fmt(args),
+            None => Ok(()),
+        }
     }
 }
 
