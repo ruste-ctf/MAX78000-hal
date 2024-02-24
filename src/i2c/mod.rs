@@ -170,6 +170,24 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
 
         if !master_enabled {
             i2c.set_hardware_slave_address(slave_address)?;
+            unsafe {
+                i2c.reg.set_i2c_peripheral_enable(false);
+                i2c.reg.set_disable_slave_clock_stretching(false);
+                i2c.reg
+                    .set_transmit_fifo_received_nack_auto_flush_disable(true);
+                i2c.reg
+                    .set_transmit_fifo_slave_address_match_read_auto_flush_disable(false);
+                i2c.reg
+                    .set_transmit_fifo_slave_address_match_write_auto_flush_disable(false);
+                i2c.reg
+                    .set_transmit_fifo_general_call_address_match_auto_flush_disable(false);
+                i2c.reg.set_i2c_peripheral_enable(true);
+                i2c.reg.set_disable_slave_clock_stretching(false);
+            }
+        } else {
+            unsafe {
+                i2c.reg.set_one_master_mode(false);
+            }
         }
 
         Ok(i2c)
