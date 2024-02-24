@@ -355,6 +355,8 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
             }
         }
 
+        debug_println!("Transfer Done");
+
         self.send_bus_event(I2CBusControlEvent::Stop);
         while !self.reg.is_slave_mode_stop_condition_active() {}
         while !self.reg.is_transfer_complete_flag_active() {}
