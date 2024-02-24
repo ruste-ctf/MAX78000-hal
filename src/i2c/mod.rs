@@ -426,21 +426,47 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
             };
             unsafe { self.reg.set_receive_fifo_transaction_size(transaction_size) };
 
-            self.send_bus_event(I2CBusControlEvent::Start);
-            while self.reg.is_send_repeated_start_condition_pending() {}
-
+            debug_println!("Sending Address with READ");
             self.send_address_with_rw(address, false);
+            self.send_bus_event(I2CBusControlEvent::Start);
 
-            while bytes_written <= rx.len() {
+            while !self.reg.is_master_ack_from_external_slave_active() {
+                if self.reg.is_master_address_nack_from_slave_err_active() {
+                    debug_println!("Slave responed with NACK");
+                    self.debug_dump_int_status();
+                    unsafe {
+                        self.reg.set_interrupt_flags_0(u32::MAX);
+                        self.reg.set_interrupt_flags_1(u32::MAX);
+                    }
+                    self.send_bus_event(I2CBusControlEvent::Stop);
+                    return Err(ErrorKind::NoResponse);
+                }
+                microcontroller_delay(10);
+                self.debug_dump_int_status();
+            }
+
+            while bytes_written < rx.len() {
+                self.debug_dump_int_status();
+                debug_println!("Test");
                 if self.reg.is_receive_fifo_threshold_level_active()
                     || self.reg.is_transfer_complete_flag_active()
                 {
-                    bytes_written += self.read_fifo(&mut rx[bytes_written..]);
-                    unsafe { self.reg.clear_receive_fifo_threshold_level() };
+                    while !self.reg.get_receive_fifo_empty() {
+                        debug_println!(
+                            "reading bytes... {} {}",
+                            bytes_written,
+                            self.reg.get_current_receive_fifo_bytes()
+                        );
+                        bytes_written += self.read_fifo(&mut rx[bytes_written..]);
+                        unsafe { self.reg.clear_receive_fifo_threshold_level() };
+                    }
                 }
 
                 if self.reg.get_error_condition() != 0 {
+                    debug_println!("Error");
+                    self.debug_dump_int_status();
                     self.send_bus_event(I2CBusControlEvent::Stop);
+                    unsafe { self.reg.set_error_condition(self.reg.get_error_condition()) };
                     return Err(ErrorKind::ComError);
                 }
 
@@ -580,7 +606,12 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
     fn send_bus_event(&mut self, event: I2CBusControlEvent) {
         match event {
             I2CBusControlEvent::Start => unsafe {
-                self.reg.activate_start_master_mode_transfer();
+                // If we get a START, we might want to send a restart if a start is already pending
+                if self.reg.is_start_condition_flag_active() {
+                    self.reg.activate_send_repeated_start_condition();
+                } else {
+                    self.reg.activate_start_master_mode_transfer();
+                }
             },
             I2CBusControlEvent::Restart => unsafe {
                 self.reg.activate_send_repeated_start_condition();
