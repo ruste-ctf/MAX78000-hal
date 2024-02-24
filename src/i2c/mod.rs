@@ -275,6 +275,58 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
         }
     }
 
+    fn debug_dump_int_status(&self) {
+        debug_println!(
+            r#"I2C Status: {:b} {:b}
+    done: {},
+    irxm: {},
+    gc_addr_match: {},
+    addr_match: {},
+    rx_thd: {},
+    tx_thd: {},
+    stop: {},
+    addr_ack: {},
+    arb_err: {},
+    to_error: {},
+    addr_nack_error: {},
+    data_err: {},
+    dnr_err: {},
+    start_err: {},
+    stop_err: {},
+    tx_lockout: {},
+    rd_addr_match: {},
+    wr_addr_match: {},
+    start: {},
+    tx_un: {},
+    rx_ov: {}
+"#,
+            self.reg.get_interrupt_flags_0(),
+            self.reg.get_interrupt_flags_1(),
+            self.reg.is_transfer_complete_flag_active(),
+            self.reg.is_irxm_interrupt_flag_active(),
+            self.reg
+                .is_slave_general_call_address_match_received_active(),
+            self.reg.is_slave_incoming_address_match_status_active(),
+            self.reg.is_receive_fifo_threshold_level_active(),
+            self.reg.is_transmit_fifo_threshold_level_active(),
+            self.reg.is_slave_mode_stop_condition_active(),
+            self.reg.is_master_ack_from_external_slave_active(),
+            self.reg.is_master_mode_arbitration_lost_active(),
+            self.reg.is_timeout_error_flag_active(),
+            self.reg.is_master_address_nack_from_slave_err_active(),
+            self.reg.is_master_data_nack_from_slave_err_active(),
+            self.reg.is_slave_mode_do_not_respond_active(),
+            self.reg.is_out_of_sequence_start_flag_active(),
+            self.reg.is_out_of_sequence_stop_flag_active(),
+            self.reg.is_transmit_fifo_locked_active(),
+            self.reg.is_slave_read_addr_match_interrupt_active(),
+            self.reg.is_slave_write_addr_match_interrupt_active(),
+            self.reg.is_start_condition_flag_active(),
+            self.reg.is_slave_mode_transmit_fifo_underflow_flag_active(),
+            self.reg.is_slave_mode_receive_fifo_overflow_flag_active(),
+        );
+    }
+
     pub fn master_transaction(
         &mut self,
         address: usize,
