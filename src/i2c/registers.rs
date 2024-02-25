@@ -91,7 +91,7 @@ make_device! {
     /// Write Bit Status
     /// Get the logic level of the R/W bit on a received address match.
     #[bit(11, RO, rro::I2C_CTRL)]
-    write_bit_status,
+    read_write_bit_status,
 
     /// Software I2C Mode
     /// Tell the controller to either use software mode (i.e the SCL and SDA are managed
