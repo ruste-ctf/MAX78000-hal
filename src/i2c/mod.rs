@@ -222,13 +222,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
         }
 
         unsafe {
-            self.clear_rx_fifo();
-            self.clear_tx_fifo();
-            self.debug_dump_int_status();
-            self.reg
-                .set_interrupt_flags_0(self.reg.get_interrupt_flags_0());
-            self.reg
-                .set_interrupt_flags_1(self.reg.get_interrupt_flags_1());
+            self.reg.clear_slave_mode_do_not_respond();
         }
 
         self.set_rx_fifo_threshold(1);
