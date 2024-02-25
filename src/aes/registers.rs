@@ -52,6 +52,10 @@ make_device! {
     #[bit(0, RW, rro::AES_CTRL)]
     aes_enable,
 
+    /// AES Control Register. See Page 360-361, Table 24-4.
+    #[bit(0..=31, RW, rro::AES_CTRL)]
+    aes_control_register,
+
     /// Output FIFO Full. See Page 361, Table 24-5.
     #[bit(4, RO, rro::AES_STATUS)]
     output_fifo_full,
