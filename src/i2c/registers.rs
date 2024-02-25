@@ -52,11 +52,11 @@ make_device! {
     #[bit(0..=15, RW, rro::I2C_CTRL)]
     control_register,
 
-    /// The entire I2C interrupt flags0 register.
+    /// The entire I2C interrupt flags 0 register.
     #[bit(0..=31, RW, rro::I2C_INTFL0)]
     interrupt_flags_0,
 
-    /// The entire I2C interrupt flags1 register.
+    /// The entire I2C interrupt flags 1 register.
     #[bit(0..=31, RW, rro::I2C_INTFL1)]
     interrupt_flags_1,
 
