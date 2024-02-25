@@ -228,38 +228,57 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
         self.set_rx_fifo_threshold(1);
         self.set_tx_fifo_threshold(1);
 
+        // while !self.reg.is_slave_incoming_address_match_status_active()
+        //     && !self
+        //         .reg
+        //         .is_slave_general_call_address_match_received_active()
+        // {
+        //     debug_println!("Waiting for Address Match");
+        //     self.debug_dump_int_status();
+        // }
+
+        // unsafe {
+        //     self.reg.clear_slave_incoming_address_match_status();
+        // }
+
+        let mut tx_ing = false;
+        let mut rx_ing = false;
+
+        debug_println!("Start");
+
         // TODO: Refacter this to be async later
         loop {
+            if self
+                .reg
+                .is_slave_general_call_address_match_received_active()
+            {
+                debug_println!("General Call");
+                unsafe { self.reg.clear_slave_general_call_address_match_received() };
+            }
+
+            if self.reg.is_slave_incoming_address_match_status_active() {
+                debug_println!("Incoming");
+                // unsafe { self.reg.clear_slave_incoming_address_match_status() };
+                // unsafe { self.reg.clear_start_condition_flag() };
+                if self.reg.get_read_write_bit_status() {
+                    debug_println!("Write");
+                    unsafe { self.reg.clear_slave_write_addr_match_interrupt() };
+                    unsafe { self.reg.clear_transmit_fifo_locked() };
+                    tx_ing = true;
+                } else {
+                    debug_println!("Read");
+                    // unsafe { self.reg.clear_slave_read_addr_match_interrupt() };
+                    rx_ing = true;
+                }
+                unsafe { self.reg.clear_slave_incoming_address_match_status() };
+            }
+
             if self.reg.is_slave_mode_stop_condition_active()
                 && !self.reg.is_transfer_complete_flag_active()
             {
-                debug_println!("STOP");
+                tx_ing = false;
+                rx_ing = false;
                 unsafe { self.reg.clear_slave_mode_stop_condition() };
-            }
-
-            if self.reg.is_slave_read_addr_match_interrupt_active() {
-                debug_println!("READ!!");
-            }
-
-            if self.reg.is_slave_write_addr_match_interrupt_active() {
-                debug_println!("WRITE!!");
-                unsafe {
-                    self.reg.clear_slave_write_addr_match_interrupt();
-                    self.reg
-                        .is_slave_general_call_address_match_received_active();
-                    self.reg.is_slave_incoming_address_match_status_active();
-                }
-
-                let bytes_to_tx = self.reg.get_transmit_fifo_threshold_level();
-
-                for i in 0..(8 - bytes_to_tx) {
-                    let byte = tx()?;
-
-                    unsafe { self.reg.set_fifo_data(byte) };
-                }
-                unsafe { self.reg.clear_transmit_fifo_threshold_level() };
-                unsafe { self.reg.clear_transmit_fifo_locked() };
-                unsafe { self.reg.activate_transmit_fifo_flush() };
             }
 
             if self.reg.is_slave_mode_receive_fifo_overflow_flag_active() {
@@ -267,45 +286,71 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
             }
 
             if self.reg.is_slave_mode_transmit_fifo_underflow_flag_active() {
-                debug_println!("Buffer Underrun");
                 unsafe { self.reg.clear_slave_mode_transmit_fifo_underflow_flag() };
             }
 
-            if self.reg.is_receive_fifo_threshold_level_active() {
-                unsafe { self.reg.clear_receive_fifo_threshold_level() };
-
+            if self.reg.is_receive_fifo_threshold_level_active() && rx_ing {
                 while !self.reg.get_receive_fifo_empty() {
                     rx(self.reg.get_fifo_data())?;
                 }
             }
 
-            if self.reg.is_transmit_fifo_threshold_level_active() {
-                let bytes_to_tx = self.reg.get_transmit_fifo_threshold_level();
-
-                for i in 0..(8 - bytes_to_tx) {
-                    let byte = tx()?;
-
-                    unsafe { self.reg.set_fifo_data(byte) };
+            if self.reg.is_transmit_fifo_threshold_level_active() && tx_ing {
+                if self.reg.get_transmit_fifo_empty() {
+                    debug_println!("Transmit Full");
                 }
-                unsafe { self.reg.clear_transmit_fifo_threshold_level() };
-                unsafe { self.reg.clear_transmit_fifo_locked() };
-                unsafe { self.reg.activate_transmit_fifo_flush() };
-                while self.reg.is_transmit_fifo_flush_pending() {
-                    debug_println!("Wating for TX Flush");
+
+                if self.reg.is_transmit_fifo_locked_active() {
+                    debug_println!("Transmit Locked");
+                }
+
+                if self.reg.is_master_data_nack_from_slave_err_active() {
+                    debug_println!("NACK");
+                }
+
+                if self.reg.get_transmit_fifo_empty() && !self.reg.is_transmit_fifo_locked_active()
+                {
+                    let data = tx()?;
+                    unsafe { self.reg.set_fifo_data(data) };
                 }
             }
 
-            if self.reg.is_slave_mode_stop_condition_active()
-                || self.reg.is_transfer_complete_flag_active()
-            {
+            if self.reg.get_error_condition() != 0 {
+                debug_println!("Error Condition");
+                self.debug_dump_int_status();
                 unsafe {
-                    self.reg.clear_slave_mode_stop_condition();
-                    self.reg.clear_transfer_complete_flag();
+                    self.reg.set_interrupt_flags_0(u32::MAX);
+                    self.reg.set_interrupt_flags_1(u32::MAX);
                 }
 
-                return Ok(());
+                return Err(ErrorKind::ComError);
+            }
+
+            if self.reg.is_transfer_complete_flag_active()
+                && self.reg.get_error_condition() == 0
+                && self.reg.is_start_condition_flag_active()
+            {
+                debug_println!("Transfer Complete");
+                debug_println!("Resetting...");
+                // unsafe { self.reg.clear_slave_read_addr_match_interrupt() };
+                // unsafe { self.reg.clear_slave_write_addr_match_interrupt() };
+                unsafe {
+                    // self.reg.clear_slave_mode_stop_condition();
+                    self.reg.clear_transfer_complete_flag();
+                    // self.reg.clear_transmit_fifo_threshold_level();
+                }
+                self.debug_dump_int_status();
+
+                break;
             }
         }
+
+        // unsafe {
+        // self.reg.set_interrupt_flags_0(u32::MAX);
+        // self.reg.set_interrupt_flags_1(u32::MAX);
+        // }
+
+        Ok(())
     }
 
     fn debug_dump_int_status(&self) {
