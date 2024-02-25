@@ -5,6 +5,7 @@ pub mod registers;
 /// # GPIO Select
 /// Select a GPIO port.
 #[repr(u8)]
+#[derive(Copy, Clone)]
 pub enum GpioSelect {
     Gpio0 = 0,
     Gpio1 = 1,

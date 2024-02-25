@@ -66,3 +66,30 @@ pub fn i2c_n(port: usize) -> Option<[GpioPin; 2]> {
 
     Some([gpio_0, gpio_1])
 }
+
+// UART 0 P0_0 Rx P0_1 Tx
+// UART 1 P0_12 Rx P0_13 Tx
+// UART 2 P1_0 Rx P1_1 Tx
+// LPUART P2_6 Rx P2_7 Tx
+
+/// # UART (n)
+/// Get the UART GPIO pins for port n.
+pub fn uart_n(port: usize) -> Option<[GpioPin; 2]> {
+    // (Rx, Tx, GPIO_port)
+    let pins = match port {
+        0 => (0, 1, super::GpioSelect::Gpio0),
+        1 => (12, 13, super::GpioSelect::Gpio0),
+        2 => (0, 1, super::GpioSelect::Gpio1),
+        3 => (6, 7, super::GpioSelect::Gpio2),
+
+        _ => panic!("Cannot have a port higher than 3"),
+    };
+
+    let gpio_rx = GpioPin::new(pins.2, pins.0)?;
+    let gpio_tx = GpioPin::new(pins.2, pins.1)?;
+
+    gpio_rx.configure_input(super::ResistorStrength::None, super::PinFunction::AF1);
+    gpio_tx.configure_input(super::ResistorStrength::None, super::PinFunction::AF1);
+
+    Some([gpio_rx, gpio_tx])
+}

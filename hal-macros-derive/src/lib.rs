@@ -667,7 +667,7 @@ fn generate_range_set(
         #[inline(always)]
         pub unsafe fn #name(&mut self, flag: #bit_type) {
             use hal_macros::{VolatileRead, VolatileWrite};
-            debug_assert_eq!((flag as usize) >> (<Self>::#self_end - <Self>::#self_shift + 1), 0, "Provided flag {flag} is too large for provided setter range {}..={}!", #start, #end);
+            debug_assert!((flag as usize) >> ((<Self>::#self_end) - <Self>::#self_shift) <= 1, "Provided flag {flag} is too large for provided setter range {}..={}!", #start, #end);
             let flag_shift: u32 = (flag as u32) << (<Self>::#self_shift as u32);
             let read_value: u32 = self.#self_dot.read() & (!<Self>::#self_mask as u32) & (<Self>::#self_set_mask as u32);
             self.#self_dot.write(read_value | flag_shift);

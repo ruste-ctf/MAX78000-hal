@@ -1,4 +1,6 @@
 use crate::error::{ErrorKind, Result};
+use crate::gcr::{peripheral_reset, system_clock_enable};
+use crate::gpio::GpioPin;
 use crate::memory_map::mmio;
 use core::marker::PhantomData;
 
@@ -7,6 +9,7 @@ pub mod registers;
 mod private {
     pub trait UARTPortCompatable {
         const PORT_PTR: usize;
+        const PORT_NUM: usize;
     }
 }
 
@@ -17,17 +20,21 @@ pub struct UART2 {}
 
 impl private::UARTPortCompatable for UART0 {
     const PORT_PTR: usize = mmio::UART_0;
+    const PORT_NUM: usize = 0;
 }
 impl private::UARTPortCompatable for UART1 {
     const PORT_PTR: usize = mmio::UART_1;
+    const PORT_NUM: usize = 1;
 }
 impl private::UARTPortCompatable for UART2 {
     const PORT_PTR: usize = mmio::UART_2;
+    const PORT_NUM: usize = 2;
 }
 
 pub struct UART<Port = NoPort> {
     reg: registers::Registers,
-    ph: PhantomData<Port>,
+    _ph: PhantomData<Port>,
+    _gpio: [GpioPin; 2],
 }
 
 #[allow(unused)]
@@ -60,7 +67,9 @@ impl UART<NoPort> {
         transmit_parity: bool,
         parity_value: ParityValueSelect,
         hfc: bool,
-    ) -> UART<UART0> {
+    ) -> Result<UART<UART0>> {
+        peripheral_reset(crate::gcr::HardwareSource::UART0);
+        system_clock_enable(crate::gcr::HardwareSource::UART0, true);
         UART::<UART0>::init(
             baud_rate,
             character_length,
@@ -98,7 +107,9 @@ impl UART<NoPort> {
         transmit_parity: bool,
         parity_value: ParityValueSelect,
         hfc: bool,
-    ) -> UART<UART1> {
+    ) -> Result<UART<UART1>> {
+        peripheral_reset(crate::gcr::HardwareSource::UART1);
+        system_clock_enable(crate::gcr::HardwareSource::UART1, true);
         UART::<UART1>::init(
             baud_rate,
             character_length,
@@ -136,7 +147,9 @@ impl UART<NoPort> {
         transmit_parity: bool,
         parity_value: ParityValueSelect,
         hfc: bool,
-    ) -> UART<UART2> {
+    ) -> Result<UART<UART2>> {
+        peripheral_reset(crate::gcr::HardwareSource::UART2);
+        system_clock_enable(crate::gcr::HardwareSource::UART2, true);
         UART::<UART2>::init(
             baud_rate,
             character_length,
@@ -224,10 +237,11 @@ impl<Port: private::UARTPortCompatable> UART<Port> {
         transmit_parity: bool,
         parity_value: ParityValueSelect,
         hfc: bool,
-    ) -> Self {
+    ) -> Result<Self> {
         let mut uart = Self {
             reg: registers::Registers::new(Port::PORT_PTR),
-            ph: PhantomData,
+            _gpio: crate::gpio::hardware::uart_n(Port::PORT_NUM).ok_or(ErrorKind::Busy)?,
+            _ph: PhantomData,
         };
 
         // Clear the FIFOs
@@ -251,7 +265,7 @@ impl<Port: private::UARTPortCompatable> UART<Port> {
             uart.reg.set_hardware_flow_control(hfc);
         }
 
-        uart
+        Ok(uart)
     }
 
     /// # Print String
