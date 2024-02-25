@@ -183,6 +183,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
                     .set_transmit_fifo_general_call_address_match_auto_flush_disable(false);
                 i2c.reg.set_i2c_peripheral_enable(true);
                 i2c.reg.set_disable_slave_clock_stretching(false);
+                i2c.reg.set_transmit_fifo_preload_mode_enable(false);
             }
         } else {
             unsafe {
