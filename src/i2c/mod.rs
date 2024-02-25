@@ -121,6 +121,24 @@ impl I2C<NoPort> {
         system_clock_enable(crate::gcr::HardwareSource::I2C2, true);
         I2C::<I2CPort2>::init(true, 0x00)
     }
+
+    pub fn init_port_0_slave(address: usize) -> Result<I2C<I2CPort0>> {
+        peripheral_reset(crate::gcr::HardwareSource::I2C0);
+        system_clock_enable(crate::gcr::HardwareSource::I2C0, true);
+        I2C::<I2CPort0>::init(false, address)
+    }
+
+    pub fn init_port_1_slave(address: usize) -> Result<I2C<I2CPort1>> {
+        peripheral_reset(crate::gcr::HardwareSource::I2C1);
+        system_clock_enable(crate::gcr::HardwareSource::I2C1, true);
+        I2C::<I2CPort1>::init(false, address)
+    }
+
+    pub fn init_port_2_slave(address: usize) -> Result<I2C<I2CPort2>> {
+        peripheral_reset(crate::gcr::HardwareSource::I2C2);
+        system_clock_enable(crate::gcr::HardwareSource::I2C2, true);
+        I2C::<I2CPort2>::init(false, address)
+    }
 }
 
 #[allow(unused)]
@@ -152,6 +170,25 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
 
         if !master_enabled {
             i2c.set_hardware_slave_address(slave_address)?;
+            unsafe {
+                i2c.reg.set_i2c_peripheral_enable(false);
+                i2c.reg.set_disable_slave_clock_stretching(false);
+                i2c.reg
+                    .set_transmit_fifo_received_nack_auto_flush_disable(true);
+                i2c.reg
+                    .set_transmit_fifo_slave_address_match_read_auto_flush_disable(false);
+                i2c.reg
+                    .set_transmit_fifo_slave_address_match_write_auto_flush_disable(false);
+                i2c.reg
+                    .set_transmit_fifo_general_call_address_match_auto_flush_disable(false);
+                i2c.reg.set_i2c_peripheral_enable(true);
+                i2c.reg.set_disable_slave_clock_stretching(false);
+                i2c.reg.set_transmit_fifo_preload_mode_enable(false);
+            }
+        } else {
+            unsafe {
+                i2c.reg.set_one_master_mode(false);
+            }
         }
 
         Ok(i2c)
@@ -175,6 +212,199 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
         Ok(())
     }
 
+    pub fn slave_transaction<RXFun, TXFun>(&mut self, mut rx: RXFun, mut tx: TXFun) -> Result<()>
+    where
+        RXFun: FnMut(u8) -> Result<()>,
+        TXFun: FnMut() -> Result<u8>,
+    {
+        if self.master_enabled {
+            return Err(ErrorKind::BadState);
+        }
+
+        unsafe {
+            self.reg.clear_slave_mode_do_not_respond();
+        }
+
+        self.set_rx_fifo_threshold(1);
+        self.set_tx_fifo_threshold(1);
+
+        // while !self.reg.is_slave_incoming_address_match_status_active()
+        //     && !self
+        //         .reg
+        //         .is_slave_general_call_address_match_received_active()
+        // {
+        //     debug_println!("Waiting for Address Match");
+        //     self.debug_dump_int_status();
+        // }
+
+        // unsafe {
+        //     self.reg.clear_slave_incoming_address_match_status();
+        // }
+
+        let mut tx_ing = false;
+        let mut rx_ing = false;
+
+        debug_println!("Start");
+
+        // TODO: Refacter this to be async later
+        loop {
+            if self
+                .reg
+                .is_slave_general_call_address_match_received_active()
+            {
+                debug_println!("General Call");
+                unsafe { self.reg.clear_slave_general_call_address_match_received() };
+            }
+
+            if self.reg.is_slave_incoming_address_match_status_active() {
+                debug_println!("Incoming");
+                // unsafe { self.reg.clear_slave_incoming_address_match_status() };
+                // unsafe { self.reg.clear_start_condition_flag() };
+                if self.reg.get_read_write_bit_status() {
+                    debug_println!("Write");
+                    unsafe { self.reg.clear_slave_write_addr_match_interrupt() };
+                    unsafe { self.reg.clear_transmit_fifo_locked() };
+                    tx_ing = true;
+                } else {
+                    debug_println!("Read");
+                    // unsafe { self.reg.clear_slave_read_addr_match_interrupt() };
+                    rx_ing = true;
+                }
+                unsafe { self.reg.clear_slave_incoming_address_match_status() };
+            }
+
+            if self.reg.is_slave_mode_stop_condition_active()
+                && !self.reg.is_transfer_complete_flag_active()
+            {
+                tx_ing = false;
+                rx_ing = false;
+                unsafe { self.reg.clear_slave_mode_stop_condition() };
+            }
+
+            if self.reg.is_slave_mode_receive_fifo_overflow_flag_active() {
+                todo!("Buffer Overrun")
+            }
+
+            if self.reg.is_slave_mode_transmit_fifo_underflow_flag_active() {
+                unsafe { self.reg.clear_slave_mode_transmit_fifo_underflow_flag() };
+            }
+
+            if self.reg.is_receive_fifo_threshold_level_active() && rx_ing {
+                while !self.reg.get_receive_fifo_empty() {
+                    rx(self.reg.get_fifo_data())?;
+                }
+            }
+
+            if self.reg.is_transmit_fifo_threshold_level_active() && tx_ing {
+                if self.reg.get_transmit_fifo_empty() {
+                    debug_println!("Transmit Full");
+                }
+
+                if self.reg.is_transmit_fifo_locked_active() {
+                    debug_println!("Transmit Locked");
+                }
+
+                if self.reg.is_master_data_nack_from_slave_err_active() {
+                    debug_println!("NACK");
+                }
+
+                if self.reg.get_transmit_fifo_empty() && !self.reg.is_transmit_fifo_locked_active()
+                {
+                    let data = tx()?;
+                    unsafe { self.reg.set_fifo_data(data) };
+                }
+            }
+
+            if self.reg.get_error_condition() != 0 {
+                debug_println!("Error Condition");
+                self.debug_dump_int_status();
+                unsafe {
+                    self.reg.set_interrupt_flags_0(u32::MAX);
+                    self.reg.set_interrupt_flags_1(u32::MAX);
+                }
+
+                return Err(ErrorKind::ComError);
+            }
+
+            if self.reg.is_transfer_complete_flag_active()
+                && self.reg.get_error_condition() == 0
+                && self.reg.is_start_condition_flag_active()
+            {
+                debug_println!("Transfer Complete");
+                debug_println!("Resetting...");
+                // unsafe { self.reg.clear_slave_read_addr_match_interrupt() };
+                // unsafe { self.reg.clear_slave_write_addr_match_interrupt() };
+                unsafe {
+                    // self.reg.clear_slave_mode_stop_condition();
+                    self.reg.clear_transfer_complete_flag();
+                    // self.reg.clear_transmit_fifo_threshold_level();
+                }
+                self.debug_dump_int_status();
+
+                break;
+            }
+        }
+
+        // unsafe {
+        // self.reg.set_interrupt_flags_0(u32::MAX);
+        // self.reg.set_interrupt_flags_1(u32::MAX);
+        // }
+
+        Ok(())
+    }
+
+    fn debug_dump_int_status(&self) {
+        debug_println!(
+            r#"I2C Status: {:b} {:b}
+    done: {},
+    irxm: {},
+    gc_addr_match: {},
+    addr_match: {},
+    rx_thd: {},
+    tx_thd: {},
+    stop: {},
+    addr_ack: {},
+    arb_err: {},
+    to_error: {},
+    addr_nack_error: {},
+    data_err: {},
+    dnr_err: {},
+    start_err: {},
+    stop_err: {},
+    tx_lockout: {},
+    rd_addr_match: {},
+    wr_addr_match: {},
+    start: {},
+    tx_un: {},
+    rx_ov: {}
+"#,
+            self.reg.get_interrupt_flags_0(),
+            self.reg.get_interrupt_flags_1(),
+            self.reg.is_transfer_complete_flag_active(),
+            self.reg.is_irxm_interrupt_flag_active(),
+            self.reg
+                .is_slave_general_call_address_match_received_active(),
+            self.reg.is_slave_incoming_address_match_status_active(),
+            self.reg.is_receive_fifo_threshold_level_active(),
+            self.reg.is_transmit_fifo_threshold_level_active(),
+            self.reg.is_slave_mode_stop_condition_active(),
+            self.reg.is_master_ack_from_external_slave_active(),
+            self.reg.is_master_mode_arbitration_lost_active(),
+            self.reg.is_timeout_error_flag_active(),
+            self.reg.is_master_address_nack_from_slave_err_active(),
+            self.reg.is_master_data_nack_from_slave_err_active(),
+            self.reg.is_slave_mode_do_not_respond_active(),
+            self.reg.is_out_of_sequence_start_flag_active(),
+            self.reg.is_out_of_sequence_stop_flag_active(),
+            self.reg.is_transmit_fifo_locked_active(),
+            self.reg.is_slave_read_addr_match_interrupt_active(),
+            self.reg.is_slave_write_addr_match_interrupt_active(),
+            self.reg.is_start_condition_flag_active(),
+            self.reg.is_slave_mode_transmit_fifo_underflow_flag_active(),
+            self.reg.is_slave_mode_receive_fifo_overflow_flag_active(),
+        );
+    }
+
     pub fn master_transaction(
         &mut self,
         address: usize,
@@ -186,8 +416,8 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
         }
 
         unsafe {
-            self.reg.clear_transmit_fifo_locked();
-            self.clear_tx_fifo();
+            self.reg.set_interrupt_flags_0(u32::MAX);
+            self.reg.set_interrupt_flags_1(u32::MAX);
         }
 
         let reading = rx.is_some();
@@ -196,34 +426,57 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
         if !reading || writing {
             self.send_address_with_rw(address, true);
             self.send_bus_event(I2CBusControlEvent::Start);
-        }
 
-        // Not the best, but I think its fine for now
-        let mut tx_iter = tx.unwrap_or(&[0_u8; 0]).iter().copied();
+            // Not the best, but I think its fine for now
+            let mut tx_iter = tx.unwrap_or(&[0_u8; 0]).iter().copied();
 
-        loop {
-            if self.reg.is_transmit_fifo_threshold_level_active() {
-                if self.write_fifo(&mut tx_iter).is_err() {
-                    break;
+            loop {
+                while !self.reg.is_master_ack_from_external_slave_active() {
+                    if self.reg.is_master_address_nack_from_slave_err_active() {
+                        debug_println!("Slave responed with NACK");
+                        self.debug_dump_int_status();
+                        unsafe {
+                            self.reg.set_interrupt_flags_0(u32::MAX);
+                            self.reg.set_interrupt_flags_1(u32::MAX);
+                        }
+                        self.send_bus_event(I2CBusControlEvent::Stop);
+                        return Err(ErrorKind::NoResponse);
+                    }
+                    microcontroller_delay(10);
+                    self.debug_dump_int_status();
                 }
 
-                unsafe { self.reg.clear_transmit_fifo_threshold_level() };
-            }
+                if self.reg.is_transmit_fifo_threshold_level_active() {
+                    if self.write_fifo(&mut tx_iter).is_err() {
+                        break;
+                    }
 
-            let error = self.reg.get_error_condition();
-            if error != 0 {
-                // Clear the error
-                unsafe { self.reg.set_error_condition(error) };
-                self.send_bus_event(I2CBusControlEvent::Stop);
+                    unsafe { self.reg.clear_transmit_fifo_threshold_level() };
+                }
 
-                return Err(ErrorKind::ComError);
+                let error = self.reg.get_error_condition();
+                if error != 0 {
+                    debug_println!("COM ERROR");
+                    self.debug_dump_int_status();
+                    // Clear the error
+                    unsafe { self.reg.set_error_condition(error) };
+                    self.send_bus_event(I2CBusControlEvent::Stop);
+
+                    return Err(ErrorKind::ComError);
+                }
             }
         }
 
-        unsafe {
-            self.reg.clear_transfer_complete_flag();
-            self.reg.clear_receive_fifo_threshold_level();
-        }
+        unsafe { self.reg.clear_transmit_fifo_locked() };
+
+        match (reading, writing) {
+            (true, false) => self.send_bus_event(I2CBusControlEvent::Start),
+            (false, true) => self.send_bus_event(I2CBusControlEvent::Stop),
+            (true, true) => self.send_bus_event(I2CBusControlEvent::Restart),
+            _ => (),
+        };
+
+        self.debug_dump_int_status();
 
         let mut bytes_written = 0;
         if let Some(rx) = rx {
@@ -233,29 +486,46 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
                 rx.len() as u8
             };
             unsafe { self.reg.set_receive_fifo_transaction_size(transaction_size) };
-
-            self.send_bus_event(I2CBusControlEvent::Start);
-            while self.reg.is_send_repeated_start_condition_pending() {}
-
             self.send_address_with_rw(address, false);
 
-            while bytes_written <= rx.len() {
+            while !self.reg.is_master_ack_from_external_slave_active() {
+                debug_println!("Waiting on ACK");
+                if self.reg.is_master_address_nack_from_slave_err_active() {
+                    unsafe {
+                        self.reg.set_interrupt_flags_0(u32::MAX);
+                        self.reg.set_interrupt_flags_1(u32::MAX);
+                    }
+                    self.send_bus_event(I2CBusControlEvent::Stop);
+                    return Err(ErrorKind::NoResponse);
+                }
+            }
+
+            unsafe { self.reg.clear_master_ack_from_external_slave() };
+
+            while bytes_written < rx.len() {
+                debug_println!("Writting");
                 if self.reg.is_receive_fifo_threshold_level_active()
                     || self.reg.is_transfer_complete_flag_active()
                 {
-                    bytes_written += self.read_fifo(&mut rx[bytes_written..]);
-                    unsafe { self.reg.clear_receive_fifo_threshold_level() };
+                    while !self.reg.get_receive_fifo_empty() {
+                        bytes_written += self.read_fifo(&mut rx[bytes_written..]);
+                        unsafe { self.reg.clear_receive_fifo_threshold_level() };
+                    }
                 }
 
                 if self.reg.get_error_condition() != 0 {
+                    debug_println!("Error");
+                    self.debug_dump_int_status();
                     self.send_bus_event(I2CBusControlEvent::Stop);
+                    unsafe { self.reg.set_error_condition(self.reg.get_error_condition()) };
                     return Err(ErrorKind::ComError);
                 }
 
                 if self.reg.is_transfer_complete_flag_active()
-                    && bytes_written <= rx.len()
+                    && bytes_written >= rx.len()
                     && self.reg.get_receive_fifo_len() == 0
                 {
+                    debug_println!("Sending Next Chunk ...");
                     let bytes_diff = rx.len() - bytes_written;
                     let transaction_size = if bytes_diff > MAX_I2C_FIFO_TRANSACTION {
                         0
@@ -341,9 +611,9 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
     where
         Bytes: Iterator<Item = u8>,
     {
-        let current_fifo_level = self.reg.get_transmit_fifo_len() as usize;
-        let max_fifo_level = MAX_TRANSMIT_FIFO_LEN;
-        let fifo_free = max_fifo_level - current_fifo_level;
+        let current_fifo_level = self.reg.get_transmit_fifo_byte_count() as usize;
+        debug_println!("Bytes: {}", current_fifo_level);
+        let fifo_free = MAX_TRANSMIT_FIFO_LEN - current_fifo_level;
         let mut bytes_written = 0;
 
         for i in 0..fifo_free {
@@ -352,6 +622,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
             };
 
             unsafe {
+                debug_println!("Wrote {}", data);
                 self.reg.set_fifo_data(data);
             }
 
@@ -362,10 +633,8 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
     }
 
     fn read_fifo(&self, rx: &mut [u8]) -> usize {
-        let current_fifo_level = self.reg.get_receive_fifo_len() as usize;
-        let max_fifo_level = MAX_RECEIVE_FIFO_LEN;
-        let fifo_free = max_fifo_level - current_fifo_level;
-        let max_receive = fifo_free.min(rx.len());
+        let current_fifo_level = self.reg.get_current_receive_fifo_bytes() as usize;
+        let max_receive = current_fifo_level.min(rx.len());
 
         for data in rx.iter_mut().take(max_receive) {
             *data = self.reg.get_fifo_data();
@@ -411,7 +680,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
             self.reg.activate_transmit_fifo_flush();
         }
 
-        while self.reg.is_transmit_fifo_flush_pending() {}
+        //while self.reg.is_transmit_fifo_flush_pending() {}
     }
 
     pub fn set_rx_fifo_threshold(&mut self, threshold: usize) {
