@@ -1,59 +1,38 @@
 pub mod registers;
+
+use crate::gcr::HardwareSource;
+use crate::gcr::{peripheral_reset, system_clock_enable};
 use crate::memory_map::mmio;
 use registers::Registers;
 
+/// A wrapper around the TRNG register. Used to allow the borrow checker to keep
+/// track of who can mutate the state of TRNG.
 pub struct TRNG {
     registers: Registers,
-    has_key: bool,
 }
 
 impl TRNG {
+    /// Initializes TRNG by resetting the TRNG peripheral, enabling TRNG's system
+    /// clock, enabling AES's system clock, and clearing the TRNG control register.
+    /// Should never be initialized more than once.
     pub fn init() -> Self {
-        let registers = Self {
-            registers: Registers::new(mmio::TRNG),
-            has_key: false,
-        };
-        registers
+        system_clock_enable(HardwareSource::AES, true);
+        peripheral_reset(HardwareSource::TRNG);
+        system_clock_enable(HardwareSource::TRNG, true);
+
+        let mut registers = Registers::new(mmio::TRNG);
+        unsafe { registers.set_trng_control_register(0) };
+        Self { registers }
     }
 
-    pub fn has_key(&self) -> bool {
-        self.has_key
-    }
-
-    pub fn wipe_key(&mut self) {
-        unsafe {
-            self.registers.set_wipe_key(true);
-        }
-        self.has_key = false;
-    }
-
-    pub fn generate_new_key(&mut self) {
-        unsafe {
-            self.registers.set_generate_key(true);
-        }
-        self.has_key = true;
-    }
-
+    /// Get a random number from TRNG.
     pub fn get_trng_data(&mut self) -> u32 {
-        // FIXME use interrupts
-        assert!(self.has_key);
         while !self.registers.get_random_number_ready() {}
         self.registers.get_trng_data()
     }
 
-    /// # Safety
-    /// This function is for educational purposes only. It should only be used to
-    /// learn about what happens when you generate a number without having a key.
-    pub unsafe fn unchecked_get_trng_data(&self) -> u32 {
-        while !self.registers.get_random_number_ready() {}
-        self.registers.get_trng_data()
-    }
-
+    /// Check if `get_trng_data` is ready.
     pub fn ready(&self) -> bool {
         self.registers.get_random_number_ready()
-    }
-
-    pub fn get(&self) -> u32 {
-        self.registers.get_trng_data()
     }
 }
