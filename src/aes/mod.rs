@@ -1,7 +1,10 @@
 pub mod registers;
 
 #[cfg(not(test))]
-use crate::memory_map::mmio;
+use crate::{
+    gcr::{peripheral_reset, system_clock_enable, HardwareSource},
+    memory_map::mmio,
+};
 use registers::Registers;
 
 /// The type of a cipher operation. This enum is used to set the `Encryption Type`
@@ -36,6 +39,8 @@ impl AES {
     #[cfg(not(test))]
     /// Initializes a new instance of AES. Should never be called more than once.
     pub fn init() -> Self {
+        peripheral_reset(HardwareSource::AES);
+        system_clock_enable(HardwareSource::AES, true);
         Self {
             registers: Registers::new(mmio::AES),
         }
