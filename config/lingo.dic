@@ -187,3 +187,5 @@ LPUART
 FDM
 RTS's
 decrypt
+TRNG's
+AES's

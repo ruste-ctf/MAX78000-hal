@@ -28,6 +28,10 @@ make_device! {
     #[bit(1, RW, rro::TRNG_CTRL)]
     random_number_interrupt_enable,
 
+    /// TRNG Control Register. See Page 363, Table 25-2.
+    #[bit(0..=31, RW, rro::TRNG_CTRL)]
+    trng_control_register,
+
     /// Random Number Ready. See Page 363-364, Table 25-3.
     #[bit(0, RO, rro::TRNG_STATUS)]
     random_number_ready,
