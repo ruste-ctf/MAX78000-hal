@@ -54,6 +54,19 @@ pub enum HardwareSource {
     LPCOMP,
 }
 
+/// # Controller Reset
+/// Preform a complete reset of the controller.
+pub fn controller_reset() -> ! {
+    ensure_gcr();
+    unsafe {
+        GLOBAL_CONTROL_REGISTER
+            .as_mut()
+            .unwrap()
+            .activate_system_reset()
+    };
+    loop {}
+}
+
 /// # System Clock Enable
 /// Enable/Disable a `HardwareSource`'s clock.
 pub fn system_clock_enable(clock: HardwareSource, enable: bool) {
