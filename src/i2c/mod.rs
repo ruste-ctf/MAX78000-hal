@@ -121,11 +121,9 @@ const MAX_I2C_FAST_CLOCK_HZ: usize = 400000;
 const MAX_I2C_FASTPLUS_CLOCK_TIME: usize = 1000000;
 const MAX_I2C_HIGHSPEED_CLOCK_TIME: usize = 3400000;
 
-const MAX_I2C_FIFO_TRANSACTION: usize = 256;
 const MAX_TRANSMIT_FIFO_LEN: usize = 8;
-const MAX_RECEIVE_FIFO_LEN: usize = 8;
 
-fn microcontroller_delay(us: usize) {
+fn microcontroller_delay(_us: usize) {
     for _ in 0..100000 {
         unsafe { core::arch::asm!("nop") }
     }
