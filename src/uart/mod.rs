@@ -1,3 +1,4 @@
+use crate::debug_println;
 use crate::error::{ErrorKind, Result};
 use crate::gcr::{peripheral_reset, system_clock_enable};
 use crate::gpio::GpioPin;
@@ -32,7 +33,7 @@ impl private::UARTPortCompatable for UART2 {
 }
 
 pub struct UART<Port = NoPort> {
-    reg: registers::Registers,
+    pub reg: registers::Registers,
     _ph: PhantomData<Port>,
     _gpio: [GpioPin; 2],
 }
@@ -65,6 +66,7 @@ impl UART<NoPort> {
         character_length: CharacterLength,
         stop_bits: StopBits,
         transmit_parity: bool,
+        parity: Parity,
         parity_value: ParityValueSelect,
         hfc: bool,
     ) -> Result<UART<UART0>> {
@@ -75,6 +77,7 @@ impl UART<NoPort> {
             character_length,
             stop_bits,
             transmit_parity,
+            parity,
             parity_value,
             hfc,
         )
@@ -105,6 +108,7 @@ impl UART<NoPort> {
         character_length: CharacterLength,
         stop_bits: StopBits,
         transmit_parity: bool,
+        parity: Parity,
         parity_value: ParityValueSelect,
         hfc: bool,
     ) -> Result<UART<UART1>> {
@@ -115,6 +119,7 @@ impl UART<NoPort> {
             character_length,
             stop_bits,
             transmit_parity,
+            parity,
             parity_value,
             hfc,
         )
@@ -145,6 +150,7 @@ impl UART<NoPort> {
         character_length: CharacterLength,
         stop_bits: StopBits,
         transmit_parity: bool,
+        parity: Parity,
         parity_value: ParityValueSelect,
         hfc: bool,
     ) -> Result<UART<UART2>> {
@@ -155,6 +161,7 @@ impl UART<NoPort> {
             character_length,
             stop_bits,
             transmit_parity,
+            parity,
             parity_value,
             hfc,
         )
@@ -229,12 +236,29 @@ impl Into<bool> for ParityValueSelect {
     }
 }
 
+/// # Parity Odd / Even
+/// Which type of parity to use.
+pub enum Parity {
+    Odd,
+    Even,
+}
+
+impl Into<bool> for Parity {
+    fn into(self) -> bool {
+        match self {
+            Parity::Odd => false,
+            Parity::Even => true,
+        }
+    }
+}
+
 impl<Port: private::UARTPortCompatable> UART<Port> {
     fn init(
         baud_rate: BaudRates,
         character_length: CharacterLength,
         stop_bits: StopBits,
         transmit_parity: bool,
+        parity: Parity,
         parity_value: ParityValueSelect,
         hfc: bool,
     ) -> Result<Self> {
@@ -249,6 +273,9 @@ impl<Port: private::UARTPortCompatable> UART<Port> {
         uart.clear_tx_fifo();
 
         unsafe {
+            // Disable the baud clock
+            uart.reg.set_baud_clock_enable(false);
+            // Set the number of character bits to 8
             uart.reg.set_character_length(character_length as u8);
             // Set the number of stop bits to 1
             uart.reg.set_number_of_stop_bits(stop_bits.into());
@@ -256,13 +283,25 @@ impl<Port: private::UARTPortCompatable> UART<Port> {
                 .set_transmit_parity_generation_enable(transmit_parity);
             // Set the parity value
             uart.reg.set_parity_value(parity_value.into());
+            // Set the parity
+            uart.reg.set_parity_odd_even(parity.into());
             // Set the clock source to IBRO
             uart.reg.set_baud_clock_source(ClockSources::IBRO as u8);
             // Set the clock divisor to 7.3728 Mhz / baud rate
-            let divisor = 7372800 / baud_rate as u32;
+            let divisor = 7372800u32 / baud_rate as u32;
             uart.reg.set_baud_rate_divisor(divisor);
             // Set the Hardware Flow Control
             uart.reg.set_hardware_flow_control(hfc);
+            // Disable UART auto gating
+            uart.reg.set_clock_auto_gating(false);
+            // Set RX threshold to 1 byte
+            uart.reg.set_recieve_fifo_threshold(1);
+            // Set the OSR to 28
+            uart.reg.set_lpuart_oversampling_rate(5);
+            // Enable the baud clock
+            uart.reg.set_baud_clock_enable(true);
+            // Wait until the baud clock is ready
+            while !uart.reg.get_baud_clock_ready() {}
         }
 
         Ok(uart)
