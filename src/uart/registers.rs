@@ -68,7 +68,7 @@ make_device! {
     baud_clock_ready,
 
 
-    /// Bit Frame Error Detection Enable. See Page 180, Table 12-8.
+    /// Bit Frame Error Detection Enable. See Page 181, Table 12-8.
     /// Enable or disable frame error detection
     /// This feature can **only** be used with `LPUART`
     /// - 0: Error detection disabled
@@ -77,7 +77,7 @@ make_device! {
     bit_frame_error_detection,
 
 
-    /// Baud Clock Source. See Page 180, Table 12-8.
+    /// Baud Clock Source. See Page 181, Table 12-8.
     /// Select the source for the baud generator (See Table 12-1)
     /// - 0: Clock 0
     /// - 1: Clock 1
@@ -87,7 +87,7 @@ make_device! {
     baud_clock_source,
 
 
-    /// Baud Clock Enable. See Page 180, Table 12-8.
+    /// Baud Clock Enable. See Page 181, Table 12-8.
     /// Choose if the baud clock is enabled or not
     /// - 0: Disabled
     /// - 1: Enabled
@@ -95,7 +95,7 @@ make_device! {
     baud_clock_enable,
 
 
-    /// Hardware Flow Control RTS `Deassert` Condition.
+    /// Hardware Flow Control RTS `Deassert` Condition. See Page 181, Table 12-8.
     /// Describes the conditions when RTS is deasserted
     /// - 0: When FIFO level = C_RX_FIFO_DEPTH, RTS is deasserted
     /// - 1: When FIFO level `>=` UART_CTRL.rx_thd_val, RTS is deasserted
@@ -103,7 +103,7 @@ make_device! {
     hardware_flow_rts_deassert_condition,
 
 
-    /// Hardware Flow Control
+    /// Hardware Flow Control. See Page 181, Table 12-8.
     /// Choose if hardware flow control is enabled, or disabled
     /// - 0: Disabled
     /// - 1: Enabled
@@ -111,7 +111,7 @@ make_device! {
     hardware_flow_control,
 
 
-    /// Number of stop bits
+    /// Number of stop bits. See Page 181, Table 12-8.
     /// The number of stop bits
     /// - 0: 1 stop bit
     /// - 1: 1.5 stop bit for 5 bit mode, 2 bit mode otherwise
@@ -119,7 +119,7 @@ make_device! {
     number_of_stop_bits,
 
 
-    /// Character Length
+    /// Character Length. See Page 181, Table 12-8.
     /// The number of bits in a character in an UART frame.
     /// - 0: 5 bits
     /// - 1: 6 bits
@@ -129,19 +129,19 @@ make_device! {
     character_length,
 
 
-    /// Activate Receive FIFO Flush
+    /// Receive FIFO Flush. See Page 181, Table 12-8.
     /// Write a 1 to flush the receive FIFO
     #[bit(9, RW1O, rro::UART_CTRL)]
     receive_fifo_flush,
 
 
-    /// Activate Transmit FIFO Flush
+    /// Transmit FIFO Flush. See Page 181, Table 12-8.
     /// Write a 1 to flush the transmit FIFO
     #[bit(8, RW1O, rro::UART_CTRL)]
     transmit_fifo_flush,
 
 
-    /// `CTS` Sampling Disable
+    /// `CTS` Sampling Disable. See Page 181, Table 12-8.
     /// Choose to enable or disable `CTS` (Clear To Send)
     /// - 0: Enabled
     /// - 1: Disabled
@@ -149,7 +149,7 @@ make_device! {
     cts_sampling_disable,
 
 
-    /// Parity Value
+    /// Parity Value. See Page 181, Table 12-8.
     /// The parity calculation uses 1s or 0s in data frame
     /// - 0: Use 1s
     /// - 1: Use 0s
@@ -157,7 +157,7 @@ make_device! {
     parity_value,
 
 
-    /// Parity Odd Even Select
+    /// Parity Odd Even Select. See Page 181, Table 12-8.
     /// parity to ensure even or odd
     /// - 0: Even parity (default)
     /// - 1: Odd parity
@@ -165,7 +165,7 @@ make_device! {
     parity_odd_even,
 
 
-    /// Transmit Parity Generation Enable
+    /// Transmit Parity Generation Enable. See Page 181, Table 12-8.
     /// Use parity for outward transmissions
     /// - 0: Disable parity
     /// - 1: Use parity (placed after data frame)
@@ -173,7 +173,7 @@ make_device! {
     transmit_parity_generation_enable,
 
 
-    /// Receive FIFO Threshold
+    /// Receive FIFO Threshold. See Page 182, Table 12-8.
     /// The byte size of FIFO before CPU interrupt is sent
     /// ```text
     /// Note: Setting threshold too low at high speeds can slow CPU
@@ -192,8 +192,7 @@ make_device! {
     #[bit(0..=3, RW, rro::UART_CTRL)]
     recieve_fifo_threshold,
 
-    /// The UART Status Register. See page 182, table 12-9
-    /// Transmit FIFO Level
+    /// Transmit FIFO Level. See page 182, table 12-9
     /// Checks of bytes in outbound FIFO buffer
     /// - 0-8: Current of bytes in buffer
     /// - 9-15: Reserved
@@ -201,7 +200,7 @@ make_device! {
     transmit_fifo_level,
 
 
-    /// Receive FIFO Level
+    /// Receive FIFO Level. See page 182, table 12-9
     /// Checks of bytes in inbound FIFO buffer
     /// - 0-8: Current of bytes in buffer
     /// - 9-15: Reserved
@@ -209,7 +208,7 @@ make_device! {
     receive_fifo_level,
 
 
-    /// Transmit FIFO Full
+    /// Transmit FIFO Full. See page 182, table 12-9
     /// Checks if the outbound data buffer has filled up
     /// - 0: Not full
     /// - 1: Full
@@ -217,7 +216,7 @@ make_device! {
     transmit_fifo_full,
 
 
-    /// Transmit FIFO Empty
+    /// Transmit FIFO Empty. See page 182, table 12-9
     /// Checks if the outbound data buffer is empty
     /// - 0: Not empty
     /// - 1: Empty
@@ -225,7 +224,7 @@ make_device! {
     transmit_fifo_empty,
 
 
-    /// Receive FIFO Full
+    /// Receive FIFO Full. See page 182, table 12-9
     /// Checks if the inbound data buffer has filled up
     /// - 0: Not full
     /// - 1: Full
@@ -233,7 +232,7 @@ make_device! {
     receive_fifo_full,
 
 
-    /// Receive FIFO Empty
+    /// Receive FIFO Empty. See page 182, table 12-9
     /// Checks if the inbound data buffer is empty
     /// - 0: Not empty
     /// - 1: Empty
@@ -241,7 +240,7 @@ make_device! {
     receive_fifo_empty,
 
 
-    /// Receive Busy
+    /// Receive Busy. See page 182, table 12-9
     /// Checks if the inbound data line is busy
     /// - 0: Not busy
     /// - 1: Busy
@@ -249,16 +248,14 @@ make_device! {
     receive_busy,
 
 
-    /// Transmit Busy
+    /// Transmit Busy. See page 182, table 12-9
     /// Checks if the outbound data line is busy
     /// - 0: Not busy
     /// - 1: Busy
     #[bit(0, RO, rro::UART_STATUS)]
     transmit_busy,
 
-    /// # UART Interrupt Enable Register
-    /// The UART Interrupt Enable Register. See page 182, table 12-10
-    /// Transmit FIFO Half-Empty Event Interrupt Enable
+    /// Transmit FIFO Half-Empty Event Interrupt Enable. See page 183, table 12-10
     /// Sets whether the interrupt for half-full outbound FIFO buffer is enabled
     /// - 0: Disabled
     /// - 1: Enabled
@@ -266,7 +263,7 @@ make_device! {
     transmit_fifo_half_empty_event,
 
 
-    /// Receive FIFO Threshold Event
+    /// Receive FIFO Threshold Event. See page 183, table 12-10
     /// Sets whether the interrupt for the receive FIFO threshold event is enabled
     /// - 0: Disabled
     /// - 1: Enabled
@@ -274,7 +271,7 @@ make_device! {
     receive_fifo_thershold_event,
 
 
-    /// Receive FIFO Overrun Event
+    /// Receive FIFO Overrun Event. See page 183, table 12-10
     /// Sets whether the interrupt for the receive FIFO overrun event is enabled
     /// - 0: Disabled
     /// - 1: Enabled
@@ -282,7 +279,7 @@ make_device! {
     receive_fifo_overrun_event,
 
 
-    /// `CTS` Signal Change Event Interrupt Enable
+    /// `CTS` Signal Change Event Interrupt Enable. See page 183, table 12-10
     /// Sets if the interrupt for a change in CTS Signal is enabled
     /// - 0: Disabled
     /// - 1: Enabled
@@ -290,7 +287,7 @@ make_device! {
     cts_signal_change_event,
 
 
-    /// Receive Parity Event Interrupt Enable
+    /// Receive Parity Event Interrupt Enable. See page 183, table 12-10
     /// Set if parity errors on received data is enabled
     /// - 0: Disabled
     /// - 1: Enabled
@@ -298,16 +295,14 @@ make_device! {
     receive_parity_event,
 
 
-    /// Receive Frame Error Event Interrupt Enable
+    /// Receive Frame Error Event Interrupt Enable. See page 183, table 12-10
     /// Set if stop bit not being recognized generates an interrupt
     /// - 0: Disabled
     /// - 1: Enabled
     #[bit(0, RW, rro::UART_INT_EN)]
     receive_frame_error_event,
 
-    /// UART Interrupt Flag Register
-    /// The UART Interrupt Flag Register. See Page 183, Table 12-11.
-    /// # Get Transmit FIFO Half-Empty Interrupt Flag
+    /// Transmit FIFO Half-Empty Interrupt Flag. See Page 183, Table 12-11.
     /// Get the status of the transmit FIFO half-empty flag
     /// - 0: Disabled
     /// - 1: Enabled
@@ -315,7 +310,7 @@ make_device! {
     transmit_fifo_half_empty_interrupt_flag,
 
 
-    /// # Get Receive FIFO Threshold Interrupt Flag
+    /// Receive FIFO Threshold Interrupt Flag. See Page 183, Table 12-11.
     /// Get the status flag for the FIFO-filled flag
     /// - 0: Disabled
     /// - 1: Enabled
@@ -323,7 +318,7 @@ make_device! {
     receive_fifo_threshold_interrupt_flag,
 
 
-    /// # Get Receive FIFO Overrun Interrupt Flag
+    /// Receive FIFO Overrun Interrupt Flag. See Page 183, Table 12-11.
     /// Get the status flag for the inbound FIFO buffer overrun flag
     /// - 0: Disabled
     /// - 1: Enabled
@@ -331,7 +326,7 @@ make_device! {
     receive_fifo_overrun_interrupt_flag,
 
 
-    /// # Get CTS Signal Change Interrupt Flag
+    /// CTS Signal Change Interrupt Flag. See Page 183, Table 12-11.
     /// The status flag for changes in CTS Signal
     /// - 0: Disabled
     /// - 1: Enabled
@@ -339,7 +334,7 @@ make_device! {
     cts_signal_change_interrupt_flag,
 
 
-    /// # Get Receive Parity Error Interrupt Flag
+    /// Receive Parity Error Interrupt Flag. See Page 183, Table 12-11.
     /// The status flag for errors in the received parity bit
     /// - 0: Disabled
     /// - 1: Enabled
@@ -347,21 +342,19 @@ make_device! {
     receive_parity_error_interrupt_flag,
 
 
-    /// Receive Frame Error Interrupt Flag
+    /// Receive Frame Error Interrupt Flag. See Page 183, Table 12-11.
     /// The status flag for errors in the received parity bit
     /// - 0: Disabled
     /// - 1: Enabled
     #[bit(0, RW1C, rro::UART_INTERRUPT_FL)]
     receive_frame_error_interrupt_flag,
 
-    /// The UART Clock Divisor Register. See Page 183-184, Table 12-12
-    /// # Get Baud Rate Divisor
+    /// Baud Rate Divisor. See Page 184, Table 12-12
     /// The divisor for generating the baud tick from baud clock
     #[bit(0..=19, RW, rro::UART_CLKDIV)]
     baud_rate_divisor,
 
-    /// The UART Oversampling Control Register. See Page 184, Table 12-13
-    /// LPUART Over Sampling Rate
+    /// LPUART Over Sampling Rate. See Page 184, Table 12-13
     /// How many times faster LPUART is sampling than the clock speed
     /// FDM Enabled:
     /// - 0: 8x
@@ -383,43 +376,38 @@ make_device! {
     #[bit(0..=2, RW, rro::UART_OSR)]
     lpuart_oversampling_rate,
 
-    /// The UART Transmit FIFO Register. See Page 184, Table 12-14.
-    /// Transmit FIFO Data
+    /// Transmit FIFO Data. See Page 184, Table 12-14.
     /// Reads the data in the outbound FIFO, no data reads as 0
     #[bit(0..=7, RO, rro::UART_TXPEEK)]
     transmit_fifo_data,
 
-    /// # UART Pin Control Register
-    /// The UART Pin Control Register. See Page 184-185, Table 12-15.
-    /// RTS Output State
+    /// RTS Output State. See Page 184, Table 12-15.
     /// The outbound RTS's state
     /// - 0: Push to 0
     /// - 1: Push to 1
     #[bit(1, RW, rro::UART_PNR)]
     rts_output_state,
 
-    /// CTS Pin State
+    /// CTS Pin State. See Page 185, Table 12-15.
     /// The CTS pin's state
     /// - 0: 0
     /// - 1: 1
     #[bit(0, RO, rro::UART_PNR)]
     cts_pin_state,
 
-    /// The UART Data Register. See Page 185, Table 12-16.
-    /// # Get Receive FIFO Byte Parity
+    /// Receive FIFO Byte Parity. See Page 185, Table 12-16.
     /// Shows if parity error occurred while receiving last byte
     /// - 0: No error
     /// - 1: Error occurred
     #[bit(8, RO, rro::UART_FIFO)]
     receive_fifo_byte_parity,
 
-    /// Get/Set Transmit/Receive FIFO Data
+    /// Transmit/Receive FIFO Data. See Page 185, Table 12-16.
     /// Sets outbound FIFO and Gets inbound FIFO data
     #[bit(0..=7, RW, rro::UART_FIFO)]
     fifo_data,
 
-    /// The UART DMA Register. See Page 185, Table 12-17.
-    /// Receive DMA Channel Enable
+    /// Receive DMA Channel Enable. See Page 185, Table 12-17.
     /// Enabling Direct Memory Access for inbound UART to allow using multiple buffers
     /// The documentation has a typo for this bit's access.
     /// It says "0" while it should say "R/W".
@@ -428,7 +416,7 @@ make_device! {
     #[bit(9, RW, rro::UART_DMA)]
     receive_dma_channel_enable,
 
-    /// # Set Receive FIFO Level DMA Threshold
+    /// Receive FIFO Level DMA Threshold. See Page 185, Table 12-17.
     /// How many bytes in inbound FIFO there must be to tell the DMA there is data to transfer
     /// The documentation has a typo for this bit's access.
     /// It says "0" while it should say "R/W".
@@ -436,33 +424,33 @@ make_device! {
     #[bit(5..=8, RW, rro::UART_DMA)]
     receive_fifo_level_dma_threshold,
 
-    /// # Set Transmit DMA Channel Enable
+    /// Transmit DMA Channel Enable. See Page 185, Table 12-17.
     /// Enabling Direct Memory Access for outbound UART to allow using multiple buffers
     #[bit(4, RW, rro::UART_DMA)]
     transmit_dma_channel_enable,
 
-    /// # Set Transmit FIFO Level DMA Threshold
+    /// Transmit FIFO Level DMA Threshold. See Page 185, Table 12-17.
     /// How many bytes in outbound FIFO there must be to tell the DMA there is spare room
     /// - Nothing listed in documentation
     #[bit(0..=3, RW, rro::UART_DMA)]
     transmit_dma_level_dma_threshold,
 
-    /// The UART Wakeup Enable Register. See Page 185-186, Table 12-18.
-    /// # Set Receive FIFO Threshold Wake-up Event Enable
+
+    /// Receive FIFO Threshold Wake-up Event Enable. See Page 186, Table 12-18.
     /// Allow a threshold of bytes in the inbound FIFO to wake up the CPU and resume normal operation
     /// - 0: Disabled
     /// - 1: Enabled
     #[bit(2, RW, rro::UART_WKEN)]
     receive_fifo_threshold_wakeup_event_enable,
 
-    /// # Receive FIFO Full Wake-up Event Enable
+    /// Receive FIFO Full Wake-up Event Enable. See Page 186, Table 12-18.
     /// Allow a full inbound FIFO to wake up the CPU and resume normal operation
     /// - 0: Disabled
     /// - 1: Enabled
     #[bit(1, RW, rro::UART_WKEN)]
     receive_fifo_full_wakeup_event_enable,
 
-    /// # Receive FIFO Not Empty Wake-up Event Enable
+    /// Receive FIFO Not Empty Wake-up Event Enable. See Page 186, Table 12-18.
     /// Allow a non-empty inbound FIFO to wake up the CPU and resume normal operation
     /// - 0: Disabled
     /// - 1: Enabled
@@ -470,21 +458,21 @@ make_device! {
     receive_fifo_not_empty_wakeup_event_enable,
 
     /// The UART Wakeup Flag register. See Page 186, Table 12-19.
-    /// # Set Receive FIFO Threshold Wake-up Event
+    /// Receive FIFO Threshold Wake-up Event
     /// Flag to tell the CPU to wake up when the inbound FIFO has more bytes than the threshold
     /// - 0: Disabled
     /// - 1: Enabled
     #[bit(2, RW, rro::UART_WKFL)]
     receive_fifo_threshold_wakeup_event,
 
-    /// # Receive FIFO Full Wake-up Event
+    /// Receive FIFO Full Wake-up Event. See Page 186, Table 12-19.
     /// Flag to tell the CPU to wake up when the inbound FIFO is full
     /// - 0: Disabled
     /// - 1: Enabled
     #[bit(1, RW, rro::UART_WKFL)]
     receive_fifo_full_wakeup_event,
 
-    /// # Receive FIFO Not Empty Wake-up Event
+    /// Receive FIFO Not Empty Wake-up Event. See Page 186, Table 12-19.
     /// Flag to tell the CPU to wake up when the inbound FIFO is not empty
     /// - 0: Disabled
     /// - 1: Enabled
