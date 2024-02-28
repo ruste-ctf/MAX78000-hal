@@ -40,6 +40,7 @@ pub struct I2C<Port = NoPort> {
     master_enabled: bool,
     slave_address: usize,
     gpio: [GpioPin; 2],
+    slave_underflow: bool,
     _ph: PhantomData<Port>,
 }
 
@@ -175,11 +176,14 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
             slave_address,
             gpio: crate::gpio::hardware::i2c_n(Port::PORT_NUM).ok_or(ErrorKind::Busy)?,
             master_enabled,
+            slave_underflow: false,
             _ph: PhantomData,
         };
 
         // Attempt to take control of the bus
-        // i2c.bus_recover(16)?;
+        if master_enabled {
+            i2c.bus_recover(16)?;
+        }
 
         // Enable the I2C peripheral
         unsafe {
@@ -249,6 +253,10 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
             return Err(ErrorKind::ComError);
         }
 
+        if self.reg.is_receive_fifo_threshold_level_active() {
+            return Ok(SlaveStatus::ReadRequested);
+        }
+
         if self.reg.is_slave_mode_stop_condition_active() {
             return Ok(SlaveStatus::Stop);
         }
@@ -263,11 +271,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
         {
             let is_write = self.reg.get_read_write_bit_status()
                 && !self.reg.is_slave_read_addr_match_interrupt_active();
-            return Ok(SlaveStatus::IncomingRequest { is_write: is_write });
-        }
-
-        if self.reg.is_receive_fifo_threshold_level_active() {
-            return Ok(SlaveStatus::ReadRequested);
+            return Ok(SlaveStatus::IncomingRequest { is_write });
         }
 
         if self.reg.is_transmit_fifo_locked_active() {
@@ -281,6 +285,112 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
         Ok(SlaveStatus::None)
     }
 
+    pub fn slave_manual_pulling<Iter>(
+        &mut self,
+        mut iter: Iter,
+    ) -> Result<impl IntoIterator<Item = u8>>
+    where
+        Iter: Iterator<Item = u8>,
+    {
+        let mut recv_buffer = [0; 256];
+        let mut recv_buffer_index = 0;
+
+        if self.master_enabled {
+            return Err(ErrorKind::BadState);
+        }
+
+        unsafe {
+            self.reg.clear_slave_mode_do_not_respond();
+        }
+
+        self.set_rx_fifo_threshold(1);
+        self.set_tx_fifo_threshold(1);
+
+        // If we got an error in the middle of a tx_state, we want to
+        // restore it.
+        let mut tx_state = self.slave_underflow;
+        self.slave_underflow = false;
+
+        // RX does not have this problem, because its always ok to read from
+        // a non-empty fifo
+        let mut rx_state = false;
+
+        loop {
+            match self.slave_status() {
+                Err(cond) => {
+                    debug_println!("Error Condition");
+                    self.debug_dump_int_status();
+                    unsafe {
+                        self.reg.set_interrupt_flags_0(u32::MAX);
+                        self.reg.set_interrupt_flags_1(u32::MAX);
+                    }
+
+                    return Err(cond);
+                }
+                Ok(SlaveStatus::IncomingRequest { is_write: false }) => {
+                    debug_println!("Incoming Read");
+                    rx_state = true;
+                    unsafe { self.reg.clear_slave_incoming_address_match_status() };
+                    unsafe { self.reg.clear_slave_read_addr_match_interrupt() };
+                }
+                Ok(SlaveStatus::IncomingRequest { is_write: true }) => {
+                    debug_println!("Incoming Write");
+                    tx_state = true;
+                    unsafe { self.reg.clear_slave_incoming_address_match_status() };
+                    unsafe { self.reg.clear_slave_write_addr_match_interrupt() };
+                    unsafe { self.reg.clear_transmit_fifo_locked() };
+                }
+                Ok(SlaveStatus::Stop) => {
+                    debug_println!("Stop");
+                    tx_state = false;
+                    rx_state = false;
+                    unsafe { self.reg.clear_slave_mode_stop_condition() };
+                    break;
+                }
+                Ok(SlaveStatus::ReadRequested) => {
+                    while !self.reg.get_receive_fifo_empty() {
+                        unsafe { self.reg.clear_slave_mode_receive_fifo_overflow_flag() };
+                        if recv_buffer_index >= recv_buffer.len() {
+                            unsafe { self.reg.activate_transmit_fifo_flush() };
+                            while !self.reg.is_transmit_fifo_flush_pending()
+                                && !self.reg.is_transmit_fifo_locked_active()
+                            {
+                            }
+                            return Err(ErrorKind::Overflow);
+                        }
+
+                        let data = self.reg.get_fifo_data();
+                        recv_buffer[recv_buffer_index] = data;
+                        recv_buffer_index += 1;
+
+                        unsafe { self.reg.clear_receive_fifo_threshold_level() };
+                    }
+                }
+                Ok(SlaveStatus::WriteRequested) if tx_state => {
+                    let data = iter
+                        .next()
+                        .ok_or(ErrorKind::Underflow)
+                        .inspect_err(|_err| self.slave_underflow = true)?;
+                    unsafe { self.reg.clear_slave_mode_transmit_fifo_underflow_flag() };
+                    unsafe { self.reg.set_fifo_data(data) };
+                    unsafe { self.reg.clear_transmit_fifo_threshold_level() };
+                }
+                Ok(SlaveStatus::TransferDone) => {
+                    unsafe { self.reg.clear_transfer_complete_flag() };
+                    tx_state = false;
+                }
+                Ok(_) => {
+                    if !rx_state && !tx_state {
+                        return Err(ErrorKind::NoneAvailable);
+                    }
+                }
+            }
+        }
+
+        Ok(recv_buffer.into_iter().take(recv_buffer_index))
+    }
+
+    // Maybe this should use slave_manual_pulling instead?
     pub fn slave_transaction<RXFun, TXFun>(&mut self, mut rx: RXFun, mut tx: TXFun) -> Result<()>
     where
         RXFun: FnMut(u8) -> Result<()>,
@@ -464,12 +574,14 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
             MasterCommand::StartWrite { address } => {
                 self.send_address_with_rw(address, true);
                 self.send_bus_event(I2CBusControlEvent::StartOrRestart);
+                while self.reg.is_send_repeated_start_condition_pending() {}
             }
             MasterCommand::StartRead {
                 address,
                 read_amount,
             } => {
                 self.send_bus_event(I2CBusControlEvent::StartOrRestart);
+                while self.reg.is_send_repeated_start_condition_pending() {}
                 self.send_address_with_rw(address, false);
 
                 let new_read_amount = if read_amount >= 256 {
@@ -479,9 +591,11 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
                 };
 
                 unsafe { self.reg.set_receive_fifo_transaction_size(new_read_amount) };
+                while self.reg.is_send_repeated_start_condition_pending() {}
             }
             MasterCommand::Stop => {
                 self.send_bus_event(I2CBusControlEvent::Stop);
+                while self.reg.is_send_stop_condition_pending() {}
             }
         }
     }
@@ -571,34 +685,32 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
                     Ok(MasterStatus::SlaveNack) => {
                         self.handle_i2c_master_error(ErrorKind::NoResponse, "Slave NACK")?
                     }
-                    Ok(MasterStatus::NextReadChunkRequested) => {
-                        let read_amount = rx.len() - bytes_written;
-
-                        self.master_command(MasterCommand::StartRead {
-                            address,
-                            read_amount,
-                        });
-                    }
                     Ok(MasterStatus::TransferDone) => {
+                        got_ack = false;
+                        unsafe { self.reg.clear_transfer_complete_flag() };
                         while !self.reg.get_receive_fifo_empty() {
                             bytes_written += self.read_fifo(&mut rx[bytes_written..]);
-                            unsafe { self.reg.clear_receive_fifo_threshold_level() };
                         }
                         unsafe { self.reg.clear_receive_fifo_threshold_level() };
 
-                        if bytes_written != rx.len() {
+                        if bytes_written < rx.len() {
+                            let read_amount = rx.len() - bytes_written;
+                            self.master_command(MasterCommand::StartRead {
+                                address,
+                                read_amount,
+                            });
+                        } else if bytes_written == rx.len() {
+                            break;
+                        } else {
                             self.handle_i2c_master_error(
                                 ErrorKind::Abort,
-                                "Unexpected Transfer done",
-                            )?
+                                "Transfer Done at unexpected time",
+                            )?;
                         }
-
-                        unsafe { self.reg.clear_transfer_complete_flag() };
                     }
                     Ok(MasterStatus::ReadRequested) if got_ack => {
                         while !self.reg.get_receive_fifo_empty() {
                             bytes_written += self.read_fifo(&mut rx[bytes_written..]);
-                            unsafe { self.reg.clear_receive_fifo_threshold_level() };
                         }
                         unsafe { self.reg.clear_receive_fifo_threshold_level() };
                     }
@@ -714,6 +826,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
     }
 
     fn send_bus_event(&mut self, event: I2CBusControlEvent) {
+        while self.reg.is_transmit_fifo_locked_active() {}
         match event {
             I2CBusControlEvent::StartOrRestart => unsafe {
                 if self.reg.get_transaction_active() {
