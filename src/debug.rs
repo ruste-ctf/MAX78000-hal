@@ -39,15 +39,17 @@ pub fn _print(args: ::core::fmt::Arguments) {
 
 #[macro_export]
 macro_rules! debug_print {
-    ($($arg:tt)*) => {
+    ($($arg:tt)*) => {{
+        #[cfg(debug_assertions)]
         $crate::debug::_print(format_args!($($arg)*));
-    };
+    }};
 }
 
 #[macro_export]
 macro_rules! debug_println {
     () => {$crate::debug_print!("\n")};
     ($($arg:tt)*) => {{
+        #[cfg(debug_assertions)]
         $crate::debug::_print(format_args!($($arg)*));
         $crate::debug_print!("\n");
     }};
