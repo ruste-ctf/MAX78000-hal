@@ -33,7 +33,7 @@ impl private::UARTPortCompatable for UART2 {
 }
 
 pub struct UART<Port = NoPort> {
-    pub reg: registers::Registers,
+    reg: registers::Registers,
     _ph: PhantomData<Port>,
     _gpio: [GpioPin; 2],
 }
@@ -47,16 +47,18 @@ impl UART<NoPort> {
     /// * `character_length` - The number of data bits that will be transferred in a frame
     /// * `stop_bits` - The number of stop bits that will be used
     /// * `transmit_parity` - Enables the generation of the parity bit
+    /// * `parity` - Specifies whether to use odd, or even parity
     /// * `hfc` - Enables the use of hardware flow control
     /// # Example
     ///
     /// ```no_run
-    /// use max78000_hal::uart::{UART, BaudRates, CharacterLength, StopBits, ParityValueSelect};
+    /// use max78000_hal::uart::{UART, BaudRates, CharacterLength, StopBits, ParityValueSelect, Parity};
     /// let mut uart_test = UART::port_0_init(
     ///     BaudRates::Baud115200,
     ///     CharacterLength::EightBits,
     ///     StopBits::OneBit,
     ///     false,
+    ///     Parity::Odd,
     ///     ParityValueSelect::OneBased,
     ///     false,
     /// );
@@ -89,16 +91,18 @@ impl UART<NoPort> {
     /// * `character_length` - The number of data bits that will be transferred in a frame
     /// * `stop_bits` - The number of stop bits that will be used
     /// * `transmit_parity` - Enables the generation of the parity bit
+    /// * `parity` - Specifies whether to use odd, or even parity
     /// * `hfc` - Enables the use of hardware flow control
     /// # Example
     ///
     /// ```no_run
-    /// use max78000_hal::uart::{UART, BaudRates, CharacterLength, StopBits, ParityValueSelect};
-    /// let mut uart_test = UART::port_1_init(
+    /// use max78000_hal::uart::{UART, BaudRates, CharacterLength, StopBits, ParityValueSelect, Parity};
+    /// let mut uart_test = UART::port_0_init(
     ///     BaudRates::Baud115200,
     ///     CharacterLength::EightBits,
     ///     StopBits::OneBit,
     ///     false,
+    ///     Parity::Odd,
     ///     ParityValueSelect::OneBased,
     ///     false,
     /// );
@@ -124,6 +128,7 @@ impl UART<NoPort> {
             hfc,
         )
     }
+
     /// # Port 2 Init
     /// Initializes UART 2
     /// # Arguments
@@ -131,16 +136,18 @@ impl UART<NoPort> {
     /// * `character_length` - The number of data bits that will be transferred in a frame
     /// * `stop_bits` - The number of stop bits that will be used
     /// * `transmit_parity` - Enables the generation of the parity bit
+    /// * `parity` - Specifies whether to use odd, or even parity
     /// * `hfc` - Enables the use of hardware flow control
     /// # Example
     ///
     /// ```no_run
-    /// use max78000_hal::uart::{UART, BaudRates, CharacterLength, StopBits, ParityValueSelect};
-    /// let mut uart_test = UART::port_2_init(
+    /// use max78000_hal::uart::{UART, BaudRates, CharacterLength, StopBits, ParityValueSelect, Parity};
+    /// let mut uart_test = UART::port_0_init(
     ///     BaudRates::Baud115200,
     ///     CharacterLength::EightBits,
     ///     StopBits::OneBit,
     ///     false,
+    ///     Parity::Odd,
     ///     ParityValueSelect::OneBased,
     ///     false,
     /// );
