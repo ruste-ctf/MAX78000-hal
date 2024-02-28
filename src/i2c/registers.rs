@@ -52,6 +52,14 @@ make_device! {
     #[bit(0..=15, RW, rro::I2C_CTRL)]
     control_register,
 
+    /// The entire I2C interrupt flags 0 register.
+    #[bit(0..=31, RW, rro::I2C_INTFL0)]
+    interrupt_flags_0,
+
+    /// The entire I2C interrupt flags 1 register.
+    #[bit(0..=31, RW, rro::I2C_INTFL1)]
+    interrupt_flags_1,
+
     /// Set I2C to high speed mode, or set it to low speed mode.
     /// 0: Disabled
     /// 1: Enabled
@@ -83,7 +91,7 @@ make_device! {
     /// Write Bit Status
     /// Get the logic level of the R/W bit on a received address match.
     #[bit(11, RO, rro::I2C_CTRL)]
-    write_bit_status,
+    read_write_bit_status,
 
     /// Software I2C Mode
     /// Tell the controller to either use software mode (i.e the SCL and SDA are managed
@@ -226,7 +234,7 @@ make_device! {
     transaction_active,
 
     /// I2C has had an error on the Interrupt Flag 0 Register
-    #[bit(8..=14, RO, rro::I2C_INTFL0)]
+    #[bit(8..=14, RW, rro::I2C_INTFL0)]
     error_condition,
 
     /// Slave Write Address Match Interrupt

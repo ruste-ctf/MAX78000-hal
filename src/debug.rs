@@ -46,9 +46,9 @@ macro_rules! debug_print {
 
 #[macro_export]
 macro_rules! debug_println {
-    () => ($crate::debug_print!("\n"));
-    ($($arg:tt)*) => {
+    () => {$crate::debug_print!("\n")};
+    ($($arg:tt)*) => {{
         $crate::debug::_print(format_args!($($arg)*));
         $crate::debug_print!("\n");
-    }
+    }};
 }
