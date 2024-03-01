@@ -287,7 +287,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
 
     pub fn slave_manual_pulling<Iter>(
         &mut self,
-        mut iter: Iter,
+        iter: &mut Iter,
     ) -> Result<impl IntoIterator<Item = u8>>
     where
         Iter: Iterator<Item = u8>,
