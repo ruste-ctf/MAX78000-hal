@@ -36,20 +36,12 @@ pub struct AES {
 }
 
 impl AES {
-    #[cfg(not(test))]
     /// Initializes a new instance of AES. Should never be called more than once.
     pub fn init() -> Self {
         peripheral_reset(HardwareSource::AES);
         system_clock_enable(HardwareSource::AES, true);
         Self {
             registers: Registers::new(mmio::AES),
-        }
-    }
-
-    #[cfg(test)]
-    pub fn init(port: usize) -> Self {
-        Self {
-            registers: Registers::new(port),
         }
     }
 
@@ -168,7 +160,9 @@ mod test {
     #[test]
     fn load_fifo_test() {
         let mut fake_aes_registers: [u32; 6] = [0; 6];
-        let mut aes = AES::init(fake_aes_registers.as_mut_ptr() as usize);
+        let mut aes = AES {
+            registers: fake_aes_registers.as_mut_ptr() as usize,
+        };
         let data = [0b_01110101; 16];
         aes.load_fifo(data);
         assert_eq!(
@@ -181,7 +175,9 @@ mod test {
     fn read_back_fifo_test() {
         let mut fake_aes_registers: [u32; 6] = [0; 6];
         fake_aes_registers[4] = 0b_01110101_01110101_01110101_01110101;
-        let aes = AES::init(fake_aes_registers.as_mut_ptr() as usize);
+        let aes = AES {
+            registers: fake_aes_registers.as_mut_ptr() as usize,
+        };
         let data = aes.read_back_fifo();
         assert_eq!(
             data[0..4],
