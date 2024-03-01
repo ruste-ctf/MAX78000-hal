@@ -1,6 +1,5 @@
 pub mod registers;
 
-#[cfg(not(test))]
 use crate::{
     gcr::{peripheral_reset, system_clock_enable, HardwareSource},
     memory_map::mmio,
@@ -161,7 +160,7 @@ mod test {
     fn load_fifo_test() {
         let mut fake_aes_registers: [u32; 6] = [0; 6];
         let mut aes = AES {
-            registers: fake_aes_registers.as_mut_ptr() as usize,
+            registers: Registers::new(fake_aes_registers.as_mut_ptr() as usize),
         };
         let data = [0b_01110101; 16];
         aes.load_fifo(data);
@@ -176,7 +175,7 @@ mod test {
         let mut fake_aes_registers: [u32; 6] = [0; 6];
         fake_aes_registers[4] = 0b_01110101_01110101_01110101_01110101;
         let aes = AES {
-            registers: fake_aes_registers.as_mut_ptr() as usize,
+            registers: Registers::new(fake_aes_registers.as_mut_ptr() as usize),
         };
         let data = aes.read_back_fifo();
         assert_eq!(

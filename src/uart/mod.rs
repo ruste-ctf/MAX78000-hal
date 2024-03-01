@@ -1,4 +1,3 @@
-use crate::debug_println;
 use crate::error::{ErrorKind, Result};
 use crate::gcr::{peripheral_reset, system_clock_enable};
 use crate::gpio::GpioPin;
