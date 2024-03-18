@@ -41,6 +41,7 @@ pub struct I2C<Port = NoPort> {
     slave_address: usize,
     gpio: [GpioPin; 2],
     slave_underflow: bool,
+    transaction_buffer: (usize, [u8; 256]),
     _ph: PhantomData<Port>,
 }
 
@@ -177,6 +178,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
             gpio: crate::gpio::hardware::i2c_n(Port::PORT_NUM).ok_or(ErrorKind::Busy)?,
             master_enabled,
             slave_underflow: false,
+            transaction_buffer: (0, [0; 256]),
             _ph: PhantomData,
         };
 
@@ -288,13 +290,10 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
     pub fn slave_manual_pulling<Iter>(
         &mut self,
         iter: &mut Iter,
-    ) -> Result<impl IntoIterator<Item = u8>>
+    ) -> Result<impl Iterator<Item = u8>>
     where
         Iter: Iterator<Item = u8>,
     {
-        let mut recv_buffer = [0; 256];
-        let mut recv_buffer_index = 0;
-
         if self.master_enabled {
             return Err(ErrorKind::BadState);
         }
@@ -310,6 +309,10 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
         // restore it.
         let mut tx_state = self.slave_underflow;
         self.slave_underflow = false;
+
+        if !tx_state {
+            self.transaction_buffer = (0, [0; 256]);
+        }
 
         // RX does not have this problem, because its always ok to read from
         // a non-empty fifo
@@ -350,7 +353,7 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
                 Ok(SlaveStatus::ReadRequested) => {
                     while !self.reg.get_receive_fifo_empty() {
                         unsafe { self.reg.clear_slave_mode_receive_fifo_overflow_flag() };
-                        if recv_buffer_index >= recv_buffer.len() {
+                        if self.transaction_buffer.0 >= self.transaction_buffer.1.len() {
                             unsafe { self.reg.activate_transmit_fifo_flush() };
                             while !self.reg.is_transmit_fifo_flush_pending()
                                 && !self.reg.is_transmit_fifo_locked_active()
@@ -360,8 +363,8 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
                         }
 
                         let data = self.reg.get_fifo_data();
-                        recv_buffer[recv_buffer_index] = data;
-                        recv_buffer_index += 1;
+                        self.transaction_buffer.1[self.transaction_buffer.0] = data;
+                        self.transaction_buffer.0 += 1;
 
                         unsafe { self.reg.clear_receive_fifo_threshold_level() };
                     }
@@ -370,7 +373,9 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
                     let data = iter
                         .next()
                         .ok_or(ErrorKind::Underflow)
-                        .inspect_err(|_err| self.slave_underflow = true)?;
+                        .inspect_err(|_err| {
+                            self.slave_underflow = true;
+                        })?;
                     unsafe { self.reg.clear_slave_mode_transmit_fifo_underflow_flag() };
                     unsafe { self.reg.set_fifo_data(data) };
                     unsafe { self.reg.clear_transmit_fifo_threshold_level() };
@@ -387,7 +392,12 @@ impl<Port: private::I2CPortCompatable> I2C<Port> {
             }
         }
 
-        Ok(recv_buffer.into_iter().take(recv_buffer_index))
+        Ok(self
+            .transaction_buffer
+            .1
+            .clone()
+            .into_iter()
+            .take(self.transaction_buffer.0))
     }
 
     // Maybe this should use slave_manual_pulling instead?
